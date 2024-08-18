@@ -6,6 +6,43 @@
 
 var links = [];
 
+function scalerFunction(startIndex, endIndex) {
+    let partitions = [];
+    let step = Math.floor((endIndex - startIndex + 1) / 21);
+    let remainder = (endIndex - startIndex + 1) % 21;
+
+    for (let i = 0; i < 21; i++) {
+        let start = startIndex + i * step + Math.min(i, remainder);
+        let end = startIndex + (i + 1) * step + Math.min(i + 1, remainder) - 1;
+        partitions.push([start, end]);
+    }
+
+    // Define the frequencyArray
+    let frequencyArray = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100, 1];
+
+    // Function to select a random partition based on frequencyArray
+    function pickRandomPartition() {
+        let total = frequencyArray.reduce((a, b) => a + b, 0); // Calculate the sum of all frequencies
+        let random = Math.random() * total; // Generate a random number up to the sum
+        let cumulative = 0;
+
+        for (let i = 0; i < frequencyArray.length; i++) {
+            cumulative += frequencyArray[i];
+            if (random < cumulative) {
+                return partitions[i];
+            }
+        }
+    }
+
+    // Pick a random partition based on the frequency array
+    let selectedPartition = pickRandomPartition();
+
+    return {
+        partitions: partitions,
+        selectedPartition: selectedPartition
+    };
+}
+
 function getRandomIndexByFrequency(frequencyArray) {
 	// Calculate the cumulative sum of frequencies 
 	const cumulativeSum = [];
@@ -96,8 +133,10 @@ openStuff = function () {
     const endIndex = Number(urlParams.get('endIndex'));
     // let randomInt = randomIntFromInterval2(startIndex, endIndex);
     // window.open("https://github.com/cjcaf1995/" + repository + "/issues/" + randomInt);
-    let randomRange = randomRangeFromInterval3(startIndex, endIndex);
-    let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
+    // let randomRange = randomRangeFromInterval3(startIndex, endIndex);
+    // let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
+    const selectedPartition = scalerFunction(startIndex, endIndex)["selectedPartition"];
+    alert("selectedPartition: " + selectedPartition);
     window.open("https://github.com/cjcaf1995/" + repository + "/issues/" + randomInt);
 };
 
