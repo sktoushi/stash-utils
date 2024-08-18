@@ -56,6 +56,14 @@ openStuff = function () {
     
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
+    const allocArr = urlParams.get('allocArr');
+    const startIdxArr = urlParams.get('startIdxArr');
+    const endIdxArr = urlParams.get('endIdxArr');
+    const scaledArr = urlParams.get('scaledArr');
+    alert("allocArr: " + JSON.stringify(allocArr));
+    alert("startIdxArr: " + JSON.stringify(startIdxArr));
+    alert("endIdxArr: " + JSON.stringify(endIdxArr));
+    alert("scaledArr: " + JSON.stringify(scaledArr));
     const alloc1 = Number(urlParams.get('alloc1'));
     const alloc2 = Number(urlParams.get('alloc2'));
     const scaled1 = urlParams.get('scaled1');
