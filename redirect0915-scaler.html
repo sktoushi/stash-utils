@@ -76,8 +76,8 @@ openStuff = function () {
     
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
-    const allocArr = urlParams.get('allocArr');
-    alert(allocArr.split(","));
+    const allocArr = urlParams.get('allocArr').split(",");
+    alert("CHOSEN INDEX BASED ON FREQUENCY: " + getRandomIndexByFrequency(allocArr));
     const alloc1 = Number(urlParams.get('alloc1'));
     const alloc2 = Number(urlParams.get('alloc2'));
     const scaled1 = urlParams.get('scaled1');
