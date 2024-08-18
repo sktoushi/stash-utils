@@ -19,6 +19,11 @@ function scalerFunction(startIndex, endIndex) {
 
     // Define the frequencyArray
     let frequencyArray1 = [0.67, 0.67, 1.34, 2.01, 3.35, 5.36, 8.71, 14.07, 22.78, 36.85, 59.63, 96.48, 154.61, 250.86, 407.95, 663.61, 1071.54, 1735.15, 2806.69, 4534.23, 10000];
+    let rand1 = Math.random();
+    let rand2 = Math.random();
+    if (rand1 < rand2) {
+	frequencyArray1 = shuffleArray(frequencyArray1);
+    }
     let frequencyArray = [];
     for (let i = 0; i < frequencyArray1.length; i++) {
 	if (Math.random() <= 0.50) {
@@ -144,7 +149,7 @@ openStuff = function () {
     // let randomRange = randomRangeFromInterval3(startIndex, endIndex);
     // let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
     const selectedPartition = scalerFunction(startIndex, endIndex)["selectedPartition"];
-    alert("selectedPartition: " + selectedPartition);
+    let randomInt = randomIntFromInterval2(selectedPartition[0], selectedPartition[1])
     window.open("https://github.com/cjcaf1995/" + repository + "/issues/" + randomInt);
 };
 
