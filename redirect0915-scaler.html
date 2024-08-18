@@ -81,51 +81,16 @@ openStuff = function () {
     
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
+    const repository = urlParams.get('repository');
     const allocArr = urlParams.get('allocArr').split(",");
-    alert(getRandomIndexBasedOnStringFrequencies(allocArr));
-	
-    const alloc1 = Number(urlParams.get('alloc1'));
-    const alloc2 = Number(urlParams.get('alloc2'));
-    const scaled1 = urlParams.get('scaled1');
-    const scaled2 = urlParams.get('scaled2');
-    let prefix = "redirect0915";
-    
-    if (Math.random() < Math.random()) {
-        const randomVariable = Math.random();
-        if (randomVariable <= 0.34) {
-            window.open("https://www.instagram.com/explore/");
-        } else if (randomVariable <= 0.34 && randomVariable <= 0.66) {
-            window.open("https://www.instagram.com/reels/");
-        } else if (randomVariable <= 0.66 && randomVariable <= 1) {
-            window.open("https://www.youtube.com/shorts/");
-        }        
-    } else {
-        if (Math.random() <= (alloc1 / (alloc1 + alloc2))) {
-            const repository1 = urlParams.get('repository1');
-            const startIndex1 = Number(urlParams.get('startIndex1'));
-            const endIndex1 = Number(urlParams.get('endIndex1'));
-            // let randomInt = randomIntFromInterval2(startIndex1, endIndex1);
-            // window.open("https://github.com/cjcaf1995/" + repository1 + "/issues/" + randomInt);
-            //// let randomRange = randomRangeFromInterval3(startIndex1, endIndex1);
-            //// let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
-            if (scaled1 === "true") {
-                prefix = prefix + "-scaled";
-            }
-            window.open("https://" + prefix + ".tumblr.com/?repository=" + repository1 + "&startIndex=" + startIndex1 + "&endIndex=" + endIndex1);
-        } else {
-            const repository2 = urlParams.get('repository2');
-            const startIndex2 = Number(urlParams.get('startIndex2'));
-            const endIndex2 = Number(urlParams.get('endIndex2'));
-            // let randomInt = randomIntFromInterval2(startIndex2, endIndex2);
-            // window.open("https://github.com/cjcaf1995/" + repository2 + "/issues/" + randomInt);
-            //// let randomRange = randomRangeFromInterval3(startIndex2, endIndex2);
-            //// let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
-            if (scaled2 === "true") {
-                prefix = prefix + "-scaled";
-            }
-            window.open("https://" + prefix + ".tumblr.com/?repository=" + repository2 + "&startIndex=" + startIndex2 + "&endIndex=" + endIndex2);
-        }
-    }
+    const chosenGithubIssue = getRandomIndexBasedOnStringFrequencies(allocArr) + 1;
+    // const startIndex = Number(urlParams.get('startIndex'));
+    // const endIndex = Number(urlParams.get('endIndex'));
+    // let randomInt = randomIntFromInterval2(startIndex1, endIndex1);
+    // window.open("https://github.com/cjcaf1995/" + repository1 + "/issues/" + randomInt);
+    //// let randomRange = randomRangeFromInterval3(startIndex1, endIndex1);
+    //// let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
+    window.open("https://github.com/cjcaf1995/" + repository + "/issues/" + chosenGithubIssue);
 
 };
 
