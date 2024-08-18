@@ -6,24 +6,29 @@
 
 var links = [];
 
-function getRandomIndexByFrequency(frequencyArray) {
-	// Calculate the cumulative sum of frequencies 
-	const cumulativeSum = [];
-	let sum = 0;
-	for (const freq of frequencyArray) {
-		sum += freq;
-		cumulativeSum.push(sum);
-	}
-	// Generate a random number between 0 and the total sum 
-	const randomNum = Math.floor(Math.random() * sum);
-	// Find the index corresponding to the random number 
-	for (let i = 0; i < cumulativeSum.length; i++) {
-		if (randomNum < cumulativeSum[i]) {
-			return i;
-		}
-	}
-	// If something goes wrong (unlikely), return a fallback index (e.g., 0) 
-	return 1;
+function getRandomIndexBasedOnStringFrequencies(frequencyStrings) {
+    // Convert the array of strings to an array of integers
+    const frequencies = frequencyStrings.map(Number);
+
+    // Calculate the total sum of all frequencies
+    const totalSum = frequencies.reduce((sum, frequency) => sum + frequency, 0);
+    
+    // Generate a random number between 0 and totalSum
+    let randomValue = Math.random() * totalSum;
+
+    // Iterate through the frequencies array
+    for (let i = 0; i < frequencies.length; i++) {
+        // Subtract the current frequency from the randomValue
+        randomValue -= frequencies[i];
+        
+        // If randomValue is less than 0, return the current index
+        if (randomValue < 0) {
+            return i;
+        }
+    }
+
+    // Fallback: in case of any floating point arithmetic issues
+    return frequencies.length - 1;
 }
 	
 function randomIntFromInterval(min, max) { // min and max included 
@@ -77,7 +82,8 @@ openStuff = function () {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const allocArr = urlParams.get('allocArr').split(",");
-    alert("CHOSEN INDEX BASED ON FREQUENCY: " + getRandomIndexByFrequency(allocArr));
+    alert(getRandomIndexBasedOnStringFrequencies(allocArr));
+	
     const alloc1 = Number(urlParams.get('alloc1'));
     const alloc2 = Number(urlParams.get('alloc2'));
     const scaled1 = urlParams.get('scaled1');
