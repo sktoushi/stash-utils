@@ -18,7 +18,15 @@ function scalerFunction(startIndex, endIndex) {
     }
 
     // Define the frequencyArray
-    let frequencyArray = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100];
+    let frequencyArray1 = [0.67, 0.67, 1.34, 2.01, 3.35, 5.36, 8.71, 14.07, 22.78, 36.85, 59.63, 96.48, 154.61, 250.86, 407.95, 663.61, 1071.54, 1735.15, 2806.69, 4534.23, 10000];
+    let frequencyArray = [];
+    for (let i = 0; i < frequencyArray1.length; i++) {
+	if (Math.random() <= 0.50) {
+	    frequencyArray[i] = frequencyArray1[i] * Math.random();
+	} else {
+	    frequencyArray[i] = frequencyArray1[i] * (Math.random() + 1);
+	}
+    }
 
     // Function to select a random partition based on frequencyArray
     function pickRandomPartition() {
