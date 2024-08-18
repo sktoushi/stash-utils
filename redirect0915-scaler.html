@@ -6,6 +6,26 @@
 
 var links = [];
 
+function getRandomIndexByFrequency(frequencyArray) {
+	// Calculate the cumulative sum of frequencies 
+	const cumulativeSum = [];
+	let sum = 0;
+	for (const freq of frequencyArray) {
+		sum += freq;
+		cumulativeSum.push(sum);
+	}
+	// Generate a random number between 0 and the total sum 
+	const randomNum = Math.floor(Math.random() * sum);
+	// Find the index corresponding to the random number 
+	for (let i = 0; i < cumulativeSum.length; i++) {
+		if (randomNum < cumulativeSum[i]) {
+			return i;
+		}
+	}
+	// If something goes wrong (unlikely), return a fallback index (e.g., 0) 
+	return 1;
+}
+	
 function randomIntFromInterval(min, max) { // min and max included 
     return Math.floor(Math.random() * (Number(max) - Number(min) + 1)) + Number(min);
 }
@@ -57,13 +77,7 @@ openStuff = function () {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const allocArr = urlParams.get('allocArr');
-    const startIdxArr = urlParams.get('startIdxArr');
-    const endIdxArr = urlParams.get('endIdxArr');
-    const scaledArr = urlParams.get('scaledArr');
-    alert("allocArr: " + JSON.stringify(allocArr));
-    alert("startIdxArr: " + JSON.stringify(startIdxArr));
-    alert("endIdxArr: " + JSON.stringify(endIdxArr));
-    alert("scaledArr: " + JSON.stringify(scaledArr));
+    alert(allocArr.split(","));
     const alloc1 = Number(urlParams.get('alloc1'));
     const alloc2 = Number(urlParams.get('alloc2'));
     const scaled1 = urlParams.get('scaled1');
