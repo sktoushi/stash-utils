@@ -86,6 +86,7 @@
             cursor: pointer;
         }
     </style>
+    <script src="config.js"></script>
 </head>
 
 <body>
@@ -99,12 +100,12 @@
 
         <div class="slider-container">
             <label for="expectedPayoff">Expected Payoff: <span class="slider-value" id="expectedPayoffValue">100</span></label>
-            <input type="range" id="expectedPayoff" min="0" max="200" value="100" oninput="updateValue('expectedPayoff')">
+            <input type="range" id="expectedPayoff" min="0" max="100" value="100" oninput="updateValue('expectedPayoff')">
         </div>
 
         <div class="slider-container">
             <label for="actualPayoff">Actual Payoff: <span class="slider-value" id="actualPayoffValue">50</span></label>
-            <input type="range" id="actualPayoff" min="0" max="200" value="50" oninput="updateValue('actualPayoff')">
+            <input type="range" id="actualPayoff" min="0" max="100" value="50" oninput="updateValue('actualPayoff')">
         </div>
 
         <div class="slider-container">
@@ -122,7 +123,7 @@
         <div class="results" id="resultsContainer">
             <h2>Results</h2>
             <p id="totalPayoff">Total Payoff: </p>
-            <p id="payoffDifference">Difference between Expected and Actual: </p>
+            <p id="foresight">Foresight%: </p>
         </div>
     </div>
 
@@ -139,11 +140,36 @@
             var negativeExternality = parseFloat(document.getElementById('negativeExternality').value);
 
             var totalPayoff = actualPayoff + positiveExternality - negativeExternality;
+            var foresight = (expectedPayoff !== 0) ? (actualPayoff / expectedPayoff) * 100 : 0;
 
             document.getElementById('totalPayoff').innerText = 'Total Payoff: ' + totalPayoff;
-            document.getElementById('payoffDifference').innerText = 'Difference between Expected and Actual: ' + (actualPayoff - expectedPayoff);
+            document.getElementById('foresight').innerText = 'Foresight%: ' + foresight.toFixed(2) + '%';
 
             document.getElementById('resultsContainer').style.display = 'block';
+
+            var scriptURL = PAYOFFS_API;
+            var fullURL = scriptURL + "?domain=" + encodeURIComponent(domain) +
+                "&expectedPayoff=" + encodeURIComponent(expectedPayoff) +
+                "&positiveExternality=" + encodeURIComponent(positiveExternality) +
+                "&negativeExternality=" + encodeURIComponent(negativeExternality) +
+                "&totalPayoff=" + encodeURIComponent(totalPayoff);
+
+            fetch(fullURL, { mode: 'no-cors' })
+                .then(response => {
+                    if (response.ok) {
+                        var userChoice = confirm("Data Successfully Registered. Redirect to Sheet?");
+                        if (userChoice) {
+                            window.location.href = "https://www.google.com";
+                        } else {
+                            window.close();
+                        }
+                    } else {
+                        alert("Done.");
+                    }
+                })
+                .catch(error => {
+                    alert("Error: " + error.message);
+                });
         }
 
         function resetForm() {
