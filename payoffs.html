@@ -84,11 +84,10 @@
             fetch(fullURL, { mode: 'no-cors' })
                 .then(response => {
                     if (response.ok) {
-                        var userChoice = confirm("Data Registered Successfully. Redirect to Sheet?");
+                        copyToClipboard(fullURL);
+                        var userChoice = confirm("Registered successfully!");
                         if (userChoice) {
-                            window.location.href = "https://www.google.com";
-                        } else {
-                            window.close();
+                            window.history.back();
                         }
                     } else {
                         alert("Registered successfully!");
@@ -96,6 +95,18 @@
                 })
                 .catch(error => {
                     alert("Error: " + error.message);
+                });
+        }
+
+        function copyToClipboard(fullURL) {
+            var currentDateTime = new Date().toISOString();
+            var clipboardContent = `\`${currentDateTime} ${fullURL}\``;
+            navigator.clipboard.writeText(clipboardContent)
+                .then(() => {
+                    console.log("URL copied to clipboard with timestamp.");
+                })
+                .catch(err => {
+                    console.error("Failed to copy to clipboard: ", err);
                 });
         }
 
