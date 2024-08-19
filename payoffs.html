@@ -13,10 +13,15 @@
             margin: 10px 0;
         }
     </style>
+	<script src="config.js"></script>
 </head>
 <body>
     <h1>Game Theory Payoff Calculator</h1>
     
+    <label for="domain">Domain:</label>
+    <input type="text" id="domain" placeholder="Enter domain" required>
+    <br>
+
     <label for="expectedPayoff">Expected Payoff:</label>
     <input type="number" id="expectedPayoff" placeholder="Enter expected payoff" required>
     <br>
@@ -40,8 +45,16 @@
     <p id="payoffDifference">Difference between Expected and Actual: </p>
     
     <script>
+        // Function to get URL parameters
+        function getURLParam(param) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Function to calculate and submit the payoff
         function calculatePayoff() {
             // Get user inputs
+            var domain = document.getElementById('domain').value;
             var expectedPayoff = parseFloat(document.getElementById('expectedPayoff').value);
             var actualPayoff = parseFloat(document.getElementById('actualPayoff').value);
             var positiveExternality = parseFloat(document.getElementById('positiveExternality').value);
@@ -50,13 +63,49 @@
             // Calculate total payoff
             var totalPayoff = actualPayoff + positiveExternality - negativeExternality;
             
-            // Calculate the difference between expected and actual payoff
-            var payoffDifference = actualPayoff - expectedPayoff;
-            
             // Display results
             document.getElementById('totalPayoff').innerText = 'Total Payoff: ' + totalPayoff;
-            document.getElementById('payoffDifference').innerText = 'Difference between Expected and Actual: ' + payoffDifference;
+            document.getElementById('payoffDifference').innerText = 'Difference between Expected and Actual: ' + (actualPayoff - expectedPayoff);
+            
+            // Construct the URL for the Google Apps Script
+            var scriptURL = PAYOFFS_API;
+			var fullURL = scriptURL + "?domain=" + encodeURIComponent(domain) +
+										  "&expectedPayoff=" + encodeURIComponent(expectedPayoff) +
+										  "&positiveExternality=" + encodeURIComponent(positiveExternality) +
+										  "&negativeExternality=" + encodeURIComponent(negativeExternality) +
+										  "&totalPayoff=" + encodeURIComponent(totalPayoff);
+
+            
+            // Send the request
+            fetch(fullURL, { mode: 'no-cors' })
+                .then(response => {
+                    if (response.ok) {
+                        // Show success dialog
+                        var userChoice = confirm("Data Successfully Registered. Redirect to Sheet?");
+                        if (userChoice) {
+                            window.location.href = "https://www.google.com";
+                        } else {
+                            window.close();
+                        }
+                    } else {
+                        // alert("Error: Unable to register data.");
+                        alert("Done.");
+                    }
+                })
+                .catch(error => {
+                    alert("Error: " + error.message);
+                });
         }
+
+        // Prepopulate the domain field if the URL parameter is present
+        window.onload = function() {
+            var domainParam = getURLParam('domain');
+            if (domainParam) {
+                var domainInput = document.getElementById('domain');
+                domainInput.value = domainParam;
+                domainInput.disabled = true;
+            }
+        };
     </script>
 </body>
 </html>
