@@ -83,14 +83,10 @@
 
             fetch(fullURL, { mode: 'no-cors' })
                 .then(response => {
-                    if (response.ok) {
-                        copyToClipboard(fullURL);
-                        var userChoice = confirm("Registered successfully!");
-                        if (userChoice) {
-                            window.history.back();
-                        }
-                    } else {
-                        alert("Registered successfully!");
+                    copyToClipboard(fullURL);
+                    var userChoice = confirm("Registered successfully!");
+                    if (userChoice) {
+                        window.history.back();
                     }
                 })
                 .catch(error => {
