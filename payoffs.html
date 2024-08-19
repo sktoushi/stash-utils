@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Game Theory</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        input, button {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Game Theory Payoff Calculator</h1>
+    
+    <label for="expectedPayoff">Expected Payoff:</label>
+    <input type="number" id="expectedPayoff" placeholder="Enter expected payoff" required>
+    <br>
+    
+    <label for="actualPayoff">Actual Payoff:</label>
+    <input type="number" id="actualPayoff" placeholder="Enter actual payoff" required>
+    <br>
+    
+    <label for="positiveExternality">Positive Externality:</label>
+    <input type="number" id="positiveExternality" placeholder="Enter positive externality" required>
+    <br>
+    
+    <label for="negativeExternality">Negative Externality:</label>
+    <input type="number" id="negativeExternality" placeholder="Enter negative externality" required>
+    <br>
+    
+    <button onclick="calculatePayoff()">Calculate Total Payoff</button>
+    
+    <h2>Results</h2>
+    <p id="totalPayoff">Total Payoff: </p>
+    <p id="payoffDifference">Difference between Expected and Actual: </p>
+    
+    <script>
+        function calculatePayoff() {
+            // Get user inputs
+            var expectedPayoff = parseFloat(document.getElementById('expectedPayoff').value);
+            var actualPayoff = parseFloat(document.getElementById('actualPayoff').value);
+            var positiveExternality = parseFloat(document.getElementById('positiveExternality').value);
+            var negativeExternality = parseFloat(document.getElementById('negativeExternality').value);
+            
+            // Calculate total payoff
+            var totalPayoff = actualPayoff + positiveExternality - negativeExternality;
+            
+            // Calculate the difference between expected and actual payoff
+            var payoffDifference = actualPayoff - expectedPayoff;
+            
+            // Display results
+            document.getElementById('totalPayoff').innerText = 'Total Payoff: ' + totalPayoff;
+            document.getElementById('payoffDifference').innerText = 'Difference between Expected and Actual: ' + payoffDifference;
+        }
+    </script>
+</body>
+</html>
