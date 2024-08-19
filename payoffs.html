@@ -56,7 +56,25 @@
             font-size: 0.8em;
         }
 
-        button {
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .buttons button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 2em;
+            margin-left: 10px;
+        }
+
+        .buttons button:hover {
+            color: #007bff;
+        }
+
+        button.calculate {
             width: 100%;
             padding: 10px;
             background-color: #4CAF50;
@@ -67,7 +85,7 @@
             cursor: pointer;
         }
 
-        button:hover {
+        button.calculate:hover {
             background-color: #45a049;
         }
 
@@ -76,22 +94,11 @@
             display: none;
         }
 
-        #refresh-btn {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            font-size: 1.2em;
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
-        }
     </style>
     <script src="config.js"></script>
 </head>
 
 <body>
-    <button id="refresh-btn" onclick="resetForm()">🔄</button>
-
     <div class="container">
         <h1>Game Theory Payoff Calculator</h1>
 
@@ -118,7 +125,12 @@
             <input type="range" id="negativeExternality" min="0" max="100" value="0" oninput="updateValue('negativeExternality')">
         </div>
 
-        <button onclick="calculatePayoff()">Calculate Total Payoff</button>
+        <div class="buttons">
+            <button id="sheet-btn" onclick="redirectToSheet()">📄</button>
+            <button id="refresh-btn" onclick="resetForm()">🔄</button>
+        </div>
+
+        <button class="calculate" onclick="calculatePayoff()">Calculate Total Payoff</button>
 
         <div class="results" id="resultsContainer">
             <h2>Results</h2>
@@ -134,6 +146,10 @@
 
         function calculatePayoff() {
             var domain = document.getElementById('domain').value;
+            if (!domain) {
+                alert("Domain is required!");
+                return;
+            }
             var expectedPayoff = parseFloat(document.getElementById('expectedPayoff').value);
             var actualPayoff = parseFloat(document.getElementById('actualPayoff').value);
             var positiveExternality = parseFloat(document.getElementById('positiveExternality').value);
@@ -157,14 +173,14 @@
             fetch(fullURL, { mode: 'no-cors' })
                 .then(response => {
                     if (response.ok) {
-                        var userChoice = confirm("Data Successfully Registered. Redirect to Sheet?");
+                        var userChoice = confirm("Data Registered Successfully. Redirect to Sheet?");
                         if (userChoice) {
                             window.location.href = "https://www.google.com";
                         } else {
                             window.close();
                         }
                     } else {
-                        alert("Done.");
+                        alert("Registered successfully!");
                     }
                 })
                 .catch(error => {
@@ -187,6 +203,10 @@
             updateValue('negativeExternality');
 
             document.getElementById('resultsContainer').style.display = 'none';
+        }
+
+        function redirectToSheet() {
+            window.location.href = SHEET_URL;
         }
 
         window.onload = function () {
