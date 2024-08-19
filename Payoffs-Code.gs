@@ -62,7 +62,7 @@ function incrementCounter(yearMonth, domain, expectedPayoff, positiveExternality
     sheet.insertRowAfter(1);
     sheet.getRange(2, 1).setValue(yearMonth);
     sheet.getRange(2, 2).setValue(domain);
-    sheet.getRange(2, 3).setFormula(`=(J2*100)/H2`);  // Foresight%
+    sheet.getRange(2, 3).setFormula(`=(K2/H2)*100`);  // Foresight%
     sheet.getRange(2, 4).setFormula(`=K2/G2`);  // Average Total Payoff
     sheet.getRange(2, 5).setFormula(`=I2/G2`);  // Average Positive Externality
     sheet.getRange(2, 6).setFormula(`=J2/G2`);  // Average Negative Externality
