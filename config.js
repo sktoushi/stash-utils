@@ -20,11 +20,10 @@ const config = [
 
 const frequencyMods = {
     "cjcaf1995-stash": {
-        "77": 10000,
-        "88": 10000
+        "77": 100,
+        "88": 100
     },
     "cjcaf1995-payoffs": {
-        "5": 2,
-        "5": 2
+        "5": 200
     }
 };
