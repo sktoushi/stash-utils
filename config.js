@@ -17,3 +17,14 @@ const config = [
         "endIdx": 7
     }
 ];
+
+const frequencyMods = {
+    "cjcaf1995-stash": {
+        "777": 10000,
+        "888": 10000
+    },
+    "cjcaf1995-payoffs": {
+        "5": 2,
+        "5": 2
+    }
+};
