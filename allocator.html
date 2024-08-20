@@ -14,20 +14,28 @@
     <script>
         function drawRandomIssue() {
             const resultElement = document.getElementById('result');
-            let chosenIssue = null;
+            let totalIndices = 0;
 
-            // Loop through each item in the config and pick a random index
+            // Calculate the total number of indices across all ranges
+            config.forEach(item => {
+                totalIndices += item.endIdx - item.startIdx + 1;
+            });
+
+            // Pick a random index in the total range
+            const randomIndex = Math.floor(Math.random() * totalIndices);
+            let cumulativeIndex = 0;
+
+            // Determine which specific range the random index falls into
             for (let item of config) {
-                const { username, repo, startIdx, endIdx } = item;
-                const randomIndex = Math.floor(Math.random() * (endIdx - startIdx + 1)) + startIdx;
-                
-                // Construct the GitHub issue URL
-                const issueURL = `https://github.com/${username}/${repo}/issues/${randomIndex}`;
-                chosenIssue = issueURL;
+                const rangeSize = item.endIdx - item.startIdx + 1;
+                if (randomIndex < cumulativeIndex + rangeSize) {
+                    const finalIndex = item.startIdx + (randomIndex - cumulativeIndex);
+                    const issueURL = `https://github.com/${item.username}/${item.repo}/issues/${finalIndex}`;
+                    resultElement.textContent = issueURL;
+                    return;
+                }
+                cumulativeIndex += rangeSize;
             }
-
-            // Display the chosen issue
-            resultElement.textContent = chosenIssue;
         }
     </script>
 </body>
