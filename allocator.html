@@ -15,31 +15,73 @@
         function drawRandomIssue() {
             const resultElement = document.getElementById('result');
             let totalWeight = 0;
-            const weightedRanges = [];
+            const ranges = [];
 
-            // Calculate the total weighted possibilities considering frequencyMod
+            // Step 1: Process each repo and identify special cases and normal ranges
             config.forEach(item => {
                 const { username, repo, startIdx, endIdx } = item;
                 const mod = frequencyMods[`${username}-${repo}`] || {};
+                let previousEndIdx = startIdx - 1;
 
-                for (let i = startIdx; i <= endIdx; i++) {
-                    let frequencyMod = mod[i] || 1; // Default to 1 if no special frequencyMod
-                    let rangeWeight = frequencyMod;
-                    weightedRanges.push({ username, repo, index: i, weight: rangeWeight });
-                    totalWeight += rangeWeight;
+                for (const modIdx in mod) {
+                    const modIndex = parseInt(modIdx);
+                    if (modIndex > previousEndIdx + 1) {
+                        // Add the normal range before the special case
+                        ranges.push({
+                            username,
+                            repo,
+                            startIdx: previousEndIdx + 1,
+                            endIdx: modIndex - 1,
+                            weight: modIndex - previousEndIdx - 1
+                        });
+                        totalWeight += modIndex - previousEndIdx - 1;
+                    }
+                    // Add the special case
+                    ranges.push({
+                        username,
+                        repo,
+                        startIdx: modIndex,
+                        endIdx: modIndex,
+                        weight: mod[modIdx]
+                    });
+                    totalWeight += mod[modIdx];
+                    previousEndIdx = modIndex;
+                }
+
+                if (previousEndIdx < endIdx) {
+                    // Add the remaining normal range after the last special case
+                    ranges.push({
+                        username,
+                        repo,
+                        startIdx: previousEndIdx + 1,
+                        endIdx: endIdx,
+                        weight: endIdx - previousEndIdx
+                    });
+                    totalWeight += endIdx - previousEndIdx;
                 }
             });
 
-            // Pick a random number in the total weighted range
-            console.log(weightedRanges);
+            // console.log(ranges);
+            // console.log(`Total Weight: ${totalWeight}`);
+
+            // Step 2: Pick a random number within the total weighted range
             let randomWeight = Math.floor(Math.random() * totalWeight);
             let cumulativeWeight = 0;
 
-            // Determine which specific index the random weight falls into
-            for (let range of weightedRanges) {
+            // Step 3: Determine which range and index the random weight falls into
+            for (let range of ranges) {
                 cumulativeWeight += range.weight;
+
+                // console.log(`Evaluating Range: ${range.startIdx}-${range.endIdx} | Repo: ${range.username}/${range.repo} | Cumulative Weight: ${cumulativeWeight}`);
+
                 if (randomWeight < cumulativeWeight) {
-                    const issueURL = `https://github.com/${range.username}/${range.repo}/issues/${range.index}`;
+                    // Calculate the selected index within the current range
+                    const rangeSize = range.endIdx - range.startIdx + 1;
+                    const withinRangeWeight = randomWeight - (cumulativeWeight - range.weight);
+                    const selectedIndex = range.startIdx + (withinRangeWeight % rangeSize);
+
+                    const issueURL = `https://github.com/${range.username}/${range.repo}/issues/${selectedIndex}`;
+                    // console.log(`Selected Index: ${selectedIndex} | Repo: ${range.username}/${range.repo} | Issue URL: ${issueURL}`);
                     resultElement.textContent = issueURL;
                     return;
                 }
