@@ -14,27 +14,34 @@
     <script>
         function drawRandomIssue() {
             const resultElement = document.getElementById('result');
-            let totalIndices = 0;
+            let totalWeight = 0;
+            const weightedRanges = [];
 
-            // Calculate the total number of indices across all ranges
+            // Calculate the total weighted possibilities considering frequencyMod
             config.forEach(item => {
-                totalIndices += item.endIdx - item.startIdx + 1;
+                const { username, repo, startIdx, endIdx } = item;
+                const mod = frequencyMods[`${username}-${repo}`] || {};
+
+                for (let i = startIdx; i <= endIdx; i++) {
+                    let frequencyMod = mod[i] || 1; // Default to 1 if no special frequencyMod
+                    let rangeWeight = frequencyMod;
+                    weightedRanges.push({ username, repo, index: i, weight: rangeWeight });
+                    totalWeight += rangeWeight;
+                }
             });
 
-            // Pick a random index in the total range
-            const randomIndex = Math.floor(Math.random() * totalIndices);
-            let cumulativeIndex = 0;
+            // Pick a random number in the total weighted range
+            let randomWeight = Math.floor(Math.random() * totalWeight);
+            let cumulativeWeight = 0;
 
-            // Determine which specific range the random index falls into
-            for (let item of config) {
-                const rangeSize = item.endIdx - item.startIdx + 1;
-                if (randomIndex < cumulativeIndex + rangeSize) {
-                    const finalIndex = item.startIdx + (randomIndex - cumulativeIndex);
-                    const issueURL = `https://github.com/${item.username}/${item.repo}/issues/${finalIndex}`;
+            // Determine which specific index the random weight falls into
+            for (let range of weightedRanges) {
+                cumulativeWeight += range.weight;
+                if (randomWeight < cumulativeWeight) {
+                    const issueURL = `https://github.com/${range.username}/${range.repo}/issues/${range.index}`;
                     resultElement.textContent = issueURL;
                     return;
                 }
-                cumulativeIndex += rangeSize;
             }
         }
     </script>
