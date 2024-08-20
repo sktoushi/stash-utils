@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allocator</title>
+    <script src="config.js"></script>
+</head>
+<body>
+    <h1>Issue Allocator</h1>
+    <button onclick="drawRandomIssue()">Draw</button>
+    <p id="result"></p>
+
+    <script>
+        function drawRandomIssue() {
+            const resultElement = document.getElementById('result');
+            let chosenIssue = null;
+
+            // Loop through each item in the config and pick a random index
+            for (let item of config) {
+                const { username, repo, startIdx, endIdx } = item;
+                const randomIndex = Math.floor(Math.random() * (endIdx - startIdx + 1)) + startIdx;
+                
+                // Construct the GitHub issue URL
+                const issueURL = `https://github.com/${username}/${repo}/issues/${randomIndex}`;
+                chosenIssue = issueURL;
+            }
+
+            // Display the chosen issue
+            resultElement.textContent = chosenIssue;
+        }
+    </script>
+</body>
+</html>
