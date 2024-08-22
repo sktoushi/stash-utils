@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Wages-fund</title>
+    <script>
+        const qna = {
+            "What are the two main considerations under the head of Wages?": "The two main considerations are the causes that determine or influence the wages of labor generally, and the differences that exist between the wages of different employments. § 2. The Wages-fund, and the Objections to it Considered.",
+            "What does competition regulate in the present state of society?": "Competition is regarded as the principal regulator of wages in the present state of society. § 2. The Wages-fund, and the Objections to it Considered.",
+            "What do wages depend mainly upon?": "Wages depend mainly upon the demand and supply of labor, or the proportion between population and capital. § 2. The Wages-fund, and the Objections to it Considered.",
+            "What does 'population' refer to in this context?": "'Population' refers to the number of the laboring-class or those who work for hire. § 2. The Wages-fund, and the Objections to it Considered.",
+            "What should be remembered when using the term 'wages-fund'?": "It should be remembered that 'wages-fund' is an elliptical expression and not a literal statement of the entire truth. § 2. The Wages-fund, and the Objections to it Considered."
+        };
+
+        function showRandomQnA() {
+            const keys = Object.keys(qna);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            alert(randomKey);
+            alert(qna[randomKey]);
+        }
+    </script>
+</head>
+<body onload="showRandomQnA()">
+    <h1>§ 2. The Wages-fund, and the Objections to it Considered.</h1>
+    <p>
+        Under the head of Wages are to be considered, first, the causes which determine or influence the wages of labor generally, and secondly, the differences that exist between the wages of different employments. It is convenient to keep these two classes of considerations separate; and in discussing the law of wages, to proceed in the first instance as if there were no other kind of labor than common unskilled labor, of the average degree of hardness and disagreeableness.
+    </p>
+    <p>
+        Competition, however, must be regarded, in the present state of society, as the principal regulator of wages, and custom or individual character only as a modifying circumstance, and that in a comparatively slight degree.
+    </p>
+    <p>
+        Wages, then, depend mainly upon the demand and supply of labor; or, as it is often expressed, on the proportion between population and capital. By population is here meant the number only of the laboring-class, or rather of those who work for hire; and by capital, only circulating capital, and not even the whole of that, but the part which is expended in the direct purchase of labor. To this, however, must be added all funds which, without forming a part of capital, are paid in exchange for labor, such as the wages of soldiers, domestic servants, and all other unproductive laborers. There is unfortunately no mode of expressing, by one familiar term, the aggregate of what may be called the wages-fund of a country: and, as the wages of productive labor form nearly the whole of that fund, it is usual to overlook the smaller and less important part, and to say that wages depend on population and capital. It will be convenient to employ this expression, remembering, however, to consider it as elliptical, and not as a literal statement of the entire truth.
+    </p>
+</body>
+</html>
