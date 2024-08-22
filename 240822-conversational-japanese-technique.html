@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversational Japanese Technique</title>
+    <script>
+        const qna = {
+            "What is the main technique discussed in the text?": "The technique discussed involves breaking sentences into two, where the first sentence may be incomplete, and the second sentence provides the necessary verb or completes the thought. It's common in conversational Japanese to separate a verb from the rest of the sentence.",
+            "What does '何それ？' mean and why is it significant?": "'何それ？' translates to 'What? That.' in English. It represents two sentences lumped into one, showing how Japanese conversational speech can break down thoughts into separate, incomplete sentences.",
+            "Why might someone end up with an incomplete sentence in Japanese?": "If the main verb has already slipped out of the speaker's mouth, they might be left with the rest of the sentence without a verb to complete the thought. In such cases, it's common to use a follow-up sentence to provide the verb.",
+            "Is it acceptable in Japanese to separate a verb from the rest of the sentence?": "Yes, in conversational Japanese, it's perfectly acceptable to have the verb come first or to break sentences apart, even if one ends up being incomplete.",
+            "Provide an example of this sentence-splitting technique.": "An example provided is: '見た？あの人？' meaning 'Did you see? That guy?' Here, the verb '見た' (Did you see) is separated from 'あの人' (That guy), demonstrating the splitting technique.",
+            "How does the text describe the conversational structure in any language?": "The text suggests that this kind of sentence splitting, where one part might be incomplete, is common in the speech of any language, not just Japanese.",
+            "Give another example from the text using this technique.": "Another example is 'もう食べた？昨日買ったアイス。' which translates to 'You ate it already? The ice cream I bought yesterday.' The verb '食べた' (ate) is placed separately from the rest of the sentence."
+        };
+
+        function showRandomQnA() {
+            const keys = Object.keys(qna);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            alert(randomKey);
+            alert(qna[randomKey]);
+        }
+    </script>
+</head>
+<body onload="showRandomQnA()">
+    <h1>Conversational Japanese Technique</h1>
+    <p>
+        2. 何それ？<br>
+        What? That. (Two sentences lumped into one)
+    </p>
+    <p>
+        Sometimes, the first thing that pops into your head might be main verb. But if the main verb has already slipped out of your mouth, you're now left with the rest of the sentence without a verb to complete the thought. In conversational Japanese, it's perfectly acceptable to have the verb come first using the same technique we just saw by breaking them into two sentences. The second sentence is incomplete of course, but that kind of thing is common in the speech of any language.
+    </p>
+    <p>
+        1. 見た？あの人？<br>
+        Did you see? That guy?
+    </p>
+    <p>
+        2. もう食べた？昨日買ったアイス。<br>
+        You ate it already? The ice cream I bought yesterday.
+    </p>
+</body>
+</html>
