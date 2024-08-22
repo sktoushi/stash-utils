@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise Solution</title>
+    <script>
+        const qna = {
+            "What is the structure of the game in the exercise?": "The game is set up with nine regions forming a box with three rows and three columns. Two vendors independently choose a region to locate their store, and there are two consumers in each region.",
+            "How do consumers choose a vendor?": "Consumers will walk to the nearest vendor to purchase a soda, generating a $1.00 profit for the vendor. If two vendors are equidistant from a consumer, the consumer's purchase is split equally between the vendors.",
+            "Why can't consumers walk diagonally?": "Consumers cannot walk diagonally because the exercise explicitly states that movement is restricted to horizontal or vertical paths, which influences how vendors should strategically position themselves.",
+            "What are the optimal strategies for the vendors?": "The optimal strategies for the vendors involve choosing the central regions (positions 2, 4, 6, 8) because these positions maximize their reach to adjacent regions, ensuring the highest possible share of consumers from multiple regions.",
+            "Why are the corner regions less advantageous?": "Corner regions (positions 1, 3, 7, 9) are less advantageous because they only provide access to a smaller number of adjacent regions, limiting the vendor's potential consumer base compared to more centrally located regions.",
+            "What is the significance of consumers being split equally?": "When consumers are equidistant from both vendors, they are split equally between the two. This rule prevents one vendor from monopolizing consumers in shared regions, leading to a more balanced competition."
+        };
+
+        function showRandomQnA() {
+            const keys = Object.keys(qna);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            alert(randomKey);
+            alert(qna[randomKey]);
+        }
+    </script>
+</head>
+<body onload="showRandomQnA()">
+    <h1>Solution to Exercise 1</h1>
+    <p>
+        In this exercise, we consider a location game with nine regions arranged in a 3x3 grid. Each region has two consumers, and two vendors must choose where to locate their stores. Consumers will walk to the nearest vendor to purchase a soda, generating a $1.00 profit for that vendor. Consumers cannot walk diagonally, meaning their movement is restricted to adjacent horizontal or vertical regions.
+    </p>
+    <p>
+        The key to solving this exercise is understanding that consumers in each region will choose the nearest vendor. If two vendors are equidistant, the consumers will be split equally between them. Therefore, the optimal strategy for the vendors is to position themselves in such a way that they maximize their access to adjacent regions, while minimizing overlap with the competitor's reach.
+    </p>
+    <p>
+        <strong>Optimal Strategy:</strong> The central regions (positions 2, 4, 6, 8) are strategically superior because they provide maximum coverage of adjacent regions. By positioning in these central regions, a vendor can capture consumers from up to three adjacent regions. The corner regions (positions 1, 3, 7, 9) are less advantageous because they only provide access to fewer adjacent regions, limiting the vendor's potential consumer base.
+    </p>
+    <p>
+        If both vendors choose central regions, they will engage in competition over the shared consumers in overlapping areas. The final set of rationalizable strategies depends on each vendor's anticipation of the other's strategy, leading to potential mixed strategies where each vendor randomizes between two or more central locations to avoid being predictable.
+    </p>
+    <p>
+        <strong>Conclusion:</strong> The exercise highlights the importance of centrality and strategic positioning in maximizing consumer access. By choosing the central regions, vendors can increase their consumer base and potential profits, leading to a more competitive outcome.
+    </p>
+</body>
+</html>
