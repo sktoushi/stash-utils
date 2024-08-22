@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Game Analysis</title>
+    <script>
+        const qna = {
+            "What is the objective of the players in this modified location game?": "In this modified location game, the players aim to sell as few cans as possible, contrary to the standard game where they would aim to sell more. This shift in objective changes the strategy completely. Players now gain by moving away from the middle locations. cans of soda as possible, suppose that each wants to sell as few cans as possible.",
+            "How does the strategy in region 1 compare to strategies 2 through 5?": "The strategy of locating in region 1 dominates each of the strategies 2 through 5 because it results in strictly lower sales regardless of the opponent's location. This makes region 1 a dominant strategy in this game.",
+            "What happens to strategies 2 through 8 after the first round of iterated dominance?": "Strategies 2 through 8 for both players are removed in the first round of the iterated-dominance procedure, leaving only strategies 1 and 9 as rationalizable strategies.",
+            "Do strategies 1 and 9 dominate each other?": "In the second round, it is found that neither strategy 1 nor strategy 9 dominates the other. Thus, both strategies remain rationalizable for each player.",
+            "How does the modified game differ from the original game?": "The modified game differs from the original game in that players now want to sell fewer cans rather than more. This reversal of incentives shifts the optimal strategy from the middle regions to the outer regions (1 and 9).",
+            "What is the significance of the iterated-dominance procedure in this game?": "The iterated-dominance procedure helps in identifying and eliminating inferior strategies (strategies 2 through 8), simplifying the game to focus on the truly competitive strategies (1 and 9)."
+        };
+
+        function showRandomQnA() {
+            const keys = Object.keys(qna);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            alert(randomKey);
+            alert(qna[randomKey]);
+        }
+    </script>
+</head>
+<body onload="showRandomQnA()">
+    <h1>Location Game Analysis</h1>
+    <p>
+        cans of soda as possible, suppose that each wants to sell as few cans as possible. To motivate such preferences, think of the players being paid a fixed wage for their work, and imagine that sales entail effort that they would rather not exert. In this new game, are there any dominated strategies for the players? Compute the rationalizable strategies for the players, and explain the difference between this game and the original game.
+    </p>
+    <p>
+        <strong>Solution:</strong> Intuitively, players in this game want to do the opposite of what was shown to be rational in the standard location game. Whereas in the standard game a player benefits from being closer to the middle location than is her opponent, in this game the players gain (that is, sell fewer sodas) by moving away from the middle. Indeed, you can easily check that the strategy of locating in region 1 dominates each of the strategies 2 through 5, because locating in region 1 yields strictly lower sales regardless of where the opponent locates. Furthermore, the strategy of locating in region 9 dominates each of the strategies 5 through 8. Thus, strategies 2 through 8 for both players are removed in the first round of the iterated-dominance procedure. In the second round, we find that neither strategy 1 nor strategy 9 dominates the other. Therefore, the set of rationalizable strategies for each player i is R<sub>i</sub> = {1, 9}, for i = 1, 2.
+    </p>
+    <h2>EXERCISES</h2>
+    <ol>
+        <li>
+            Consider a location game like the one discussed in this chapter. Suppose that instead of the nine regions located in a straight line, the nine regions form a box with three rows and three columns. Two vendors simultaneously and independently select on which of the nine regions to locate. Suppose that there are two consumers in each region; each consumer will walk to the nearest vendor and purchase a soda, generating a $1.00 profit for the vendor. Consumers <em>cannot</em> walk diagonally. For example, to get from the top-left region to the middle region, a consumer has to walk through either the top-center region or the middle-left region. (This means that the middle region is the same distance from top-left as top-right is from top-left.) Assume that if some consumers are the same distance from the two vendors, then these consumers are split equally between the vendors. Determine the set of rationalizable strategies for the vendors.
+        </li>
+        <li>
+            Consider a location game with nine regions like the one discussed in this chapter. But instead of having the customers distributed uniformly across the nine regions, suppose that region 1 has a different number of customers than the other regions. Specifically, suppose that regions 2 through 9 each
+        </li>
+    </ol>
+</body>
+</html>
