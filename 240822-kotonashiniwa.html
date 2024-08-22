@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japanese Sentence Q&A</title>
+    <script>
+        const qna = {
+            "What does 'ことなしに' mean in the sentence?": "'ことなしに (koto nashi ni)' means 'without doing'. It indicates that something cannot happen without a certain action being taken first. 資金を確保することなしにはどんな計画も実行できない。",
+            "What is the object that needs to be secured in the sentence?": "'資金 (しきん, shikin)' refers to the funds that need to be secured. 資金を確保することなしにはどんな計画も実行できない。",
+            "How do you say 'plan' in Japanese as used in the sentence?": "The word '計画 (けいかく, keikaku)' is used to mean 'plan' in Japanese. 資金を確保することなしにはどんな計画も実行できない。",
+            "What does '実行できない' indicate in the sentence?": "'実行できない (じっこうできない, jikkou dekinai)' means 'cannot be executed'. It indicates the impossibility of carrying out or executing a plan. 資金を確保することなしにはどんな計画も実行できない。",
+            "What is the meaning of the entire sentence?": "The sentence means 'Without securing funds, no plan can be executed.' 資金を確保することなしにはどんな計画も実行できない。"
+        };
+
+        function showRandomQnA() {
+            const keys = Object.keys(qna);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            alert(randomKey);
+            alert(qna[randomKey]);
+        }
+    </script>
+</head>
+<body onload="showRandomQnA()">
+</body>
+</html>
