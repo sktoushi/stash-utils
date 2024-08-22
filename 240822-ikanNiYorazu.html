@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japanese Sentence Q&A</title>
+    <script>
+        const qna = {
+            "What does 'いかんによらず' mean in the sentence?": "It means 'regardless of' or 'irrespective of'. It indicates that the following condition does not depend on the preceding factor, in this case, age.",
+            "What is the topic of the sentence?": "The topic of the sentence is '給料 (salary)'.",
+            "How do you say 'same' in Japanese as used in the sentence?": "The word '同じ (おなじ, onaji)' is used to mean 'same' in Japanese.",
+            "What does '年齢' refer to?": "'年齢 (ねんれい, nenrei)' refers to a person's age.",
+            "What is the purpose of 'は (wa)' in the sentence?": "'は (wa)' is the topic marker, indicating that the sentence is talking about the salary."
+        };
+
+        function showRandomQnA() {
+            const keys = Object.keys(qna);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            alert(randomKey);
+            alert(qna[randomKey]);
+        }
+    </script>
+</head>
+<body onload="showRandomQnA()">
+</body>
+</html>
