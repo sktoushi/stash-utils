@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>～なり…なり Grammar Explanation</title>
+    <script>
+        const qna = {
+            "What does the grammar pattern ～なり…なり mean?": "The pattern ～なり…なり is used to indicate that either of the options mentioned is acceptable and that something should be done. It’s similar to saying 'either… or…' in English.",
+            "What is the essence of the ～なり…なり pattern?": "The essence of the ～なり…なり pattern lies in giving the listener or reader options, showing that multiple actions or choices are acceptable and can lead to a particular outcome.",
+            "Can you provide an example using ～なり…なり?": "For example: 'コーヒーなり、お茶なり、好きな方を選んでください。' which means 'Either coffee or tea, please choose whichever you like.'",
+            "How does ～なり…なり differ from other similar patterns?": "Unlike other patterns that may suggest exclusivity or necessity of choice, ～なり…なり emphasizes that any of the mentioned options is fine and encourages action based on those options.",
+            "Is there a more casual way to express a similar idea?": "A more casual expression might be '～てもいいし…てもいい', which also indicates that either option is fine, but it's less structured than ～なり…なり."
+        };
+
+        function showRandomQnA() {
+            const keys = Object.keys(qna);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            alert(randomKey);
+            alert(qna[randomKey]);
+        }
+    </script>
+</head>
+<body onload="showRandomQnA()">
+    <h1>～なり…なり Grammar Explanation</h1>
+    <p>
+        The ～なり…なり pattern is used to indicate that either of the options mentioned is acceptable, and that something should be done. It gives the listener or reader options and shows that multiple actions or choices are acceptable, which can lead to a particular outcome.
+    </p>
+    <p>
+        Example:<br>
+        コーヒーなり、お茶なり、好きな方を選んでください。<br>
+        Either coffee or tea, please choose whichever you like.
+    </p>
+    <p>
+        This pattern is similar to saying "either… or…" in English, emphasizing that any of the mentioned options is fine and encourages action based on those options.
+    </p>
+    <p>
+        While the pattern is quite structured, a more casual expression might be "～てもいいし…てもいい", which also indicates that either option is fine but in a less formal way.
+    </p>
+</body>
+</html>
