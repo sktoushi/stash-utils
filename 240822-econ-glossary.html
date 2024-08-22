@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glossary Randomizer</title>
+    <script>
+        const glossary = {
+            "Loan shark": "Lender that violates usury laws and collects debts through illegal means.",
+            "Loanable funds": "The flow of resources available to finance capital accumulation.",
+            "Lucas critique": "The argument that traditional policy analysis does not adequately take into account the impact of policy changes on people’s expectations.",
+            "M1, M2, M3": "Various measures of the stock of money, where larger numbers signify a broader definition of money.",
+            "Macroeconometric model": "A model that uses data and statistical techniques to describe the economy quantitatively, rather than just qualitatively.",
+            "Macroeconomics": "The study of the economy as a whole. (Cf. microeconomics.)",
+            "Margin requirements": "Limits on the use of credit to purchase stocks.",
+            "Marginal product of capital (MPK)": "The amount of extra output produced when the capital input is increased by one unit.",
+            "Marginal product of labor (MPL)": "The amount of extra output produced when the labor input is increased by one unit.",
+            "Marginal propensity to consume (MPC)": "The increase in consumption resulting from a one-dollar increase in disposable income.",
+            "Market-clearing model": "A model that assumes that markets are clear.",
+            "Medium of exchange": "The item widely accepted in transactions for goods and services (Cf. unit of account).",
+            "Menu cost": "The cost of changing a price.",
+            "Microeconomics": "The study of individual markets and decision-makers. (Cf. macroeconomics.)",
+            "Microfinance": "Small loans that allow poor people to start businesses.",
+            "Model": "A simplified representation of reality, often using diagrams or equations, that shows how variables interact.",
+            "Modigliani–Miller Theorem (M and M Theorem)": "The proposition that a firm’s capital structure doesn’t matter.",
+            "Monetarism": "The doctrine according to which changes in the money supply are the primary cause of economic fluctuations, implying that a stable money supply would lead to a stable economy.",
+            "Monetary base": "The sum of currency and bank reserves; also called high-powered money.",
+            "Monetary neutrality": "See neutrality of money.",
+            "Monetary policy": "The central bank’s choice regarding the supply of money.",
+            "Monetary transmission mechanism": "The process by which changes in the money supply influence the amount that households and firms wish to spend on goods and services.",
+            "Monetary union": "A group of economies that have decided to share a common currency and thus a common monetary policy.",
+            "Money": "The stock of assets used for transactions. (Cf. commodity money, fiat money.)",
+            "Money demand function": "A function showing the determinants of the demand for real money balances; for example, (M/P^d = L(i, Y)).",
+            "Money multiplier": "The increase in the money supply resulting from a one-dollar increase in the monetary base.",
+            "Moral hazard": "The possibility of dishonest or otherwise undesirable behavior in situations in which behavior is imperfectly monitored.",
+            "Mortgage-backed securities": "Securities that entitle an owner to a share of payments on a pool of bank loans.",
+            "Multiplier": "See government-purchases multiplier, money multiplier, or tax multiplier.",
+            "Mutual fund": "A financial institution that holds a diversified set of securities and sells shares in the portfolio.",
+            "Mundell–Tobin effect": "The fall in the real interest rate that results when an increase in expected inflation raises the nominal interest rate, lowers real money balances and real wealth, and thereby reduces consumption and raises saving.",
+            "NAIRU": "Non-accelerating inflation rate of unemployment.",
+            "National income accounting": "The accounting system that measures GDP and many other related statistics.",
+            "National income accounts identity": "The equation showing that GDP is the sum of consumption, investment, government purchases, and net exports."
+        };
+
+        function showRandomGlossaryItem() {
+            const keys = Object.keys(glossary);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            alert(glossary[randomKey]);
+            alert(randomKey);
+        }
+    </script>
+</head>
+<body onload="showRandomGlossaryItem()">
+</body>
+</html>
