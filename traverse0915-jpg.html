@@ -20,6 +20,12 @@ fetch(UPDATE_VISITOR_API, { mode: 'no-cors' })
     .catch(error => console.error('Error:', error));
 }
 
+function getSecureRandomNumber() {
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  return array[0] / (0xFFFFFFFF + 1);
+}
+
 function getRandomIndexByFrequency(frequencyArray) {
 	// Calculate the cumulative sum of frequencies 
 	const cumulativeSum = [];
@@ -29,7 +35,7 @@ function getRandomIndexByFrequency(frequencyArray) {
 		cumulativeSum.push(sum);
 	}
 	// Generate a random number between 0 and the total sum 
-	const randomNum = Math.floor(Math.random() * sum);
+	const randomNum = Math.floor(getSecureRandomNumber() * sum);
 	// Find the index corresponding to the random number 
 	for (let i = 0; i < cumulativeSum.length; i++) {
 		if (randomNum < cumulativeSum[i]) {
@@ -42,7 +48,7 @@ function getRandomIndexByFrequency(frequencyArray) {
 
 function getSeventhDecimalDigit() {
     // Generate a random number and convert it to a string
-    const randomStr = Math.random().toString();
+    const randomStr = getSecureRandomNumber().toString();
     
     // Check if there are at least 8 characters in the string ("0.xxxxxxx")
     if (randomStr.length <= 8) {
@@ -58,11 +64,11 @@ function getSeventhDecimalDigit() {
 }
 
 function randomIntFromInterval(min, max) { // min and max included 
-    return Math.floor(Math.random() * (Number(max) - Number(min) + 1)) + Number(min);
+    return Math.floor(getSecureRandomNumber() * (Number(max) - Number(min) + 1)) + Number(min);
 }
 
 function randomIntFromInterval2(min, max) { // min and max included 
-  return Math.floor(Math.random() * (max - min + 1) + min)
+  return Math.floor(getSecureRandomNumber() * (max - min + 1) + min)
 }
 
 function randomRangeFromInterval3(min, max) { // min and max included 
@@ -80,7 +86,7 @@ function randomRangeFromInterval3(min, max) { // min and max included
   19, 20, 21
 ];
 
-  if (Math.random() <= 0.33) {
+  if (getSecureRandomNumber() <= 0.33) {
       frequencyArr = frequencyArr2;
   }
   
@@ -97,7 +103,7 @@ function randomRangeFromInterval3(min, max) { // min and max included
   }
   let newMax = resultArr.length + 1;
   let newMin = 1;
-  let randIdx = Math.floor(Math.random() * (newMax - newMin + 1) + newMin);
+  let randIdx = Math.floor(getSecureRandomNumber() * (newMax - newMin + 1) + newMin);
   return resultArr[randIdx];
 }
 
@@ -212,7 +218,7 @@ async function useValueForEconRated(value) {
 
 function shuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
+        var j = Math.floor(getSecureRandomNumber() * (i + 1));
         var temp = array[i];
         array[i] = array[j];
         array[j] = temp;
@@ -539,7 +545,7 @@ function getRandomNumber(uuidString) {
         retVal = retVal + Number(getNumberEquivalent(char32));
     }
     
-    return ((retVal * 3485038 * Math.floor(Math.random() * 100)) + (new Date().getFullYear() + (new Date().getMonth() + 1) + new Date().getDay() + new Date().getTime())) % 100;
+    return ((retVal * 3485038 * Math.floor(getSecureRandomNumber() * 100)) + (new Date().getFullYear() + (new Date().getMonth() + 1) + new Date().getDay() + new Date().getTime())) % 100;
 }
 
 </script>
