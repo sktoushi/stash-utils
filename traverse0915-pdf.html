@@ -114,11 +114,10 @@ openStuff = function () {
     const blob = urlParams.get('blob');
     const startIndex = Number(urlParams.get('startIndex'));
     const endIndex = Number(urlParams.get('endIndex'));
-    // let randomInt = randomIntFromInterval2(startIndex, endIndex);
-    // window.open("https://github.com/cjcaf1995/" + repository + "/issues/" + randomInt);
+    const username = urlParams.get('username') || 'cjcaf1995'; // Default to 'cjcaf1995' if no username is provided
+
     let randomInteger = randomIntFromInterval(startIndex, endIndex);
-    // let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
-    window.open("https://github.com/cjcaf1995/" + repository + "/blob/main/" + blob + randomInteger + ".pdf");
+    window.open("https://github.com/" + username + "/" + repository + "/blob/main/" + blob + randomInteger + ".pdf");
 };
 
 window.onload = function() {
