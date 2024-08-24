@@ -110,15 +110,13 @@ function randomRangeFromInterval3(min, max) { // min and max included
 openStuff = function () {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
+    const username = urlParams.get('username') || 'cjcaf1995';
     const repository = urlParams.get('repository');
     const blob = urlParams.get('blob');
     const startIndex = Number(urlParams.get('startIndex'));
     const endIndex = Number(urlParams.get('endIndex'));
-    // let randomInt = randomIntFromInterval2(startIndex, endIndex);
-    // window.open("https://github.com/cjcaf1995/" + repository + "/issues/" + randomInt);
     let randomInteger = randomIntFromInterval(startIndex, endIndex);
-    // let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
-    window.open("https://github.com/cjcaf1995/" + repository + "/blob/main/" + blob + randomInteger.toString().padStart(4, '0') + ".jpg");
+    window.open("https://github.com/" + username + "/" + repository + "/blob/main/" + blob + randomInteger.toString().padStart(4, '0') + ".jpg");
 };
 
 window.onload = function() {
