@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japanese Sentence Analysis</title>
+    <script>
+        // QnA Randomizer
+        const qna = [
+            {
+                question: "What does 来週 (らいしゅう) mean?",
+                answer: "It means 'Next week'."
+            },
+            {
+                question: "What is the respectful suffix used in お客様 (おきゃくさま)?",
+                answer: "The respectful suffix is '様 (さま)'."
+            },
+            {
+                question: "What does 大掃除 (おおそうじ) refer to?",
+                answer: "It refers to 'big cleaning' or 'spring cleaning'."
+            },
+            {
+                question: "What is the meaning of 'しなくちゃ'?",
+                answer: "It is a colloquial way to express obligation, meaning 'must do'."
+            },
+            {
+                question: "How do you say 'Inside the house' in Japanese?",
+                answer: "It is '家の中 (いえのなか)'."
+            },
+        ];
+
+        window.onload = function() {
+            const randomQnA = qna[Math.floor(Math.random() * qna.length)];
+            alert("Question: " + randomQnA.question);
+            alert("Answer: " + randomQnA.answer);
+        };
+    </script>
+</head>
+<body>
+    <h1>Japanese Sentence Analysis</h1>
+    <p>来週はお客様が来ることだし、家の中の大掃除をしなくちゃ。</p>
+    <p><strong>Translation:</strong> "Since guests are coming next week, I must do a thorough cleaning of the house."</p>
+    <h2>Grammar Breakdown</h2>
+    <ul>
+        <li><strong>来週 (らいしゅう) [raishuu]:</strong> "Next week."</li>
+        <li><strong>お客様 (おきゃくさま) [okyakusama]:</strong> "Guest" or "customer." The respectful suffix "様 (さま)" is used.</li>
+        <li><strong>が来る (がくる) [ga kuru]:</strong> "Will come." The verb 来る (くる) [kuru] means "to come."</li>
+        <li><strong>ことだし [koto dashi]:</strong> A colloquial expression used to indicate a reason or cause.</li>
+        <li><strong>家の中 (いえのなか) [ie no naka]:</strong> "Inside the house."</li>
+        <li><strong>大掃除 (おおそうじ) [oosouji]:</strong> "Big cleaning" or "spring cleaning."</li>
+        <li><strong>をしなくちゃ [wo shinakucha]:</strong> A contraction of しなければならない [shinakereba naranai], meaning "must do."</li>
+    </ul>
+</body>
+</html>
