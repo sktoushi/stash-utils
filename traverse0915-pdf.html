@@ -28,8 +28,10 @@ openStuff = function () {
     const endIndex = Number(urlParams.get('endIndex'));
     const username = urlParams.get('username') || 'cjcaf1995'; // Default to 'cjcaf1995' if 'username' is not provided
     
-    let randomInteger = randomIntFromInterval(startIndex, endIndex);
-    window.open(`https://github.com/${username}/${repository}/blob/main/${blob}${randomInteger}.pdf`);
+    var randomInteger = randomIntFromInterval(startIndex, endIndex);
+    var url = "https://github.com/" + username + "/" + repository + "/blob/main/" + blob + randomInteger + ".pdf";
+    
+    window.open(url);
 };
 
 window.onload = function() {
