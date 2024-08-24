@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240823-Government Budget Analysis with QnA Randomizer</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        // QnA set
+        const qnaSet = {
+            "What happens to the budget deficit when adjusted for inflation?": "When adjusted for inflation, the initially reported $28 billion budget deficit actually becomes a $15 billion surplus. This adjustment shows that the real debt decreased, despite an increase in nominal debt.",
+            "How does inflation affect government debt?": "Inflation reduces the real value of existing government debt. In the example provided, an 8.6% inflation rate reduced the real debt, turning the reported deficit into a surplus.",
+            "What is the concept of capital budgeting in government finance?": "Capital budgeting in government finance involves treating government expenditures on assets like infrastructure similarly to how individuals treat personal assets. It considers both government assets and liabilities when assessing the true deficit.",
+            "Why is capital budgeting challenging to implement?": "Capital budgeting is challenging because it requires deciding what counts as capital expenditure and accurately valuing assets like highways or nuclear stockpiles. There are no straightforward methods to value such assets consistently.",
+            "What is the debate among economists regarding capital budgeting?": "Economists are divided on whether the government should adopt capital budgeting. Some believe it's a more accurate reflection of finances despite its complexity, while others argue that even an imperfect system is better than ignoring capital assets.",
+            "How does capital budgeting differ from current practices?": "Under current practices, selling government assets might reduce the reported deficit. However, capital budgeting would account for the loss of assets, so it wouldn't reduce the deficit in the same way."
+        };
+
+        // Function to pick a random QnA and display it
+        function randomQnA() {
+            const keys = Object.keys(qnaSet);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const randomValue = qnaSet[randomKey];
+            alert(randomKey);
+            alert(randomValue);
+        }
+
+        window.onload = function() {
+            randomQnA();
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .content {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .analysis {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="analysis">
+            <h2>Inflation Adjustment in Government Debt</h2>
+            <p>The federal government initially reported a budget deficit of $28 billion. However, because inflation was 8.6%, the real value of the debt actually decreased.</p>
+            <p>The equation \(\pi D = 0.086 \times \$495 \text{ billion} = \$43 \text{ billion}\) calculates the impact of inflation on the existing government debt of $495 billion.</p>
+            <p><strong>Conclusion:</strong> After adjusting for inflation, the $28 billion deficit actually becomes a $15 billion surplus, indicating that the real debt (adjusted for inflation) actually decreased.</p>
+            
+            <h2>Capital Assets & Budgeting</h2>
+            <p>Many economists believe that when assessing the government's budget deficit, it’s important to account for both the government’s assets and liabilities. This approach suggests subtracting government assets from the debt to measure the true deficit.</p>
+            <p>Capital budgeting involves treating government expenditures on assets (like infrastructure) similarly to how individuals treat personal assets, like a house. Under current practices, selling government assets might reduce the reported deficit, but capital budgeting would consider the offsetting loss of assets, thus not reducing the deficit.</p>
+            <p><strong>Challenges:</strong> The major issue with capital budgeting is deciding what counts as capital expenditure. For instance, should the interstate highway system or nuclear weapons stockpiles be considered assets? If so, how do you value them? Similar questions arise about expenditures like education.</p>
+            <p>There’s disagreement among economists on whether the federal government should adopt capital budgeting. Some argue that, while it’s a more accurate reflection of the government's finances, it is difficult to implement. Others believe even an imperfect system is better than ignoring capital assets altogether.</p>
+        </div>
+    </div>
+</body>
+</html>

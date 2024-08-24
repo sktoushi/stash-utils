@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240823-Product Termination QnA Randomizer</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        // QnA set
+        const qnaSet = {
+            "What is the termination option in product development?": "The termination option refers to the decision to stop developing a product when resources spent are not justifiable, the product has no foreseeable value to the end-user, and no reasonable path exists to make the product work.",
+            "What are some behavioral challenges to terminating a project?": "Behavioral challenges include the reluctance to stop a project that has already consumed significant time and resources, even if it's not clear whether the project will succeed.",
+            "How can accounting systems contribute to risky assumptions in product development?": "Accounting systems can contribute to risky assumptions by, for example, allowing a company to continue investing in a product despite realizing that it will only provide a small fraction of the expected value at a much higher cost.",
+            "What is misaligned decision-making in the context of product development?": "Misaligned decision-making occurs when companies continue development despite the stark difference between expected value and actual costs, often due to the desire to protect department budgets and avoid the consequences of failed expenditures.",
+            "What is meant by sticking to sound marginal economics?": "Sticking to sound marginal economics means making decisions based on incremental costs and benefits, focusing on what will bring the most value, and avoiding wasteful spending on projects with little return."
+        };
+
+        // Function to pick a random QnA and display it
+        function randomQnA() {
+            const keys = Object.keys(qnaSet);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const randomValue = qnaSet[randomKey];
+            alert(randomKey);
+            alert(randomValue);
+        }
+
+        window.onload = function() {
+            randomQnA();
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .content {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .analysis {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="analysis">
+            <h2>Product Development Termination</h2>
+            <p>This passage discusses the decision to terminate the development of a product and the key factors involved in making this decision.</p>
+
+            <h3>Key Points:</h3>
+
+            <h4>1. Termination Option</h4>
+            <p>The passage talks about a scenario where a company may decide to terminate a product's development. This decision is usually made when the resources spent are not justifiable, the product has no foreseeable value to the end-user, and no reasonable path exists to make the product work.</p>
+
+            <h4>2. Behavioral Challenges</h4>
+            <p>The passage highlights the psychological and behavioral challenges that prevent people from making the right decision to terminate a project. These include the reluctance to stop a project that has already consumed significant time and resources, even if it's not clear whether the project will succeed.</p>
+
+            <h4>3. Accounting Systems and Risky Assumptions</h4>
+            <p>The text points out that accounting systems can contribute to risky assumptions. An example is provided where a company starts developing software they believe will offer 100% value to customers and cost $500,000. However, after spending half of that amount, they realize the product will only provide 15% of the expected value and will cost $5,000,000 to develop.</p>
+
+            <h4>4. Misaligned Decision-Making</h4>
+            <p>Despite the stark difference between expected value and actual costs, some companies may continue development because of the knowledge they have accumulated about the product, even though it no longer seems justifiable. This is often due to the desire to protect department budgets and avoid the consequences of failed expenditures.</p>
+
+            <h4>5. Marginal Economics</h4>
+            <p>Finally, the passage emphasizes that sticking to sound marginal economics (making decisions based on incremental costs and benefits) allows companies to identify and avoid wasteful spending. It encourages focusing on what will bring the most value rather than continuing to invest in something with little return. This approach helps to save resources and avoid unproductive efforts.</p>
+
+            <p><strong>Summary:</strong><br>
+            The overall message is about the importance of recognizing when to stop a project that is not delivering value and not getting trapped by the sunk costs fallacy or the fear of acknowledging failure.</p>
+        </div>
+    </div>
+</body>
+</html>

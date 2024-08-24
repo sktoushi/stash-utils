@@ -1,0 +1,79 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240823-Immiserizing Growth Analysis with QnA Randomizer</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        // QnA set
+        const qnaSet = {
+            "What is the concept of Immiserizing Growth?": "Immiserizing growth refers to a situation where economic growth, particularly through technical progress or expansion of production, paradoxically leads to a decline in a nation's overall welfare due to adverse changes in the terms of trade.",
+            "What does Figure 7.6 illustrate regarding Immiserizing Growth?": "Figure 7.6 shows the production frontier of Nation 1 before and after neutral technical progress. Despite increased productivity, the terms of trade deteriorate, leading to a decline in welfare as indicated by a lower indifference curve.",
+            "Why does Immiserizing Growth occur in large countries?": "In large countries, significant increases in exports can worsen the terms of trade because global prices adjust unfavorably, especially if the demand elasticity for the country’s goods is low.",
+            "What role does the elasticity of demand play in Immiserizing Growth?": "If the elasticity of demand for a country’s goods is low, increasing exports does not lead to proportionately higher revenues, which can result in a deterioration of the terms of trade and, consequently, lower welfare.",
+            "How does Nation 1’s dependence on trade affect its welfare in the context of Immiserizing Growth?": "A high dependence on trade means that any deterioration in the terms of trade can significantly reduce Nation 1's welfare, even if production increases.",
+            "What is the difference between the scenarios in sections 7.5 and 7.5c?": "While section 7.5 discusses Immiserizing Growth where increased production leads to lower welfare, section 7.5c illustrates a scenario where growth, focused on scarce resources like factor K, increases welfare without adverse changes in the terms of trade."
+        };
+
+        // Function to pick a random QnA and display it
+        function randomQnA() {
+            const keys = Object.keys(qnaSet);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const randomValue = qnaSet[randomKey];
+            alert(randomKey);
+            alert(randomValue);
+        }
+
+        window.onload = function() {
+            randomQnA();
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .content {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .analysis {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="analysis">
+            <h2>Immiserizing Growth (Section 7.5)</h2>
+            <p>Immiserizing growth refers to a situation where economic growth, particularly through technical progress or expansion of production, paradoxically leads to a decline in a nation's overall welfare. This occurs despite increases in production and exports because of adverse changes in the terms of trade.</p>
+
+            <h3>Figure 7.6 Explanation</h3>
+            <p>The figure shows the production frontier of a nation (Nation 1) before and after neutral technical progress. This technical progress increases productivity in the production of commodity X.</p>
+            <ul>
+                <li><strong>Production Frontier Shift:</strong> The production frontier shifts outward from \( PB = 1 \) to \( PC = rac15 \), indicating that Nation 1 can now produce more of commodity X.</li>
+                <li><strong>Terms of Trade Deterioration:</strong> Despite this increase in productivity, the terms of trade for Nation 1 deteriorate drastically, moving from point B (before growth) to point C (after growth).</li>
+                <li><strong>Welfare Effect:</strong> Nation 1’s welfare is negatively affected. Although increased production would typically raise welfare, the worsening terms of trade place the nation on a lower indifference curve, indicating lower welfare.</li>
+            </ul>
+
+            <h3>Why Immiserizing Growth Occurs</h3>
+            <ul>
+                <li><strong>Nation 1’s Large Scale:</strong> Significant increases in exports by a large country can worsen its terms of trade due to global price adjustments.</li>
+                <li><strong>Elasticity of Demand:</strong> Low elasticity of demand for Nation 1's goods means that increased exports don’t lead to proportionately higher revenues, worsening terms of trade.</li>
+                <li><strong>Dependence on Trade:</strong> High trade dependence can amplify the negative welfare impact when terms of trade deteriorate.</li>
+            </ul>
+
+            <h3>7.5c Illustration of Beneficial Growth and Trade</h3>
+            <p>This section contrasts immiserizing growth with a scenario where only Nation 1's scarce factor \( K \) doubles, leading to positive welfare growth as the wealth effect is not offset by adverse changes in terms of trade.</p>
+        </div>
+    </div>
+</body>
+</html>

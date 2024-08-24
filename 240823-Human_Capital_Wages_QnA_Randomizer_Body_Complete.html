@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240823-Human Capital and Wages QnA Randomizer</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        // QnA set
+        const qnaSet = {
+            "What is human capital and how does it relate to wages?": "Human capital refers to the skills, knowledge, experience, and attributes individuals acquire through education, training, and experience, making them more valuable to employers. Workers with more human capital are more productive and therefore command higher wages.",
+            "Why do workers with more human capital get paid more?": "Workers with more human capital are more productive and valuable to employers, so they command higher wages in the labor market.",
+            "What are wage differentials and why do they exist?": "Wage differentials are differences in wages among workers due to factors like skills, experience, education, and job conditions. They exist because workers with higher productivity or in more demanding jobs are compensated more.",
+            "What is meant by 'returns on investment' in human capital?": "Returns on investment in human capital refer to the benefits, like higher wages and better job opportunities, gained from investing in education, skills development, and experience.",
+            "What are compensating wage differentials?": "Compensating wage differentials refer to higher wages that are offered to compensate workers for unpleasant, dangerous, or less desirable job attributes.",
+            "How do compensating wage differentials equalize utility?": "In theory, compensating wage differentials equalize utility by offering higher wages for less desirable jobs, ensuring that workers are compensated for the negative attributes, thus balancing overall job satisfaction.",
+            "What factors contribute to wage differences among workers?": "Wage differences among workers are influenced by factors such as human capital (skills, education, experience) and job conditions (physical demands, danger, unpleasantness)."
+        };
+
+        // Function to pick a random QnA and display it
+        function randomQnA() {
+            const keys = Object.keys(qnaSet);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const randomValue = qnaSet[randomKey];
+            alert(randomKey);
+            alert(randomValue);
+        }
+
+        window.onload = function() {
+            randomQnA();
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .content {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .analysis {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="analysis">
+            <h2>Human Capital and Wages</h2>
+            <p><strong>Image 1: Human Capital and Wages</strong></p>
+            <p><em>Text:</em><br>
+            "Workers with more human capital get paid more than workers with less human capital. The return to accumulating human capital is high and has increased over the past decade."</p>
+
+            <p><strong>Explanation:</strong><br>
+            This statement touches on the concept of <em>human capital</em>, which refers to the skills, knowledge, experience, and attributes that individuals acquire through education, training, and experience, making them more valuable to employers.</p>
+
+            <p><strong>Key Points:</strong></p>
+            <ol>
+                <li><strong>Human Capital:</strong> Just like physical capital (like machinery or buildings), human capital is an investment. Workers who invest in themselves through education, skills development, and experience become more productive and, as a result, are more valuable to employers.</li>
+                <li><strong>Wage Differentials:</strong> Because workers with higher human capital are more productive, they command higher wages in the labor market. Employers are willing to pay more for workers who can contribute more value to their business.</li>
+                <li><strong>Returns on Investment:</strong> The idea that "the return to accumulating human capital is high" means that the benefits (like higher wages and better job opportunities) gained from investing in human capital are significant. Over the past decade, this return has increased, possibly due to factors such as technological advancements, globalization, and changes in the labor market that have placed a higher premium on skills and education.</li>
+            </ol>
+
+            <p><strong>Image 2: Wage Differentials and Job Attributes</strong></p>
+            <p><em>Text:</em><br>
+            "Workers earn different wages for many reasons. To some extent, wage differentials compensate workers for job attributes. Other things equal, workers in hard, unpleasant jobs get paid more than workers in easy, pleasant jobs."</p>
+
+            <p><strong>Explanation:</strong><br>
+            This statement addresses the concept of <em>compensating wage differentials</em>, which is the idea that differences in wages can often be explained by the differing conditions and characteristics of jobs.</p>
+
+            <p><strong>Key Points:</strong></p>
+            <ol>
+                <li><strong>Wage Differentials:</strong> Wage differences exist for many reasons, including differences in skills, experience, education, and even job conditions.</li>
+                <li><strong>Compensation for Job Attributes:</strong> Some jobs are more physically demanding, dangerous, or unpleasant than others. To attract workers to these less desirable positions, employers often have to offer higher wages as a form of compensation for the negative attributes of the job.</li>
+                <li><strong>Equalization of Utility:</strong> In an ideal economic model, workers choose jobs based on their preferences, and employers set wages based on job characteristics. The higher wages in unpleasant jobs are intended to equalize the overall satisfaction (or utility) that workers derive from their jobs. So, while the work might be more challenging or less pleasant, the higher pay compensates for these drawbacks.</li>
+            </ol>
+
+            <p><strong>Conclusion:</strong><br>
+            Both statements emphasize how different factors—like human capital and job conditions—contribute to wage differences among workers. The first statement focuses on the returns to human capital investment, while the second highlights how wages can be adjusted to compensate for less desirable job attributes. Together, they provide a framework for understanding why some workers earn more than others, based on both their individual investments in skills and the inherent characteristics of the jobs they do.</p>
+        </div>
+    </div>
+</body>
+</html>

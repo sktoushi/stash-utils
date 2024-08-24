@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240823-Financial Concepts QnA Randomizer</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        // QnA set
+        const qnaSet = {
+            "What is the relationship between compounding and discounting of a lump-sum?": "Compounding is the process of determining the future value of a present amount, while discounting is the process of determining the present value of a future amount. They are inverse processes.",
+            "Complete the following: 'The larger the interest rate, the _________ (larger/smaller) the future value of a value today.'": "The larger the interest rate, the **larger** the future value of a value today.",
+            "What is the effect of using a higher discount rate to discount a future value to the present?": "Using a higher discount rate will decrease the present value of the future amount.",
+            "Which account produces the highest future value if the annual percentage rate is the same: annual compounding, quarterly compounding, or continuous compounding?": "Account C: continuous compounding produces the highest future value.",
+            "What distinguishes an ordinary annuity from an annuity due?": "An ordinary annuity has payments at the end of each period, while an annuity due has payments at the beginning of each period.",
+            "What distinguishes an ordinary annuity from a deferred annuity?": "An ordinary annuity starts payments immediately, while a deferred annuity starts payments after a specified period.",
+            "How do we value the present value of a series of cash flows if the cash flow is the same amount each period, ad infinitum?": "The present value is calculated using the formula for a perpetuity: Present Value = Cash Flow / Discount Rate.",
+            "Which is most appropriate to use in describing the annual growth of the value of an investment: the arithmetic average growth rate or the geometric average growth rate? Why?": "The geometric average growth rate is most appropriate because it accounts for the compounding effect over multiple periods.",
+            "How can we break down the valuation of a deferred annuity into manageable parts for computation purposes?": "The valuation can be broken down by first calculating the present value of the annuity at the start of the payment period and then discounting that amount back to the present.",
+            "Which has the highest present value if the payments and number of payments are identical, an ordinary annuity or an annuity due?": "An annuity due has the highest present value because each payment is made one period earlier.",
+            "If offered 5% simple interest per year and 5% compound interest per year, which should you choose? Why?": "Choose the investment with 5% compound interest per year because it will accumulate more interest over time compared to simple interest.",
+            "Under what conditions does the effective annual rate of interest (EAR) differ from the APR?": "The EAR will differ from the APR if interest is compounded more than once per year (e.g., quarterly, monthly).",
+            "What happens to the relationship between the EAR and the APR as the frequency of compounding increases within the annual period?": "As the compounding frequency increases, the EAR becomes higher than the APR.",
+            "If you deposit $1,000 in an account with an APR of 4% and compounding quarterly, what will the balance be after 10 years with no withdrawals?": "The balance would be $1,000 × (1 + 0.04/4)^(4 × 10).",
+            "How much interest on interest would you earn after 10 years if you deposit $1,000 in an account with an APR of 4% and compounding quarterly?": "The interest on interest is calculated by subtracting the simple interest from the compound interest earned over the 10 years.",
+            "What is the present value of $10,000 promised five years from today at a discount rate of 6%?": "The present value is calculated as $10,000 / (1 + 0.06)^5."
+        };
+
+        // Function to pick a random QnA and display it
+        function randomQnA() {
+            const keys = Object.keys(qnaSet);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const randomValue = qnaSet[randomKey];
+            alert(randomKey);
+            alert(randomValue);
+        }
+
+        window.onload = function() {
+            randomQnA();
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .content {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .analysis {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="analysis">
+            <h2>Financial Concepts QnA</h2>
+            <p>This page contains a random QnA generator for various financial concepts, including topics like compounding, discounting, annuities, and interest rates.</p>
+        </div>
+    </div>
+</body>
+</html>

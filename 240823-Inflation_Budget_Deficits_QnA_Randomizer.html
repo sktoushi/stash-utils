@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240823-Inflation and Budget Deficits Analysis with QnA Randomizer</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        // QnA set
+        const qnaSet = {
+            "What is the standard view on the cost of reducing inflation?": "The standard view, associated with the short-run Phillips curve, suggests that reducing inflation requires a period of low output and high unemployment.",
+            "What is the sacrifice ratio in the context of reducing inflation?": "The sacrifice ratio is the number of percentage points of GDP that must be forgone to reduce inflation by one percentage point.",
+            "What are the alternative views on the cost of reducing inflation?": "Some economists believe the cost can be smaller if the disinflationary policy is announced in advance and is credible, while others think the cost is higher, arguing that a recession might raise the natural rate of unemployment.",
+            "Why do economists provide conflicting advice on managing inflation?": "Economists provide conflicting advice because they hold differing views on the cost of reducing inflation, leading to different recommendations for policymakers.",
+            "What is the traditional view on government budget deficits?": "The traditional view is that running a budget deficit reduces national savings, leading to lower investment, a trade deficit, smaller capital stock, and larger foreign debt, ultimately burdening future generations.",
+            "What is the Ricardian view on budget deficits?": "The Ricardian view argues that budget deficits merely substitute future taxes for current ones, assuming consumers are forward-looking, and therefore may not necessarily burden future generations."
+        };
+
+        // Function to pick a random QnA and display it
+        function randomQnA() {
+            const keys = Object.keys(qnaSet);
+            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const randomValue = qnaSet[randomKey];
+            alert(randomKey);
+            alert(randomValue);
+        }
+
+        window.onload = function() {
+            randomQnA();
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .content {
+            max-width: 700px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .analysis {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="analysis">
+            <h2>Cost of Reducing Inflation</h2>
+            <p>Economists often disagree on the cost of reducing inflation. The standard view, associated with the short-run Phillips curve, suggests that reducing inflation requires a period of low output and high unemployment.</p>
+            <p>The cost is measured by the sacrifice ratio, which is the number of percentage points of GDP that must be forgone to reduce inflation by one percentage point.</p>
+
+            <h3>Alternative Views</h3>
+            <ul>
+                <li>Some economists believe the cost can be smaller than what the sacrifice ratio indicates, particularly if the disinflationary policy is announced in advance and is credible.</li>
+                <li>Others think the cost is much higher, arguing that a recession caused by disinflation might raise the natural rate of unemployment, leading to a more persistent problem.</li>
+            </ul>
+            <p>Because of these differing views, economists provide conflicting advice to policymakers on how to manage inflation effectively.</p>
+
+            <h2>Government Budget Deficits</h2>
+            <p>In the U.S., large budget deficits between 1980 and 1995 caused the government debt to GDP ratio to double. Although the budget came under control by the late 1990s, deficits reemerged in the 2000s due to war, recession, and policy changes.</p>
+
+            <h3>Long-term Fiscal Concerns</h3>
+            <p>Many economists worry that deficits will grow larger as the baby-boom generation retires, leading to increased strain on Social Security and Medicare.</p>
+
+            <h3>Traditional View</h3>
+            <p>Most economists believe that running a budget deficit reduces national savings, which leads to lower investment, a trade deficit, smaller capital stock, and larger foreign debt. This view holds that government debt burdens future generations.</p>
+
+            <h3>Ricardian View</h3>
+            <p>Some economists, however, argue that budget deficits merely substitute future taxes for current ones, assuming consumers are forward-looking. They believe this doesn’t necessarily burden future generations as traditionally thought.</p>
+
+            <p>In summary, the text presents differing economic perspectives on the costs associated with reducing inflation and the potential problems of government budget deficits, highlighting the complexities and debates within economic policy-making.</p>
+        </div>
+    </div>
+</body>
+</html>
