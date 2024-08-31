@@ -1,0 +1,47 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japanese Grammar Analysis</title>
+    <script>
+        // QnA Randomizer
+        function getRandomQnA() {
+            const questions = [
+                "What is the meaning of '多くの人の答え'?",
+                "How do you translate '意志が弱い'?",
+                "What does 'から' indicate in a sentence?",
+                "What is the function of '〜からというものである' in a sentence?",
+                "Translate the entire sentence: '多くの人の答えは、「意志が弱い」からというものである。'"
+            ];
+
+            const answers = [
+                "'多くの人の答え' means 'the answer of many people'.",
+                "'意志が弱い' translates to 'weak will' or 'weak determination'.",
+                "'から' indicates the reason or cause, similar to 'because'.",
+                "'〜からというものである' is used to explain the reason or cause of something by quoting or referencing a common idea.",
+                "The sentence translates to 'The answer of many people is that it is because of a weak will.'"
+            ];
+
+            const randomIndex = Math.floor(Math.random() * questions.length);
+            alert(questions[randomIndex]);
+            alert(answers[randomIndex]);
+        }
+    </script>
+</head>
+<body onload="getRandomQnA()">
+    <h1>Japanese Grammar Analysis</h1>
+    <p>The sentence provided is: <strong>多くの人の答えは、「意志が弱い」からというものである。</strong></p>
+    <p><strong>Translation:</strong> "The answer of many people is that it is because of a weak will."</p>
+    <p><strong>Grammar Breakdown:</strong></p>
+    <ul>
+        <li><strong>多くの人の答え (ooku no hito no kotae):</strong> Means "the answer of many people".</li>
+        <li><strong>意志が弱い (ishi ga yowai):</strong> Means "weak will" or "weak determination".</li>
+        <li><strong>から (kara):</strong> Indicates the reason or cause, similar to "because".</li>
+        <li><strong>というもの (to iu mono):</strong> Indicates a common idea or quote, meaning "a thing that is said to be".</li>
+        <li><strong>である (de aru):</strong> A formal way of stating something is, similar to "is".</li>
+    </ul>
+    <p>This sentence uses the grammar pattern "〜からというものである," which is used to explain the reason or cause of something by quoting or referencing a common idea.</p>
+</body>
+</html>

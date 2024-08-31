@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japanese Sentence Analysis</title>
+</head>
+<body>
+    <h1>Japanese Sentence Analysis</h1>
+    <p><strong>Sentence:</strong> 太りたくなければ、夜遅く食べないことです。</p>
+    <p><strong>Translation:</strong> "If you don't want to get fat, do not eat late at night."</p>
+    <p><strong>Grammar Breakdown:</strong></p>
+    <ul>
+        <li>太りたくなければ (futoritakunakereba): If you don't want to get fat</li>
+        <li>夜遅く (yoru osoku): Late at night</li>
+        <li>食べないこと (tabenai koto): The act of not eating</li>
+        <li>です (desu): Polite ending particle</li>
+    </ul>
+
+    <script>
+        function getRandomInt(max) {
+            return Math.floor(Math.random() * max);
+        }
+
+        const questions = [
+            "What does 太りたくなければ mean?",
+            "How do you say 'late at night' in Japanese?",
+            "What is the meaning of 食べないこと?",
+            "What does the particle です add to the sentence?",
+            "What is the negative conditional form in this sentence?"
+        ];
+
+        const answers = [
+            "It means 'If you don't want to get fat'.",
+            "夜遅く (yoru osoku)",
+            "It means 'the act of not eating'.",
+            "です adds politeness to the sentence.",
+            "なければ (nakereba) is the negative conditional form."
+        ];
+
+        window.onload = function() {
+            const randomIndex = getRandomInt(questions.length);
+            alert(questions[randomIndex]);
+            alert(answers[randomIndex]);
+        };
+    </script>
+</body>
+</html>

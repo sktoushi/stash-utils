@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240824-Quality Management</title>
+    <script>
+        function randomizeQnA() {
+            var qna = [['What is the basis for continual improvement?', 'The plan-do-check-act (PDCA) cycle is the basis for continual improvement.'], ['What is the role of culture in quality management?', 'Creating a culture throughout the organization that is aware and committed to quality in processes and products is crucial.'], ['What quality improvement initiatives may improve project management?', 'Total quality management (TQM), Six Sigma, and Lean Six Sigma may improve the quality of project management.'], ['What is the responsibility of management in quality management?', 'Management has the responsibility to provide suitable resources at adequate capacities for quality management.'], ['What is the benefit of a mutually beneficial partnership with suppliers?', 'It enhances the ability for both the organization and the suppliers to create value for each other and optimizes costs and resources.'], ['What are the related costs in the quality control process?', 'The related costs in the quality control process are mainly the appraisal costs and internal failure costs.'], ['How should quality be incorporated in projects?', 'Quality should be incorporated into the planning and designing of the project and product.'], ['How is customer satisfaction ensured in agile environments?', 'Stakeholder engagement with the team ensures customer satisfaction is maintained throughout the project.'], ['What is the most expensive approach to quality management?', 'Letting the customer find the defects is the most expensive approach.'], ['How does quality assurance contribute to quality management?', 'Quality assurance is used to examine and correct the process itself, not just special defects.']];
+            shuffleArray(qna);
+            var randomPair = qna[0];
+            alert("Question: " + randomPair[0]);
+            alert("Answer: " + randomPair[1]);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        window.onload = randomizeQnA;
+    </script>
+</head>
+<body>
+    <h1>Increasingly Effective Quality Management and Trends</h1>
+    <p>
+There are five levels of increasingly effective quality management as follows:
+
+1. **Letting the customer find the defects:**
+   - Usually, the most expensive approach is to let the customer find the defects. This approach can lead to warranty issues, recalls, loss of reputation, and rework costs.
+
+2. **Detect and correct defects before delivery:**
+   - Detect and correct the defects before the deliverables are sent to the customer as part of the quality control process. The control quality process has related costs, which are mainly the appraisal costs and internal failure costs.
+
+3. **Use quality assurance:**
+   - Use quality assurance to examine and correct the process itself and not just special defects.
+
+4. **Incorporate quality into planning and design:**
+   - Incorporate quality into the planning and designing of the project and product.
+
+5. **Create a quality-focused culture:**
+   - Create a culture throughout the organization that is aware and committed to quality in processes and products.
+
+---
+
+### Trends and Emerging Practices in Project Quality Management
+
+Modern quality management approaches seek to minimize variation and to deliver results that meet defined stakeholder requirements. Trends in Project Quality Management include but are not limited to:
+
+1. **Customer satisfaction:**
+   - Understand, evaluate, define, and manage requirements so that customer expectations are met. This requires a combination of conformance to requirements (to ensure the project produces what it was created to produce) and fitness for use (the product or service needs to satisfy the real needs). In agile environments, stakeholder engagement with the team ensures customer satisfaction is maintained throughout the project.
+
+2. **Continual improvement:**
+   - The plan-do-check-act (PDCA) cycle is the basis for quality improvement as defined by Shewhart and modified by Deming. In addition, quality improvement initiatives such as total quality management (TQM), Six Sigma, and Lean Six Sigma may improve the quality of project management, as well as the quality of the end product, service, or result.
+
+3. **Management responsibility:**
+   - Success requires the participation of all members of the project team. Management retains, within its responsibility for quality, a related responsibility to provide suitable resources at adequate capacities.
+
+4. **Mutually beneficial partnership with suppliers:**
+   - An organization and its suppliers are interdependent. Relationships based on partnership and cooperation with the supplier are more beneficial to the organization and to the suppliers than traditional supplier management. The organization should prefer long-term relationships over short-term gains. A mutually beneficial relationship enhances the ability for both the organization and the suppliers to create value for each other, enhances their joint responses to customer needs and expectations, and optimizes costs and resources.
+</p>
+</body>
+</html>

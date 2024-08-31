@@ -1,0 +1,36 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Denominator Neglect and Risk Perception</title>
+    <script>
+        window.onload = function() {
+            // QnA Set
+            const qna = [{'question': "What is 'denominator neglect'?", 'answer': 'Denominator neglect is a cognitive bias where people focus more on the numerator than the denominator, leading to a distorted perception of risk and probability.'}, {'question': 'How does imagery affect the perception of risk?', 'answer': 'Vivid imagery, like imagining a single red marble among white ones, can enhance the perception of likelihood, even when the statistical probability remains unchanged.'}, {'question': 'How can the communication of risks influence perception?', 'answer': 'The way risks are communicated can significantly influence perception, with certain phrasings creating more vivid images and stronger emotional responses.'}, {'question': "What is the 'frequency format effect'?", 'answer': 'The frequency format effect refers to how people judge risks differently based on how they are presented, often misjudging risks when they focus on raw numbers rather than percentages.'}, {'question': 'Are experienced professionals immune to denominator neglect?', 'answer': 'No, even experienced professionals like forensic psychologists and psychiatrists can be influenced by denominator neglect, as shown in experiments involving risk assessment.'}];
+
+            // Randomly pick a QnA
+            const randomIndex = Math.floor(Math.random() * qna.length);
+            const selectedQnA = qna[randomIndex];
+
+            // Show the question first
+            alert(selectedQnA.question);
+            // Show the answer after user clicks 'OK'
+            alert(selectedQnA.answer);
+        };
+    </script>
+</head>
+<body>
+    <h1>Denominator Neglect and Risk Perception</h1>
+    <p>The extracted text discusses the concept of "denominator neglect," a cognitive bias that affects how people perceive and evaluate risks. Here are the key insights from the text:</p>
+    <ol>
+        <li><strong>Denominator Neglect:</strong> This bias occurs when people focus more on the numerator (e.g., the number of successful or winning outcomes) rather than the denominator (e.g., the total number of possible outcomes). This leads to a distorted perception of risk and probability.</li>
+        <li><strong>Impact of Imagery:</strong> The text explains how vivid imagery, such as imagining a single red marble among white ones, can enhance the perception of the likelihood of an event, even when the statistical probability remains unchanged.</li>
+        <li><strong>Communication of Risks:</strong> The way risks are communicated can significantly influence how people perceive them. For example, describing a vaccine's risk as "0.001% chance of permanent disability" seems less alarming than saying "one in 100,000 children will be permanently disabled." The latter creates a more vivid image in the mind, leading to a stronger emotional response.</li>
+        <li><strong>Frequency Format Effect:</strong> People tend to judge risks differently based on how they are presented. A disease that "kills 1,286 out of 10,000 people" may seem more dangerous than one that "kills 24.14% of the population," even though the former is actually a lower risk. This is another example of how denominator neglect and the format of information can skew judgment.</li>
+        <li><strong>Forensic Psychology and Psychiatry:</strong> The text also mentions that even experienced professionals, like forensic psychologists and psychiatrists, are not immune to the effects of denominator neglect. In an experiment, professionals evaluated the risk of discharging a patient with a history of violence, with the risk being framed in two different ways. This highlights how framing can influence decision-making, even in critical contexts like public safety.</li>
+    </ol>
+    <p>Overall, the passage illustrates how the framing of information, particularly regarding risks and probabilities, can lead to biased decision-making, a concept crucial in understanding human cognition and behavior.</p>
+</body>
+</html>

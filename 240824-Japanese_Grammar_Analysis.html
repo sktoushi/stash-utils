@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240824-Japanese Grammar Analysis</title>
+</head>
+<body>
+    <h1>Grammar Analysis: ～を禁じ得ない</h1>
+    <p><strong>Original Sentence:</strong></p>
+    <p>ある事態にあって、～という感情がわいてくるのを抑えられない。</p>
+    
+    <h2>Grammar Points:</h2>
+    <ul>
+        <li><strong>～を禁じ得ない (きんじえない):</strong> A formal expression meaning "cannot help but (do something)" or "cannot suppress (a feeling)." Used to express an uncontrollable reaction due to certain circumstances.</li>
+        <li><strong>ある事態にあって (あるじたいにあって):</strong> "In a certain situation." Refers to a specific situation or state of affairs.</li>
+        <li><strong>～という感情がわいてくる (～というかんじょうがわいてくる):</strong> "[An emotion] wells up." Indicates that an emotion begins to arise within someone.</li>
+        <li><strong>のを抑えられない (のをおさえられない):</strong> "[I] cannot suppress [this emotion]." A negative potential form indicating inability to control or suppress an emotion.</li>
+    </ul>
+    
+    <h2>Combined Translation:</h2>
+    <p>In a certain situation, one cannot help but feel a certain emotion welling up.</p>
+
+    <script>
+        // Array of Q&A pairs
+        const qaSet = [
+            {
+                question: "What does ～を禁じ得ない mean?",
+                answer: "It means 'cannot help but (do something)' or 'cannot suppress (a feeling).' It expresses an uncontrollable reaction due to certain circumstances."
+            },
+            {
+                question: "How is ある事態にあって translated?",
+                answer: "'In a certain situation.' It refers to a specific situation or state of affairs."
+            },
+            {
+                question: "What is the meaning of ～という感情がわいてくる?",
+                answer: "It means '[An emotion] wells up,' indicating that an emotion begins to arise within someone."
+            },
+            {
+                question: "What does のを抑えられない express?",
+                answer: "It expresses '[I] cannot suppress [this emotion],' indicating an inability to control or suppress an emotion."
+            }
+        ];
+
+        // Function to trigger Q&A randomizer
+        function triggerRandomQA() {
+            const randomIndex = Math.floor(Math.random() * qaSet.length);
+            const selectedQA = qaSet[randomIndex];
+
+            // First alert with the question
+            alert(selectedQA.question);
+
+            // Second alert with the corresponding answer
+            alert(selectedQA.answer);
+        }
+
+        // Trigger the random Q&A upon page load
+        window.onload = triggerRandomQA;
+    </script>
+</body>
+</html>

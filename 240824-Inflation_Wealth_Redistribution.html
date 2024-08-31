@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240824-Inflation and Wealth Redistribution</title>
+    <script>
+        function randomizeQnA() {
+            var qna = [['Why do predictable inflation rates matter?', 'Predictable inflation rates allow debtors and creditors to take inflation into account when setting nominal interest rates, reducing risk.'], ['What is an example of a country with low, stable inflation?', 'Germany in the late twentieth century is an example of a country with low, stable inflation.'], ['What is a special cost of unexpected inflation?', 'A special cost of unexpected inflation is the arbitrary redistribution of wealth among the population.'], ['What is the relationship between inflation level and volatility?', 'Countries with low average inflation tend to have stable inflation, while countries with high average inflation tend to have unstable inflation.'], ['What is the impact of a high-inflation monetary policy?', 'A high-inflation monetary policy can lead to both the costs of high expected inflation and arbitrary redistributions of wealth due to unexpected inflation.'], ["What happens to Sam's loan if there is hyperinflation?", 'If there is hyperinflation, Sam can repay his loan in less valuable dollars, reducing the real value of his debt.'], ['Why is the relationship between inflation and its volatility important?', 'The relationship is important because it highlights the additional risks and costs associated with pursuing a high-inflation monetary policy.'], ["How does deflation affect Sam's loan?", "Deflation increases the real value of Sam's debt, making it more expensive for him to repay."], ['How does high inflation affect wealth distribution?', 'High inflation increases the risk of arbitrary redistributions of wealth due to unexpected changes in inflation rates.'], ['How does unexpected inflation redistribute wealth?', 'Unexpected inflation redistributes wealth by changing the real value of money, affecting debtors and creditors differently.']];
+            shuffleArray(qna);
+            var randomPair = qna[0];
+            alert("Question: " + randomPair[0]);
+            alert("Answer: " + randomPair[1]);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        window.onload = randomizeQnA;
+    </script>
+</head>
+<body>
+    <h1>A Special Cost of Unexpected Inflation: Arbitrary Redistributions of Wealth</h1>
+    <p>
+A Special Cost of Unexpected Inflation: Arbitrary Redistributions of Wealth
+
+So far, the costs of inflation we have discussed occur even if inflation is steady and predictable. Inflation has an additional cost, however, when it comes as a surprise. Unexpected inflation redistributes wealth among the population in a way that has nothing to do with either merit or need. These redistributions occur because many loans in the economy are specified in terms of the unit of account—money.
+
+Consider an example. Suppose that Sam Student takes out a $20,000 loan at a 7 percent interest rate from Bigbank to attend college. In ten years, the loan will come due. After his debt has compounded for ten years at 7 percent, Sam will owe Bigbank $40,000. The real value of this debt will depend on inflation over the decade. If Sam is lucky, the economy will have a hyperinflation. In this case, wages and prices will rise so high that Sam will be able to pay the $40,000 debt out of pocket change. By contrast, if the economy goes through a major deflation, then wages and prices will fall, and Sam will find the $40,000 debt a greater burden than he anticipated.
+
+This example shows that unexpected changes in prices redistribute wealth among debtors and creditors. A hyperinflation enriches Sam at the expense of Bigbank because it diminishes the real value of the debt; Sam can repay the loan in less valuable dollars than he anticipated. Deflation enriches Bigbank at Sam’s expense because it increases the real value of the debt; in this case, Sam has to repay the loan in more valuable dollars than he anticipated. If inflation were predictable, then Bigbank and Sam could take inflation into account when setting the nominal interest rate. But if inflation is hard to predict, it imposes risk on Sam and Bigbank that both would prefer to avoid.
+
+This cost of unexpected inflation is important to consider together with another fact: Inflation is especially volatile and uncertain when the average rate of inflation is high. This is seen most simply by examining the experience of different countries. Countries with low average inflation, such as Germany in the late twentieth century, tend to have stable inflation. Countries with high average inflation, such as many countries in Latin America, tend also to have unstable inflation. There are no known examples of economies with high, stable inflation. This relationship between the level and volatility of inflation points to another cost of inflation. If a country pursues a high-inflation monetary policy, it will have to bear not only the costs of high expected inflation but also the arbitrary redistributions of wealth associated with unexpected inflation.
+</p>
+</body>
+</html>

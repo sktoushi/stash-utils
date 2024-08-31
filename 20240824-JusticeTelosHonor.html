@@ -1,0 +1,35 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Justice, Telos, and Honor</title>
+    <script>
+        window.onload = function() {
+            // QnA Set
+            const qna = [{'question': 'What does Aristotle mean by saying justice is teleological?', 'answer': 'Justice is teleological means that determining rights requires understanding the purpose or end of a social practice.'}, {'question': 'How does Aristotle connect justice to honor?', 'answer': 'Aristotle believes that reasoning about justice involves reasoning about what virtues a practice should honor and reward.'}, {'question': "What is a modern theory of justice's approach to fairness and rights?", 'answer': 'Modern theories often try to separate questions of fairness and rights from arguments about honor, virtue, and moral desert.'}, {'question': "How does Aristotle's view on justice differ from utilitarian views?", 'answer': "Aristotle's view focuses on honoring individual merit and virtue, while utilitarian views emphasize producing the greatest happiness for the greatest number."}, {'question': 'What is essential to understanding Aristotle’s ethics and politics?', 'answer': "Understanding the force of both teleological and honorific considerations and their relation is key to Aristotle's ethics and politics."}];
+
+            // Randomly pick a QnA
+            const randomIndex = Math.floor(Math.random() * qna.length);
+            const selectedQnA = qna[randomIndex];
+
+            // Show the question first
+            alert(selectedQnA.question);
+            // Show the answer after user clicks 'OK'
+            alert(selectedQnA.answer);
+        };
+    </script>
+</head>
+<body>
+    <h1>Justice, Telos, and Honor</h1>
+    <p>The text discusses Aristotle's theory of justice, focusing on two key ideas:</p>
+    <ol>
+        <li><strong>Justice is teleological:</strong> This means that determining rights requires understanding the telos (purpose, end, or essential nature) of a social practice. In other words, we need to figure out what the purpose of the practice is in order to determine what is just.</li>
+        <li><strong>Justice is honorific:</strong> Reasoning about the telos of a practice also involves reasoning about what virtues that practice should honor and reward. Justice, in this sense, is connected to what is valued and what is honored in a given society.</li>
+    </ol>
+    <p>The text further explains how modern theories of justice often attempt to separate questions of fairness and rights from arguments about honor, virtue, and moral desert (what people deserve). However, Aristotle's view is that debates about justice are, by their nature, debates about honor, virtue, and the nature of the good life.</p>
+    <h2>Equity and Compensation</h2>
+    <p>Aristotle's approach to justice involves giving people what they deserve, which is tied to their relevant virtues and contributions. This perspective on justice is contrasted with more modern, utilitarian views, where the focus might be on producing the greatest happiness for the greatest number rather than on honoring individual merit and virtue.</p>
+</body>
+</html>

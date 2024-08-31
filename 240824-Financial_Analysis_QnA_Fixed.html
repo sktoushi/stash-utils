@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>240824-Financial Analysis</title>
+    <script>
+        function randomizeQnA() {
+            var qna = [['What was the current ratio for Ernie Bishop Company in 2013?', 'The current ratio for 2013 was 4.07.'], ['How did the quick ratio change from 2012 to 2013?', 'The quick ratio improved from 2.60 in 2012 to 2.71 in 2013.'], ['What was the gross profit margin for Ernie Bishop Company in 2013?', 'The gross profit margin for 2013 was 28.8%.'], ['How did the net profit margin change from 2012 to 2013?', 'The net profit margin decreased from 5.26% in 2012 to 4.95% in 2013.'], ['What does the decrease in net profit margin indicate about Ernie Bishop Company?', 'The decrease in net profit margin suggests that operating expenses increased more than gross profit.'], ['What is the significance of the slight improvement in the quick ratio?', 'It suggests a marginally better position to meet short-term obligations without relying on inventory.'], ['Despite the gross profit margin improving, what concern remains for Ernie Bishop Company?', 'The concern is the decrease in net profit margin, indicating rising operating expenses.'], ['How did liquidity change from 2012 to 2013 for Ernie Bishop Company?', 'Liquidity remained stable, with the current ratio slightly decreasing and the quick ratio improving.'], ['What was the net profit margin for Ernie Bishop Company in 2012?', 'The net profit margin for 2012 was 5.26%.'], ['Why is managing operating expenses important for Ernie Bishop Company?', 'It’s important to avoid further erosion in net profitability despite improvements in gross profit margin.']];
+            shuffleArray(qna);
+            var randomPair = qna[0];
+            alert("Question: " + randomPair[0]);
+            alert("Answer: " + randomPair[1]);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        window.onload = randomizeQnA;
+    </script>
+</head>
+<body>
+    <h1>Financial Analysis of Ernie Bishop Company (2012-2013)</h1>
+    <h2>Step 1: Calculate the Liquidity Ratios</h2>
+    <p>Liquidity ratios generally include the <b>current ratio</b> and the <b>quick ratio</b>.</p>
+    <ul>
+        <li><b>Current Ratio (2013):</b> 4.07</li>
+        <li><b>Current Ratio (2012):</b> 4.08</li>
+        <li><b>Quick Ratio (2013):</b> 2.71</li>
+        <li><b>Quick Ratio (2012):</b> 2.60</li>
+    </ul>
+    <h2>Step 2: Calculate the Profitability Ratios</h2>
+    <p>Profitability ratios generally include the <b>gross profit margin</b> and the <b>net profit margin</b>.</p>
+    <ul>
+        <li><b>Gross Profit Margin (2013):</b> 28.8%</li>
+        <li><b>Gross Profit Margin (2012):</b> 27.9%</li>
+        <li><b>Net Profit Margin (2013):</b> 4.95%</li>
+        <li><b>Net Profit Margin (2012):</b> 5.26%</li>
+    </ul>
+    <h2>Step 3: Analysis of Changes</h2>
+    <ul>
+        <li><b>Liquidity:</b> The current ratio remained stable with a slight decrease from 4.08 in 2012 to 4.07 in 2013. The quick ratio improved from 2.60 in 2012 to 2.71 in 2013, suggesting a marginally better position to meet short-term obligations without relying on inventory.</li>
+        <li><b>Profitability:</b> The gross profit margin improved slightly from 27.9% in 2012 to 28.8% in 2013. However, the net profit margin decreased from 5.26% in 2012 to 4.95% in 2013, indicating that the overall profitability after all expenses have been deducted from revenue slightly declined.</li>
+    </ul>
+    <h2>Conclusion</h2>
+    <p><b>Liquidity:</b> The liquidity of Ernie Bishop Company is stable with a slight improvement in the quick ratio, suggesting a marginally better position to meet short-term obligations without relying on inventory.</p>
+    <p><b>Profitability:</b> Although the gross profit margin improved, the net profit margin slightly decreased, which could be a concern if this trend continues. The decrease in net profit margin suggests that operating expenses have increased more than gross profit, possibly due to higher operating costs or other non-operating expenses.</p>
+    <p>This mixed performance indicates that while the company is doing slightly better in terms of liquidity and gross profitability, the increase in operating expenses needs to be managed to avoid further erosion in net profitability.</p>
+</body>
+</html>

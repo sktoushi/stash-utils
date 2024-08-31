@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japanese Grammar Analysis</title>
+    <script>
+        // QnA Randomizer
+        function getRandomQnA() {
+            const questions = [
+                "What is the meaning of 'とても〜ので'?",
+                "How do you translate '普通ではない結果'?",
+                "What does 'なってしまった' imply in a sentence?",
+                "What is the function of 'あまり・あまりの～に' in a sentence?",
+                "Translate the entire sentence: 'とても〜ので、普通ではない結果になってしまった。'"
+            ];
+
+            const answers = [
+                "'とても〜ので' means 'because it was so...'",
+                "'普通ではない結果' translates to 'an abnormal result'.",
+                "'なってしまった' implies something happened unintentionally or with a negative nuance.",
+                "'あまり・あまりの～に' is used to express that something happens as a result of being too much or too extreme.",
+                "The sentence translates to 'Because it was so [extreme], it resulted in an abnormal outcome.'"
+            ];
+
+            const randomIndex = Math.floor(Math.random() * questions.length);
+            alert(questions[randomIndex]);
+            alert(answers[randomIndex]);
+        }
+    </script>
+</head>
+<body onload="getRandomQnA()">
+    <h1>Japanese Grammar Analysis</h1>
+    <p>The sentence provided is: <strong>とても〜ので、普通ではない結果になってしまった。</strong></p>
+    <p><strong>Translation:</strong> "Because it was so [extreme], it resulted in an abnormal outcome."</p>
+    <p><strong>Grammar Breakdown:</strong></p>
+    <ul>
+        <li><strong>とても〜ので (totemo ~node):</strong> Used to express that something happened because of an extreme condition.</li>
+        <li><strong>普通ではない (futsuu dewa nai):</strong> Means "not normal" or "abnormal".</li>
+        <li><strong>結果 (kekka):</strong> Means "result".</li>
+        <li><strong>なってしまった (natte shimatta):</strong> Indicates that something happened unintentionally or with a negative nuance.</li>
+    </ul>
+    <p>This sentence demonstrates the usage of "あまり・あまりの～に" which is used to express that something happens as a result of being too much or too extreme.</p>
+</body>
+</html>
