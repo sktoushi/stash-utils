@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Letters and Sum</title>
+    <script>
+        // Function to get the URL parameter by name
+        function getURLParameter(name) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(name);
+        }
+
+        // Function to generate random lowercase letters
+        function getRandomLetters(numLetters) {
+            const letters = [];
+            for (let i = 0; i < numLetters; i++) {
+                const randomCharCode = Math.floor(Math.random() * 26) + 97; // a = 97, z = 122
+                letters.push(String.fromCharCode(randomCharCode));
+            }
+            return letters;
+        }
+
+        // Function to calculate the sum of the letters (a=1, b=2, ... z=26)
+        function calculateLetterSum(letters) {
+            return letters.reduce((sum, letter) => sum + (letter.charCodeAt(0) - 96), 0); // 'a' is 1, 'b' is 2, etc.
+        }
+
+        // Main function to be called when the page loads
+        function displayAlerts() {
+            const numLetters = parseInt(getURLParameter('numLetters'));
+            if (!isNaN(numLetters) && numLetters > 0) {
+                const randomLetters = getRandomLetters(numLetters);
+                alert(randomLetters.join(' + '));
+                const letterSum = calculateLetterSum(randomLetters);
+                alert('Sum: ' + letterSum);
+            } else {
+                alert("Invalid or missing 'numLetters' parameter. Please provide a valid number.");
+            }
+        }
+
+        window.onload = displayAlerts;
+    </script>
+</head>
+<body>
+    <h1>Random Letters and Sum</h1>
+    <p>Provide a URL parameter "numLetters" to see random letters and their sum.</p>
+    <p>Example: <code>?numLetters=3</code></p>
+</body>
+</html>
