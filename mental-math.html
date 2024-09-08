@@ -28,14 +28,16 @@
 
         // Main function to be called when the page loads
         function displayAlerts() {
-            const numLetters = parseInt(getURLParameter('numLetters'));
-            if (!isNaN(numLetters) && numLetters > 0) {
+            const maxLetters = parseInt(getURLParameter('maxLetters'));
+            if (!isNaN(maxLetters) && maxLetters >= 2) {
+                // Random number between 2 and maxLetters
+                const numLetters = Math.floor(Math.random() * (maxLetters - 2 + 1)) + 2;
                 const randomLetters = getRandomLetters(numLetters);
                 alert(randomLetters.join(' + '));
                 const letterSum = calculateLetterSum(randomLetters);
                 alert('Sum: ' + letterSum);
             } else {
-                alert("Invalid or missing 'numLetters' parameter. Please provide a valid number.");
+                alert("Invalid or missing 'maxLetters' parameter. Please provide a valid number (minimum 2).");
             }
         }
 
@@ -44,7 +46,7 @@
 </head>
 <body>
     <h1>Random Letters and Sum</h1>
-    <p>Provide a URL parameter "numLetters" to see random letters and their sum.</p>
-    <p>Example: <code>?numLetters=3</code></p>
+    <p>Provide a URL parameter "maxLetters" to see random letters and their sum.</p>
+    <p>Example: <code>?maxLetters=5</code></p>
 </body>
 </html>
