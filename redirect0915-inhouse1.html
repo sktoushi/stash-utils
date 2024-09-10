@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="config.js"></script>
+</head>
+<body style="background-color:#4e6856">
+
+<script>
+
+var links = [];
+
+var links2 = [
+"http://61.89.201.27:8000/radikishi.mp3",
+"https://github.com/cjcaf1995/listening/issues/4",
+"https://github.com/cjcaf1995/stash/issues/1964",
+"https://github.com/cjcaf1995/5smeaning0915-five-star/issues/39",
+"https://github.com/cjcaf1995/stash/issues/141",
+"https://github.com/cjcaf1995/influence-cialdini/blob/main/Influence%20The%20Psychology%20of%20Persuasion_page-0194.jpg",
+"https://github.com/cjcaf1995/stash/issues/393",
+"https://github.com/cjcaf1995/stash/issues/511",
+"https://github.com/cjcaf1995/listening/issues/28",
+"https://github.com/cjcaf1995/3smeaning0915-three-star/issues/29",
+"https://www.biblegateway.com/passage/?search=1Thess.5.11-1Thess.5.15&version=NASB1995",
+"https://github.com/cjcaf1995/stash/issues/2922",
+"https://github.com/cjcaf1995/3smeaning0915-three-star/issues/28",
+"https://github.com/cjcaf1995/stash/issues/3012",
+"https://youtube.com/shorts/h9GkSL0tCUE?si=QPPJV-7kFlHzKLxp",
+"https://www.instagram.com/reel/C-5nNWbMni_/?igsh=ZncwYWhhejR3OWo3",
+"https://github.com/cjcaf1995/The-Theory-of-Gambling-and-Statistical-Logic/blob/main/The%20Theory%20of%20Gambling%20and%20Statistical%20Logic%20(%20PDFDrive%20)-72.pdf",
+"https://github.com/sktoushi/stash2/issues/30",
+"https://github.com/cjcaf1995/macroeconomics/blob/main/Macroeconomics-Mankiw_page-0019.jpg",
+"https://github.com/cjcaf1995/Project-Management-and-Leadership-Skills/blob/main/Project-Management-and-Leadership-Skills-52.pdf",
+"https://github.com/cjcaf1995/listening/issues/220",
+"https://github.com/cjcaf1995/public-repo/issues/1629",
+"https://github.com/sktoushi/stash2/issues/36",
+"https://github.com/cjcaf1995/listening/issues/28",
+"https://github.com/cjcaf1995/elon-musk/blob/main/Elon-Musk-Walter-Isaacson-423.pdf",
+"https://github.com/cjcaf1995/code-complete/blob/main/CodeComplete_page-0547.jpg",
+"https://github.com/cjcaf1995/Strategy-Game-Theory/blob/main/Strategy-Game-Theory-179.pdf",
+"https://github.com/sktoushi/stash2/issues/39",
+"https://github.com/cjcaf1995/economics-for-investment-decision-makers/blob/main/Economics%20for%20Investment%20Decision%20Makers_page-0182.jpg",
+"https://github.com/sktoushi/stash2/issues/40",
+"https://github.com/sktoushi/stash2/issues/41",
+"https://github.com/cjcaf1995/Elements-of-Mercantile-Law/blob/main/Elements-of-Mercantile-Law_page-0318.jpg",
+"https://github.com/cjcaf1995/listening/issues/4",
+"https://github.com/cjcaf1995/public-repo/issues/1196",
+"https://github.com/cjcaf1995/public-repo/issues/1676",
+"https://github.com/cjcaf1995/Project-Management-ToolBox/blob/main/Project%20Management%20ToolBox-446.pdf",
+"https://github.com/cjcaf1995/stash/issues/790",
+"https://github.com/cjcaf1995/public-repo/issues/1061",
+"https://github.com/cjcaf1995/moneybankingfinance/blob/main/MoneyBankingInternationalFinance_page-0054.jpg",
+"https://github.com/cjcaf1995/capital-markets-financial-management/blob/main/Capital%20Markets,%20Financial%20Management_page-0400.jpg",
+"https://github.com/sktoushi/stash2/issues/46",
+"https://github.com/sktoushi/stash2/issues/47",
+"https://github.com/cjcaf1995/Financial_Accounting_IFRS-P1/blob/main/Financial_Accounting_IFRS-P1_page-0286.jpg",
+"https://github.com/sktoushi/stash2/issues/48",
+"https://github.com/cjcaf1995/public-repo/issues/3104",
+"https://sktoushi.github.io/stash-utils/240822-ikanNiYorazu.html",
+"https://sktoushi.github.io/stash-utils/240822-kotonashiniwa.html",
+"https://github.com/sktoushi/stash2/issues/50",
+"https://github.com/sktoushi/stash2/issues/51",
+"https://github.com/sktoushi/stash2/issues/52",
+"https://github.com/sktoushi/stash2/issues/53",
+"https://github.com/sktoushi/stash2/issues/54",
+"https://github.com/sktoushi/stash2/issues/55",
+"https://github.com/sktoushi/stash2/issues/56",
+"https://github.com/sktoushi/stash2/issues/57",
+"https://youtube.com/shorts/HqLK5dK6jZc?si=xuGj0q-VJQCfkKX3",
+"https://youtube.com/shorts/8l04lAM4fXw?si=hN8AWFLnHnFhR4tK",
+"https://www.instagram.com/reel/C---yizSc5q/?utm_source=ig_web_copy_link",
+"https://github.com/cjcaf1995/steve-jobs/blob/main/Steve%20Jobs-By-Walter-Isaacson-127.pdf",
+"https://github.com/cjcaf1995/games-of-strategy-dixit/blob/main/games-of-strategy-dixit-518.pdf",
+"https://github.com/cjcaf1995/Games-and-Information/blob/main/Games-and-Information-280.pdf",
+"https://github.com/sktoushi/stash2/issues/58",
+"https://github.com/cjcaf1995/Game-Theory/blob/main/Game-Theory-67.pdf",
+"https://github.com/cjcaf1995/knowledge-bank/issues/271",
+"https://github.com/cjcaf1995/elon-musk/blob/main/Elon-Musk-Walter-Isaacson-251.pdf",
+"https://github.com/cjcaf1995/Strategy-Game-Theory/blob/main/Strategy-Game-Theory-101.pdf",
+"https://github.com/cjcaf1995/Games-and-Information/blob/main/Games-and-Information-188.pdf",
+"https://github.com/sktoushi/stash2/issues/59",
+"https://github.com/cjcaf1995/stash/issues/2211",
+"https://github.com/cjcaf1995/steve-jobs/blob/main/Steve%20Jobs-By-Walter-Isaacson-78.pdf",
+"https://github.com/cjcaf1995/games-of-strategy-dixit/blob/main/games-of-strategy-dixit-436.pdf",
+"https://github.com/cjcaf1995/International-Economics/blob/main/Dominick%20Salvatore-International%20Economics_page-0272.jpg",
+"https://github.com/cjcaf1995/Guide-Scrum-Agile-Certification/blob/main/Guide-Scrum-Agile-Certification-35.pdf",
+"https://github.com/cjcaf1995/The-Basics-of-Finance/blob/main/The%20Basics%20of%20Finance_page-0373.jpg",
+"https://github.com/cjcaf1995/The-Basics-of-Finance/blob/main/The%20Basics%20of%20Finance_page-0373.jpg",
+"https://github.com/cjcaf1995/art-of-strategy/blob/main/art-of-strategy-347.pdf",
+"https://github.com/cjcaf1995/Project-Management-and-Leadership-Skills/blob/main/Project-Management-and-Leadership-Skills-37.pdf",
+"https://github.com/cjcaf1995/public-repo/issues/871",
+"https://github.com/cjcaf1995/macroeconomics/blob/main/Macroeconomics-Mankiw_page-0471.jpg",
+"https://github.com/cjcaf1995/Project-Management-Planning-and-Control/blob/main/Project-Management-Planning-and-Control-309.pdf",
+"https://github.com/cjcaf1995/The-Basics-of-Finance/blob/main/The%20Basics%20of%20Finance_page-0256.jpg",
+"https://github.com/sktoushi/stash2/issues/60",
+"https://github.com/cjcaf1995/Strategy-Game-Theory/blob/main/Strategy-Game-Theory-329.pdf",
+"https://github.com/sktoushi/stash2/issues/62",
+"https://github.com/cjcaf1995/PM-Prince2/blob/main/Prince2%20PM-233.pdf",
+"https://github.com/cjcaf1995/Scrum-The-Ultimate-Beginners-Guide/blob/main/Scrum-The-Ultimate-Beginners-Guide-57.pdf",
+"https://github.com/cjcaf1995/Game-Theory/blob/main/Game-Theory-196.pdf",
+"https://github.com/cjcaf1995/supercommunicators/blob/main/Supercommunicators_How_to_Unlock_the_Secret_Language_of_Connection_Charles_Duhigg-99.pdf",
+"https://github.com/sktoushi/stash2/issues/63",
+"https://sktoushi.github.io/stash-utils/240823-AD_AS_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Financial_Concepts_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Government_Budget_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Human_Capital_Wages_QnA_Randomizer_Body_Complete.html",
+"https://sktoushi.github.io/stash-utils/240823-Immiserizing_Growth_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Inflation_Budget_Deficits_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Pricing_Strategies_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Product_Termination_QnA_Randomizer.html",
+"https://github.com/cjcaf1995/intelligent-investor/blob/main/The_intelligent_investor-50.pdf",
+"https://github.com/cjcaf1995/capital-markets-financial-management/blob/main/Capital%20Markets,%20Financial%20Management_page-0133.jpg",
+"https://github.com/cjcaf1995/justice-sandel/blob/main/justice-sandel-99.pdf",
+"https://github.com/cjcaf1995/justice-sandel/blob/main/justice-sandel-99.pdf",
+"https://github.com/sktoushi/critical-thinking-consider-the-verdict/blob/main/critical-thinking-consider-the-verdict-344.pdf",
+"https://github.com/sktoushi/critical-thinking-consider-the-verdict/blob/main/critical-thinking-consider-the-verdict-344.pdf",
+"https://github.com/cjcaf1995/Construction-Project-Management/blob/main/Construction-Project-Management-95.pdf",
+"https://github.com/cjcaf1995/elon-musk/blob/main/Elon-Musk-Walter-Isaacson-46.pdf",
+"https://github.com/cjcaf1995/macroeconomics/blob/main/Macroeconomics-Mankiw_page-0513.jpg",
+"https://github.com/cjcaf1995/history-of-economic-thought/blob/main/History%20of%20Economic%20Thought%20-%20Modern%20Economics_page-0159.jpg",
+"https://github.com/cjcaf1995/Financial_Accounting_IFRS-P1/blob/main/Financial_Accounting_IFRS-P1_page-0286.jpg",
+"https://github.com/cjcaf1995/kanji-pictographix/blob/main/kanji-pict-o-graphix-189.pdf",
+"https://github.com/sktoushi/stash2/issues/71",
+"https://github.com/cjcaf1995/Games-and-Information/blob/main/Games-and-Information-364.pdf",
+"https://www.instagram.com/reel/C_EGFhtSQHr/?igsh=NjcxanN4dGY1NmI2",
+"https://github.com/cjcaf1995/capital-markets-financial-management/blob/main/Capital%20Markets,%20Financial%20Management_page-0741.jpg",
+"https://github.com/sktoushi/stash2/issues/72",
+"https://github.com/cjcaf1995/moneybankingfinance/blob/main/MoneyBankingInternationalFinance_page-0137.jpg",
+"https://github.com/cjcaf1995/stash/issues/1636",
+"https://github.com/cjcaf1995/tae-kim-grammar-guide/blob/main/tae-kim-grammar-guide-282.pdf",
+"https://github.com/cjcaf1995/elon-musk/blob/main/Elon-Musk-Walter-Isaacson-145.pdf",
+"https://m.youtube.com/watch?reload=9&v=TxKzqbpLi0Y&t=1800s&feature=youtu.be",
+"https://github.com/sktoushi/stash2/issues/73",
+"https://github.com/cjcaf1995/intelligent-investor/blob/main/The_intelligent_investor-254.pdf",
+"https://github.com/sktoushi/stash2/issues/74",
+"https://github.com/cjcaf1995/MAPPING-AGILE-PROJECT-MANAGEMENT-PRACTICES/blob/main/MAPPING-AGILE-PROJECT-MANAGEMENT-PRACTICES-38.pdf",
+"https://github.com/cjcaf1995/Scrum-and-XP-from-the-Trenches/blob/main/Scrum-and-XP-from-the-Trenches-39.pdf",
+"https://github.com/sktoushi/stash2/issues/75",
+"https://github.com/sktoushi/stash2/issues/77",
+"https://github.com/sktoushi/stash2/issues/76",
+"https://www.instagram.com/reel/C_HWbK8s5Li/?igsh=M3NodzQxMjBzMGcy",
+"https://www.instagram.com/reel/C8M_Q5Ug6kh/?igsh=MWNwYnc3MnM5Z3AwYQ==",
+"https://github.com/cjcaf1995/knowledge-bank/issues/319",
+"https://github.com/sktoushi/stash2/issues/78",
+"https://github.com/sktoushi/stash2/issues/78",
+"https://github.com/sktoushi/stash2/issues/79",
+"https://github.com/cjcaf1995/games-of-strategy-dixit/blob/main/games-of-strategy-dixit-383.pdf",
+"https://github.com/sktoushi/Psych-Skills-Influence-People-Mind-Control-NLP/blob/main/Psych-Skills-Influence-People-Mind-Control-NLP-183.pdf",
+"https://github.com/cjcaf1995/stash/issues/363",
+"https://github.com/cjcaf1995/PMP-guide2/blob/main/PMP-guide2-195.pdf",
+"https://github.com/sktoushi/stash2/issues/80",
+"https://www.instagram.com/reel/C_JCB7Mus7X/?igsh=ZWVoNmU1NW02YWVz",
+"https://www.instagram.com/reel/C_H7z2zvDrP/?igsh=MWR2OWc3MG1oYXdnOQ==",
+"https://github.com/sktoushi/stash2/issues/81",
+"https://github.com/cjcaf1995/code-complete/blob/main/CodeComplete_page-0207.jpg",
+"https://github.com/sktoushi/stash2/issues/82",
+"https://github.com/sktoushi/how-to-win-every-argument/blob/main/how-to-win-every-argument-136.pdf",
+"https://github.com/cjcaf1995/stash/issues/3982",
+"https://github.com/cjcaf1995/macroeconomics/blob/main/Macroeconomics-Mankiw_page-0018.jpg",
+"https://github.com/sktoushi/stash2/issues/84",
+"https://www.instagram.com/reel/C-3AEHjCYE-/?igsh=ZnF0ejZpb2Nma29s",
+"https://www.instagram.com/reel/C-r2TrCgLB4/?igsh=Z2ZvMXNkNDdycDRo",
+"https://www.instagram.com/reel/C-lHYBFCkIN/?igsh=MWRpNW4xaXI5eDVpaQ==",
+"https://github.com/cjcaf1995/art-of-strategy/blob/main/art-of-strategy-175.pdf",
+"https://github.com/cjcaf1995/Learning-Agile-Understanding-Scrum-XP-Lean-and-Kanban/blob/main/Learning-Agile-Understanding-Scrum-XP-Lean-and-Kanban-327.pdf",
+"https://github.com/cjcaf1995/Learning-Agile-Understanding-Scrum-XP-Lean-and-Kanban/blob/main/Learning-Agile-Understanding-Scrum-XP-Lean-and-Kanban-327.pdf",
+"https://www.instagram.com/reel/C_LuZrZghvY/?igsh=ZDF1MTYxZTlneXFt",
+"https://youtube.com/shorts/-qvC0ISkp1k?si=MKmIvF5eiwfQHWlm",
+"https://youtube.com/shorts/62uD9m7n5Ns?si=09l2tYsHiM4RQQX1",
+"https://github.com/sktoushi/stash2/issues/86",
+"https://github.com/cjcaf1995/Project-Risk-Management-Guidelines-Cooper/blob/main/Project-Risk-Management-Guidelines-Cooper-193.pdf",
+"https://github.com/cjcaf1995/elon-musk/blob/main/Elon-Musk-Walter-Isaacson-114.pdf",
+"https://github.com/cjcaf1995/Project-Life-Cycle-Economics/blob/main/Project-Life-Cycle-Economics-334.pdf",
+"https://github.com/sktoushi/stash2/issues/89",
+"https://github.com/cjcaf1995/resorts-management-and-operation/blob/main/Resorts_%20Management%20and%20Operation_page-0261.jpg",
+"https://github.com/cjcaf1995/warren-buffett-way/blob/main/R%20G%20Hagstrom%20-%20The%20Warren%20Buffett%20Way_page-0111.jpg",
+"https://sktoushi.github.io/stash-utils/240823-AD_AS_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Financial_Concepts_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Government_Budget_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Human_Capital_Wages_QnA_Randomizer_Body_Complete.html",
+"https://sktoushi.github.io/stash-utils/240823-Immiserizing_Growth_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Inflation_Budget_Deficits_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Pricing_Strategies_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240823-Product_Termination_QnA_Randomizer.html",
+"https://sktoushi.github.io/stash-utils/240824-kotodashi.html",
+"https://sktoushi.github.io/stash-utils/20240824-DenominatorNeglect.html",
+"https://sktoushi.github.io/stash-utils/20240824-FactorPriceDetermination.html",
+"https://sktoushi.github.io/stash-utils/20240824-JusticeTelosHonor.html",
+"https://sktoushi.github.io/stash-utils/240824-Inflation_Wealth_Redistribution.html",
+"https://sktoushi.github.io/stash-utils/240824-Japanese_Grammar_Analysis.html",
+"https://sktoushi.github.io/stash-utils/240824-Quality_Management.html",
+"https://sktoushi.github.io/stash-utils/240824-Stock_Index_Futures.html",
+"https://sktoushi.github.io/stash-utils/240824-japanese-grammar-analysis-2.html",
+"https://sktoushi.github.io/stash-utils/240824-japanese-grammar-analysis.html",
+"https://sktoushi.github.io/stash-utils/240824-japanese_sentence_analysis.html",
+"https://github.com/sktoushi/stash2/issues/90",
+"https://github.com/cjcaf1995/resorts-management-and-operation/blob/main/Resorts_%20Management%20and%20Operation_page-0261.jpg",
+"https://github.com/cjcaf1995/resorts-management-and-operation/blob/main/Resorts_%20Management%20and%20Operation_page-0261.jpg",
+"https://github.com/cjcaf1995/Elements-of-Mercantile-Law/blob/main/Elements-of-Mercantile-Law_page-0131.jpg",
+"https://github.com/sktoushi/stash2/issues/92",
+"https://github.com/sktoushi/stash2/issues/91",
+"https://www.instagram.com/reel/C9VHoFuJ6mO/?igsh=cHo2cm5xdnA0enZw",
+"https://youtu.be/2mTS57hkAUk?si=luj5EJWVU6hTmegA",
+"https://youtube.com/shorts/RXyIi_mMFRk?si=ztDF-YAeITHzedKh",
+"https://youtube.com/shorts/W55bsGFbskM?si=gmDLVLkSyN4HJDsl",
+"https://www.instagram.com/reel/C_QecBLqHFz/?igsh=bmE4NnJseTFjcno=",
+"https://www.instagram.com/reel/C8w32ZbSTcG/?igsh=c3RxdncycmI3N2sx",
+"https://github.com/sktoushi/stash2/issues/88",
+"https://github.com/cjcaf1995/aquinas-mix/issues/1",
+"https://www.instagram.com/p/C_PmRJQSwci/?igsh=MXI1bnMzb3loMW8yNA==",
+"https://github.com/cjcaf1995/intelligent-investor/blob/main/The_intelligent_investor-440.pdf",
+"https://github.com/cjcaf1995/Managerial-Economics/blob/main/Managerial%20Economics_page-0614.jpg",
+"https://github.com/cjcaf1995/Cost-Accounting-FinMgt-For-Const-PMs/blob/main/Cost-Accounting-FinMgt-For-Const-PMs-144.pdf",
+"https://github.com/cjcaf1995/games-of-strategy-dixit/blob/main/games-of-strategy-dixit-385.pdf",
+"https://github.com/sktoushi/stash2/issues/87",
+"https://github.com/cjcaf1995/stash/issues/4269",
+"https://github.com/cjcaf1995/The-Art-of-Scrum-How-Scrum-Masters-Bind-Dev-Teams/blob/main/The-Art-of-Scrum-How-Scrum-Masters-Bind-Dev-Teams-166.pdf",
+"https://youtu.be/eU1LdfbgqfA?si=IdLEzIa0yN7Fd38L",
+"https://youtube.com/shorts/ZH7f890sbpM?si=BrMHR_dYC0T2lwrE",
+"https://github.com/sktoushi/stash2/issues/93",
+"https://github.com/sktoushi/stash2/issues/99",
+"https://github.com/sktoushi/stash2/issues/98",
+"https://github.com/cjcaf1995/thinking-strategically/blob/main/thinking-strategically-44.pdf",
+"https://github.com/cjcaf1995/The-Art-of-Scrum-How-Scrum-Masters-Bind-Dev-Teams/blob/main/The-Art-of-Scrum-How-Scrum-Masters-Bind-Dev-Teams-58.pdf",
+"https://github.com/sktoushi/stash2/issues/97",
+"https://github.com/sktoushi/stash2/issues/96",
+"https://github.com/sktoushi/stash2/issues/95",
+"https://github.com/sktoushi/stash2/issues/94",
+"https://github.com/sktoushi/stash2/issues/94",
+"https://github.com/cjcaf1995/steve-jobs/blob/main/Steve%20Jobs-By-Walter-Isaacson-443.pdf",
+"https://github.com/cjcaf1995/The-Lean-Six-Sigma-Black-Belt-Handbook/blob/main/The-Lean-Six-Sigma-Black-Belt-Handbook-106.pdf",
+"https://github.com/cjcaf1995/moneybankingfinance/blob/main/MoneyBankingInternationalFinance_page-0173.jpg",
+"https://github.com/cjcaf1995/Business-Analysis-Methodology-Lean/blob/main/Business-Analysis-Methodology-Lean-44.pdf",
+"https://github.com/cjcaf1995/Business-Analysis-Methodology-Lean/blob/main/Business-Analysis-Methodology-Lean-20.pdf",
+"https://github.com/cjcaf1995/Managerial-Economics/blob/main/Managerial%20Economics_page-0659.jpg",
+"https://github.com/cjcaf1995/a-theory-of-justice-rawls/blob/main/a-theory-of-justice-rawls-491.pdf",
+"https://github.com/sktoushi/stash2/issues/102",
+"https://github.com/sktoushi/stash2/issues/105",
+"https://github.com/sktoushi/stash2/issues/104",
+"https://github.com/sktoushi/stash2/issues/103",
+"https://github.com/sktoushi/sutashu/issues/14",
+"https://github.com/cjcaf1995/stash/issues/3690",
+"https://github.com/cjcaf1995/Scrum-The-Ultimate-Beginners-Guide/blob/main/Scrum-The-Ultimate-Beginners-Guide-52.pdf",
+"https://github.com/cjcaf1995/stash/issues/349",
+"https://github.com/sktoushi/stash2/issues/111",
+"https://github.com/sktoushi/stash2/issues/110",
+"https://github.com/sktoushi/stash2/issues/108",
+"https://github.com/sktoushi/stash2/issues/109",
+"https://github.com/cjcaf1995/a-theory-of-justice-rawls/blob/main/a-theory-of-justice-rawls-154.pdf",
+"https://github.com/cjcaf1995/Strategy-Game-Theory/blob/main/Strategy-Game-Theory-113.pdf",
+"https://github.com/sktoushi/stash2/issues/107",
+"https://www.instagram.com/reel/C8an2MniqZ6/?igsh=czcwY2FydWdraTNj",
+"https://github.com/sktoushi/stash2/issues/106",
+"https://youtube.com/shorts/TpUDERYC4tU?si=PoCr0UKd2ROl1eCr",
+"https://github.com/cjcaf1995/macroeconfinance/blob/main/MacroeconomicsAndTheFinancialSystem_page-0350.jpg",
+"https://github.com/cjcaf1995/macroeconfinance/blob/main/MacroeconomicsAndTheFinancialSystem_page-0081.jpg",
+"https://github.com/cjcaf1995/Scrum-For-Dummies/blob/main/Scrum-For-Dummies-134.pdf",
+"https://github.com/sktoushi/stash2/issues/101",
+"https://github.com/cjcaf1995/Strategy-Game-Theory/blob/main/Strategy-Game-Theory-363.pdf",
+"https://github.com/sktoushi/stash2/issues/100",
+"https://github.com/sktoushi/stash2/issues/129",
+"https://github.com/sktoushi/stash2/issues/128",
+"https://github.com/sktoushi/stash2/issues/127",
+"https://github.com/sktoushi/stash2/issues/126",
+"https://github.com/sktoushi/stash2/issues/125",
+"https://github.com/sktoushi/stash2/issues/124",
+"https://github.com/sktoushi/stash2/issues/123",
+"https://github.com/sktoushi/stash2/issues/122",
+"https://github.com/sktoushi/stash2/issues/121",
+"https://github.com/sktoushi/stash2/issues/120",
+"https://github.com/sktoushi/stash2/issues/119",
+"https://github.com/sktoushi/stash2/issues/118",
+"https://github.com/sktoushi/stash2/issues/117",
+"https://github.com/sktoushi/stash2/issues/116",
+"https://github.com/cjcaf1995/stash/issues/2822",
+"https://github.com/sktoushi/stash2/issues/115",
+"https://github.com/cjcaf1995/Managerial-Economics/blob/main/Managerial%20Economics_page-0121.jpg",
+"https://github.com/cjcaf1995/stash/issues/2822",
+"https://github.com/sktoushi/stash2/issues/114",
+"https://www.instagram.com/reel/C_BLMrKOg0f/?igsh=cGcxOGZxM3hsMDdr",
+"https://github.com/sktoushi/stash2/issues/113",
+"https://github.com/sktoushi/stash2/issues/112",
+"https://github.com/cjcaf1995/public-repo/issues/230",
+"https://github.com/sktoushi/stash2/issues/132",
+"https://github.com/cjcaf1995/stash/issues/4393",
+"https://github.com/cjcaf1995/Construction-Project-Management/blob/main/Construction-Project-Management-95.pdf",
+"https://github.com/sktoushi/stash2/issues/133",
+"https://github.com/sktoushi/stash2/issues/132",
+"https://github.com/cjcaf1995/niz-mix/blob/main/Nietzsche-Beyond-Good-and-Evil-192.jpg",
+"https://github.com/cjcaf1995/stash/issues/130",
+"https://github.com/sktoushi/stash2/issues/131",
+"https://github.com/sktoushi/stash2/issues/135",
+"https://github.com/sktoushi/stash2/issues/135",
+"https://github.com/sktoushi/stash2/issues/135",
+"https://github.com/sktoushi/stash2/issues/39",
+"https://github.com/cjcaf1995/Managerial-Economics/blob/main/Managerial%20Economics_page-0347.jpg",
+"https://github.com/cjcaf1995/stash/issues/4299",
+"https://github.com/cjcaf1995/capital-markets-financial-management/blob/main/Capital%20Markets,%20Financial%20Management_page-0425.jpg",
+"https://github.com/sktoushi/stash2/issues/151",
+"https://github.com/sktoushi/stash2/issues/150",
+"https://github.com/sktoushi/stash2/issues/152",
+"https://github.com/sktoushi/sutashu/issues/24",
+"https://github.com/cjcaf1995/stash/issues/4395",
+"https://github.com/cjcaf1995/Games-and-Information/blob/main/Games-and-Information-310.pdf",
+"https://github.com/cjcaf1995/Games-and-Information/blob/main/Games-and-Information-310.pdf",
+"https://github.com/cjcaf1995/stash/issues/4395",
+"https://github.com/sktoushi/stash2/issues/155",
+"https://github.com/cjcaf1995/Cost-Accounting-FinMgt-For-Const-PMs/blob/main/Cost-Accounting-FinMgt-For-Const-PMs-97.pdf",
+"https://github.com/sktoushi/sutashu/issues/25",
+"https://github.com/cjcaf1995/stash/issues/4394",
+"https://github.com/cjcaf1995/The-Lean-Six-Sigma-Black-Belt-Handbook/blob/main/The-Lean-Six-Sigma-Black-Belt-Handbook-112.pdf",
+"https://youtu.be/kJyz0KtUUiU?si=-NSrfiA0NJR5SbqT",
+"https://www.instagram.com/reel/C-85-VoylHr/?igsh=aHplcWxvMHV1MzI2",
+"https://youtube.com/shorts/Cz2ny1MemPg?si=Dou5r6vrsgxeJ0AU",
+"https://youtube.com/shorts/Wo_XT1T5DJk?si=yx4uHpmSztQeIenu",
+"https://youtube.com/shorts/w7ESsxl2IzM?si=3__Ubj_rywHJfSOk",
+"https://github.com/sktoushi/stash2/issues/136",
+"https://github.com/sktoushi/stash2/issues/134",
+"https://github.com/sktoushi/critical-thinking-consider-the-verdict/blob/main/critical-thinking-consider-the-verdict-71.pdf",
+"https://github.com/sktoushi/stash2/blob/ref2409/business_meetings.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/cleaning_services.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/real_estate_deals.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/imports_exports.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/family_values.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/witness_protection.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/neighborhood_watch.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/banking_services.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/contracts.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/dispute_resolution.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/retirement_plan.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Business_Meetings_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Cleaning_Services_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Real_Estate_Deals_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Imports_and_Exports_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Family_Values_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Witness_Protection_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Neighborhood_Watch_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Banking_Services_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Contracts_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Dispute_Resolution_and_Signaling.txt",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Final_Retirement_Plan_and_Signaling.txt",
+"https://github.com/cjcaf1995/Managerial-Economics/blob/main/Managerial%20Economics_page-0786.jpg",
+"https://www.instagram.com/reel/C-qYXzzRxyp/?igsh=MWMwMzlra280cXF0bg==",
+"https://www.instagram.com/reel/C-o0fzwyEbO/?igsh=MXJlMTdoOGV6NjBxbg==",
+"https://www.instagram.com/reel/C_owRFJiNJq/?igsh=OGtma2lkOHVwcjd2",
+"https://youtube.com/shorts/435BWUDCTzA?si=G6dOW7r6DadYpeLg",
+"https://youtube.com/shorts/BZ-ylRcJm_Y?si=wrvNu9v_tVpxrDDz",
+"https://youtube.com/shorts/B__mFW63IDs?si=UNSLfzyFMRXImCIK",
+"https://www.instagram.com/reel/C_iyOCTvJml/?igsh=OXE0dWp1ZHdrMXA0",
+"https://www.instagram.com/reel/C_hqmGSOp4j/?igsh=cGV6ZWdueDBldnNt",
+"https://www.instagram.com/reel/C_FJRfogIwF/?igsh=cmNyaDYwaG55aWJm",
+"https://www.instagram.com/reel/C9BgMXLNz7d/?igsh=MWsyeGdpd25yc2o0Mg==",
+"https://www.instagram.com/reel/C_ajxx7iABc/?igsh=c3lmNWoxdDQ1YXhx",
+"https://www.instagram.com/reel/C_lo7GuPy2b/?igsh=MTN0ZDFxZjMxdzh2dQ==",
+"https://www.instagram.com/reel/C9KETv5xBcI/?igsh=emZ4YXd4cmRiYWR2",
+"https://www.instagram.com/reel/C_nTCogIrKc/?igsh=MTU2ZWhxcmU5cXluZQ==",
+"https://www.instagram.com/reel/C_b93TFpWrQ/?igsh=MWgzbG5tZGl4ZzhsMw==",
+"https://www.instagram.com/reel/C_N3GmsgahO/?igsh=MXZmNzhndHR0Mm01aA==",
+"https://www.instagram.com/reel/C8V-0GlC8qi/?igsh=NHV6czA0b2g2eTFy",
+"https://www.instagram.com/reel/C_nvArQKH6Y/?igsh=Z3Y0aXpjcXphNHJ6",
+"https://www.instagram.com/reel/C_MdBSGvVXo/?igsh=d2xmcjQzNmRzcDEz",
+"https://github.com/sktoushi/stash2/issues/189",
+"https://github.com/sktoushi/critical-thinking-consider-the-verdict/blob/main/critical-thinking-consider-the-verdict-344.pdf",
+"https://www.instagram.com/reel/C_m1UECiXXV/?igsh=MWtheW9odXd6czhvMw==",
+"https://www.instagram.com/reel/C9CpWNlNudY/?igsh=Y3RlcjFzbnk0cGs0",
+"https://takoboto.jp/?w=1250880",
+"https://takoboto.jp/?w=1513970",
+"https://takoboto.jp/?w=1555970",
+"https://takoboto.jp/?w=1605340",
+"https://takoboto.jp/?w=2836285",
+"https://takoboto.jp/?w=2836285",
+"https://www.instagram.com/reel/C9O2fcOM9oI/?igsh=MTV0bWU0aGx3ZWo5aw==",
+"https://www.instagram.com/reel/C82xkpvOVdP/?igsh=MTNvY3ltcnNxY3llbw==",
+"https://www.instagram.com/reel/C8QXxgXywtZ/?igsh=c2ZuMDBjcjU5a213",
+"https://www.instagram.com/reel/C9Sm_KWpqgJ/?igsh=MXppNDBrN2o5eDcw",
+"https://www.instagram.com/reel/C5gTMUGAEBy/?igsh=NzB4MHRkcGR0cWFk",
+"https://www.instagram.com/reel/C9MyZnTO_D4/?igsh=c3F6MXE1am9scnNr",
+"https://www.instagram.com/reel/C_ltlYdBquF/?igsh=ajRvY3hkaDQ5YW9r",
+"https://www.instagram.com/reel/C_BQW18P4Li/?igsh=MWN4dDFsZGcyMjV1Zg==",
+"https://www.instagram.com/reel/C_odwQEg4Lj/?igsh=ZXZnbjZ3ODNwN2x1",
+"https://github.com/cjcaf1995/games-of-strategy-dixit/blob/main/games-of-strategy-dixit-733.pdf",
+"https://github.com/cjcaf1995/stash/issues/4347",
+"https://github.com/cjcaf1995/history-of-economic-thought/blob/main/History%20of%20Economic%20Thought%20-%20Modern%20Economics_page-0159.jpg",
+"https://github.com/sktoushi/stash2/blob/ref2409/240904-1350-Neighborhood_Watch_and_Signaling.txt",
+"https://github.com/cjcaf1995/PM-step-by-step/blob/main/PM-step-by-step-180.pdf",
+"https://github.com/cjcaf1995/capital-markets-financial-management/blob/main/Capital%20Markets,%20Financial%20Management_page-0445.jpg",
+"https://github.com/cjcaf1995/Game-Theory/blob/main/Game-Theory-183.pdf",
+"https://github.com/cjcaf1995/steve-jobs/blob/main/Steve%20Jobs-By-Walter-Isaacson-254.pdf",
+"https://github.com/cjcaf1995/a-theory-of-justice-rawls/blob/main/a-theory-of-justice-rawls-515.pdf",
+"https://github.com/cjcaf1995/Managerial-Economics/blob/main/Managerial%20Economics_page-0633.jpg",
+"https://github.com/cjcaf1995/Principles-of-Agricultural-Economics/blob/main/Principles%20of%20Agricultural%20Economics_page-0312.jpg",
+"https://www.instagram.com/reel/C-2jawZoE0p/?igsh=Z3kzdXhqdjlkYmJz",
+"https://www.instagram.com/reel/C7dyVa8IwxA/?igsh=MTdibXRld3ZwZmhxMw==",
+"https://www.instagram.com/reel/C8an2MniqZ6/?igsh=czcwY2FydWdraTNj",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240909-notes-1-14.pdf&startIdx=1&endIdx=14",
+"https://github.com/sktoushi/stash2/issues/248",
+"https://github.com/cjcaf1995/stash/issues/3040",
+"https://github.com/cjcaf1995/Strategy-Game-Theory/blob/main/Strategy-Game-Theory-363.pdf",
+"https://github.com/cjcaf1995/stash/issues/161",
+"https://github.com/cjcaf1995/Strategy-Game-Theory/blob/main/Strategy-Game-Theory-329.pdf",
+"https://github.com/sktoushi/stash2/issues/259",
+"https://github.com/sktoushi/The-Secrets-of-Your-Handwriting/blob/main/The-Secrets-of-Your-Handwriting-113.pdf",
+"https://github.com/sktoushi/The-Secrets-of-Your-Handwriting/blob/main/The-Secrets-of-Your-Handwriting-83.pdf",
+"https://github.com/sktoushi/The-Secrets-of-Your-Handwriting/blob/main/The-Secrets-of-Your-Handwriting-82.pdf",
+"https://github.com/cjcaf1995/Principles-of-Agricultural-Economics/blob/main/Principles%20of%20Agricultural%20Economics_page-0224.jpg",
+"https://sacred-texts.com/bud/wov/wov25.htm",
+"https://github.com/cjcaf1995/a-theory-of-justice-rawls/blob/main/a-theory-of-justice-rawls-515.pdf",
+"https://github.com/sktoushi/stash2/issues/261",
+"https://github.com/cjcaf1995/influence-cialdini/blob/main/Influence%20The%20Psychology%20of%20Persuasion_page-0130.jpg",
+"https://github.com/sktoushi/stash2/issues/144",
+"https://github.com/cjcaf1995/piagetmix/blob/main/language-and-thought-in-the-child-263.jpg"
+];
+
+function updateCounter() {
+fetch(UPDATE_VISITOR_API, { mode: 'no-cors' })
+    .then(response => {
+	// Since we can't read the response due to no-cors, you can handle it here if necessary
+	console.log('Request completed');
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function getSecureRandomNumber() {
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  return array[0] / (0xFFFFFFFF + 1);
+}
+	
+function scalerFunction(startIndex, endIndex) {
+    let partitions = [];
+    let step = Math.floor((endIndex - startIndex + 1) / 21);
+    let remainder = (endIndex - startIndex + 1) % 21;
+
+    for (let i = 0; i < 21; i++) {
+        let start = startIndex + i * step + Math.min(i, remainder);
+        let end = startIndex + (i + 1) * step + Math.min(i + 1, remainder) - 1;
+        partitions.push([start, end]);
+    }
+
+    // Define the frequencyArray
+    let frequencyArray1 = [0.67, 0.67, 1.34, 2.01, 3.35, 5.36, 8.71, 14.07, 22.78, 36.85, 59.63, 96.48, 154.61, 250.86, 407.95, 663.61, 1071.54, 1735.15, 2806.69, 4534.23, 10000];
+    let rand1 = getSecureRandomNumber();
+    let rand2 = getSecureRandomNumber();
+    if (rand1 < rand2) {
+	shuffleArray(frequencyArray1);
+    }
+    let frequencyArray = [];
+    for (let i = 0; i < frequencyArray1.length; i++) {
+	if (getSecureRandomNumber() <= 0.50) {
+	    frequencyArray[i] = frequencyArray1[i] * getSecureRandomNumber();
+	} else {
+	    frequencyArray[i] = frequencyArray1[i] * (getSecureRandomNumber() + 1);
+	}
+    }
+
+    // Function to select a random partition based on frequencyArray
+    function pickRandomPartition() {
+        let total = frequencyArray.reduce((a, b) => a + b, 0); // Calculate the sum of all frequencies
+        let random = getSecureRandomNumber() * total; // Generate a random number up to the sum
+        let cumulative = 0;
+
+        for (let i = 0; i < frequencyArray.length; i++) {
+            cumulative += frequencyArray[i];
+            if (random < cumulative) {
+                return partitions[i];
+            }
+        }
+    }
+
+    // Pick a random partition based on the frequency array
+    let selectedPartition = pickRandomPartition();
+
+    return {
+        partitions: partitions,
+        selectedPartition: selectedPartition
+    };
+}
+
+function getRandomIndexByFrequency(frequencyArray) {
+	// Calculate the cumulative sum of frequencies 
+	const cumulativeSum = [];
+	let sum = 0;
+	for (const freq of frequencyArray) {
+		sum += freq;
+		cumulativeSum.push(sum);
+	}
+	// Generate a random number between 0 and the total sum 
+	const randomNum = Math.floor(getSecureRandomNumber() * sum);
+	// Find the index corresponding to the random number 
+	for (let i = 0; i < cumulativeSum.length; i++) {
+		if (randomNum < cumulativeSum[i]) {
+			return i;
+		}
+	}
+	// If something goes wrong (unlikely), return a fallback index (e.g., 0) 
+	return 1;
+}
+
+function getSeventhDecimalDigit() {
+    // Generate a random number and convert it to a string
+    const randomStr = getSecureRandomNumber().toString();
+    
+    // Check if there are at least 8 characters in the string ("0.xxxxxxx")
+    if (randomStr.length <= 8) {
+    // If not, generate another random number until it is long enough
+    return getSeventhDecimalDigit();
+    }
+    
+    // Extract the seventh decimal place (index 8 due to '0.' at the start)
+    const seventhDecimal = randomStr.charAt(8);
+    
+    // Return the seventh decimal as a character
+    return seventhDecimal;
+}
+
+function randomIntFromInterval(min, max) { // min and max included 
+    return Math.floor(getSecureRandomNumber() * (Number(max) - Number(min) + 1)) + Number(min);
+}
+
+function randomIntFromInterval2(min, max) { // min and max included 
+  return Math.floor(getSecureRandomNumber() * (max - min + 1) + min)
+}
+
+function randomRangeFromInterval3(min, max) { // min and max included 
+  const total = max - min;
+  const part = Math.trunc(total / 21);
+  let start = min;
+  let frequencyArr2 = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 4, 7, 11, 17, 28, 44, 72, 116, 187];
+  let frequencyArr = [
+  1, 2, 3, 1, // 1 is the 3rd Fibonacci number
+  4, 5, 6, 2, // 2 is the 4th Fibonacci number
+  7, 8, 9, 3, // 3 is the 5th Fibonacci number
+  10, 11, 12, 5, // 5 is the 6th Fibonacci number
+  13, 14, 15, 8, // 8 is the 7th Fibonacci number
+  16, 17, 18, 13, // 13 is the 8th Fibonacci number
+  19, 20, 21
+];
+
+  if (getSecureRandomNumber() <= 0.33) {
+      frequencyArr = frequencyArr2;
+  }
+  
+  let multiple = getSeventhDecimalDigit();
+  
+  let resultArr = [];
+  
+  for(let i = 0; i < 21; i++) {
+      let tmpArrElement = [start, start + part];
+      for (let zzz = 0; zzz < frequencyArr[i]; zzz++) {
+          resultArr.push(tmpArrElement);
+      }
+      start = start + part;
+  }
+  let newMax = resultArr.length + 1;
+  let newMin = 1;
+  let randIdx = Math.floor(getSecureRandomNumber() * (newMax - newMin + 1) + newMin);
+  return resultArr[randIdx];
+}
+
+openStuff = function () {
+    
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const repository = urlParams.get('repository');
+    const username = urlParams.get('username') || "cjcaf1995";
+    // const startIndex = Number(urlParams.get('startIndex'));
+    const startIndex = 1;
+    // const endIndex = Number(urlParams.get('endIndex'));
+    const endIndex = links2.length;
+    // let randomInt = randomIntFromInterval2(startIndex, endIndex);
+    // window.open("https://github.com/cjcaf1995/" + repository + "/issues/" + randomInt);
+    // let randomRange = randomRangeFromInterval3(startIndex, endIndex);
+    // let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
+    const selectedPartition = scalerFunction(startIndex, endIndex)["selectedPartition"];
+    let randomInt = randomIntFromInterval2(selectedPartition[0], selectedPartition[1])
+    window.open(links2[randomInt - 1]);
+};
+
+window.onload = function() {
+    // updateCounter();
+    document.getElementById('randomButton').click();
+}
+
+econRated = function () {
+    
+    let url = 'https://raw.githubusercontent.com/cjcaf1995/info/main/limits.js';
+
+    fetch(url)
+    .then(res => res.json())
+    .then(useValueForEconRated)
+    .catch(err => { throw err });    
+};
+
+async function useValueForEconRated(value) {
+
+    var maxOf1s = value["skills0915OneStarMax"];
+    var maxOf2s = value["skills0915TwoStarMax"];
+    var maxOf3s = value["skills0915ThreeStarMax"];
+    var maxOf4s = value["skills0915FourStarMax"];
+    var maxOf5s = value["skills0915FiveStarMax"];
+
+	var buckets = [];
+	var probabilityOf1s = 9;
+	var probabilityOf2s = 13;
+	var probabilityOf3s = 17;
+	var probabilityOf4s = 25;
+	var probabilityOf5s = 36;
+    
+    for (let i = 0; i < probabilityOf1s; i++) {
+      buckets.push(1);
+    }
+    for (let i = 0; i < probabilityOf2s; i++) {
+      buckets.push(2);
+    }
+    for (let i = 0; i < probabilityOf3s; i++) {
+      buckets.push(3);
+    }
+    for (let i = 0; i < probabilityOf4s; i++) {
+      buckets.push(4);
+    }
+    for (let i = 0; i < probabilityOf5s; i++) {
+      buckets.push(5);
+    }
+    
+    var randIdx = getRandomNumber(uuidv4()) % buckets.length;
+    randIdx = parseInt(randIdx, 10);
+    
+    var chosenBucket = [];
+    
+    if (buckets[randIdx] === 1) {
+        for (let i = 1; i <= maxOf1s; i++) {
+          chosenBucket.push(i);
+        }
+    	shuffleArray(chosenBucket);
+        randIdx = getRandomNumber(uuidv4()) % chosenBucket.length;
+        randIdx = parseInt(randIdx, 10);
+        window.open('https://github.com/cjcaf1995/skills0915-one-star/issues/' + chosenBucket[randIdx]);
+    } else if (buckets[randIdx] === 2) {
+        for (let i = 1; i <= maxOf2s; i++) {
+          chosenBucket.push(i);
+        }
+    	shuffleArray(chosenBucket);
+        randIdx = getRandomNumber(uuidv4()) % chosenBucket.length;
+        randIdx = parseInt(randIdx, 10);
+        window.open('https://github.com/cjcaf1995/skills0915-two-star/issues/' + chosenBucket[randIdx]);
+    } else if (buckets[randIdx] === 3) {
+        for (let i = 1; i <= maxOf3s; i++) {
+          chosenBucket.push(i);
+        }
+    	shuffleArray(chosenBucket);
+        randIdx = getRandomNumber(uuidv4()) % chosenBucket.length;
+        randIdx = parseInt(randIdx, 10);
+        window.open('https://github.com/cjcaf1995/skills0915-three-star/issues/' + chosenBucket[randIdx]);
+    } else if (buckets[randIdx] === 4) {
+        for (let i = 1; i <= maxOf4s; i++) {
+          chosenBucket.push(i);
+        }
+    	shuffleArray(chosenBucket);
+        randIdx = getRandomNumber(uuidv4()) % chosenBucket.length;
+        randIdx = parseInt(randIdx, 10);
+        window.open('https://github.com/cjcaf1995/skills0915-four-star/issues/' + chosenBucket[randIdx]);
+    } else if (buckets[randIdx] === 5) {
+        for (let i = 1; i <= maxOf5s; i++) {
+          chosenBucket.push(i);
+        }
+    	shuffleArray(chosenBucket);
+        randIdx = getRandomNumber(uuidv4()) % chosenBucket.length;
+        randIdx = parseInt(randIdx, 10);
+        window.open('https://github.com/cjcaf1995/skills0915-five-star/issues/' + chosenBucket[randIdx]);
+    }
+
+}
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(getSecureRandomNumber() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+}
+
+function uuidv4() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}
+
+function getNumberEquivalent(strChar) {
+    let retVal = 0;
+    switch (strChar) {
+      case 'a':
+        retVal = 1;
+        break;
+      case 'b':
+        retVal = 2;
+        break;
+      case 'c':
+        retVal = 3;
+        break;
+      case 'd':
+        retVal = 4;
+        break;
+      case 'e':
+        retVal = 5;
+        break;
+      case 'f':
+        retVal = 6;
+        break;
+      case 'g':
+        retVal = 7;
+        break;
+      case 'h':
+        retVal = 8;
+        break;
+      case 'i':
+        retVal = 9;
+        break;
+      case 'j':
+        retVal = 10;
+        break;
+      case 'k':
+        retVal = 11;
+        break;
+      case 'l':
+        retVal = 12;
+        break;
+      case 'm':
+        retVal = 13;
+        break;
+      case 'n':
+        retVal = 14;
+        break;
+      case 'o':
+        retVal = 15;
+        break;
+      case 'p':
+        retVal = 16;
+        break;
+      case 'q':
+        retVal = 17;
+        break;
+      case 'r':
+        retVal = 18;
+        break;
+      case 's':
+        retVal = 19;
+        break;
+      case 't':
+        retVal = 20;
+        break;
+      case 'u':
+        retVal = 21;
+        break;
+      case 'v':
+        retVal = 22;
+        break;
+      case 'w':
+        retVal = 23;
+        break;
+      case 'x':
+        retVal = 24;
+        break;
+      case 'y':
+        retVal = 25;
+        break;
+      case 'z':
+        retVal = 26;
+        break;
+      default:
+        break;
+    }
+    return retVal;
+}
+
+function getRandomNumber(uuidString) {
+    let uuidWithoutDash = uuidString.replaceAll("-", "");
+    var retVal = 0
+    var char01 = uuidWithoutDash.charAt(1 - 1);
+    if (/^\d+$/.test(char01)) {
+        retVal = retVal + Number(char01);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char01));
+    }
+	
+    var char02 = uuidWithoutDash.charAt(2 - 1);
+    if (/^\d+$/.test(char02)) {
+        retVal = retVal + Number(char02);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char02));
+    }
+	
+    var char03 = uuidWithoutDash.charAt(3 - 1);
+    if (/^\d+$/.test(char03)) {
+        retVal = retVal + Number(char03);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char03));
+    }
+	
+    var char04 = uuidWithoutDash.charAt(4 - 1);
+    if (/^\d+$/.test(char04)) {
+        retVal = retVal + Number(char04);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char04));
+    }
+	
+    var char05 = uuidWithoutDash.charAt(5 - 1);
+    if (/^\d+$/.test(char05)) {
+        retVal = retVal + Number(char05);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char05));
+    }
+	
+    var char06 = uuidWithoutDash.charAt(6 - 1);
+    if (/^\d+$/.test(char06)) {
+        retVal = retVal + Number(char06);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char06));
+    }
+	
+    var char07 = uuidWithoutDash.charAt(7 - 1);
+    if (/^\d+$/.test(char07)) {
+        retVal = retVal + Number(char07);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char07));
+    }
+	
+    var char08 = uuidWithoutDash.charAt(8 - 1);
+    if (/^\d+$/.test(char08)) {
+        retVal = retVal + Number(char08);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char08));
+    }
+	
+    var char09 = uuidWithoutDash.charAt(9 - 1);
+    if (/^\d+$/.test(char09)) {
+        retVal = retVal + Number(char09);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char09));
+    }
+	
+    var char10 = uuidWithoutDash.charAt(10 - 1);
+    if (/^\d+$/.test(char10)) {
+        retVal = retVal + Number(char10);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char10));
+    }
+	
+    var char11 = uuidWithoutDash.charAt(11 - 1);
+    if (/^\d+$/.test(char11)) {
+        retVal = retVal + Number(char11);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char11));
+    }
+	
+    var char12 = uuidWithoutDash.charAt(12 - 1);
+    if (/^\d+$/.test(char12)) {
+        retVal = retVal + Number(char12);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char12));
+    }
+	
+    var char13 = uuidWithoutDash.charAt(13 - 1);
+    if (/^\d+$/.test(char13)) {
+        retVal = retVal + Number(char13);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char13));
+    }
+	
+    var char14 = uuidWithoutDash.charAt(14 - 1);
+    if (/^\d+$/.test(char14)) {
+        retVal = retVal + Number(char14);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char14));
+    }
+	
+    var char15 = uuidWithoutDash.charAt(15 - 1);
+    if (/^\d+$/.test(char15)) {
+        retVal = retVal + Number(char15);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char15));
+    }
+	
+    var char16 = uuidWithoutDash.charAt(16 - 1);
+    if (/^\d+$/.test(char16)) {
+        retVal = retVal + Number(char16);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char16));
+    }
+	
+    var char17 = uuidWithoutDash.charAt(17 - 1);
+    if (/^\d+$/.test(char17)) {
+        retVal = retVal + Number(char17);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char17));
+    }
+	
+    var char18 = uuidWithoutDash.charAt(18 - 1);
+    if (/^\d+$/.test(char18)) {
+        retVal = retVal + Number(char18);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char18));
+    }
+	
+    var char19 = uuidWithoutDash.charAt(19 - 1);
+    if (/^\d+$/.test(char19)) {
+        retVal = retVal + Number(char19);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char19));
+    }
+	
+    var char20 = uuidWithoutDash.charAt(20 - 1);
+    if (/^\d+$/.test(char20)) {
+        retVal = retVal + Number(char20);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char20));
+    }
+	
+    var char21 = uuidWithoutDash.charAt(21 - 1);
+    if (/^\d+$/.test(char21)) {
+        retVal = retVal + Number(char21);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char21));
+    }
+	
+    var char22 = uuidWithoutDash.charAt(22 - 1);
+    if (/^\d+$/.test(char22)) {
+        retVal = retVal + Number(char22);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char22));
+    }
+	
+    var char23 = uuidWithoutDash.charAt(23 - 1);
+    if (/^\d+$/.test(char23)) {
+        retVal = retVal + Number(char23);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char23));
+    }
+	
+    var char24 = uuidWithoutDash.charAt(24 - 1);
+    if (/^\d+$/.test(char24)) {
+        retVal = retVal + Number(char24);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char24));
+    }
+	
+    var char25 = uuidWithoutDash.charAt(25 - 1);
+    if (/^\d+$/.test(char25)) {
+        retVal = retVal + Number(char25);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char25));
+    }
+	
+    var char26 = uuidWithoutDash.charAt(26 - 1);
+    if (/^\d+$/.test(char26)) {
+        retVal = retVal + Number(char26);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char26));
+    }
+	
+    var char27 = uuidWithoutDash.charAt(27 - 1);
+    if (/^\d+$/.test(char27)) {
+        retVal = retVal + Number(char27);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char27));
+    }
+	
+    var char28 = uuidWithoutDash.charAt(28 - 1);
+    if (/^\d+$/.test(char28)) {
+        retVal = retVal + Number(char28);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char28));
+    }
+	
+    var char29 = uuidWithoutDash.charAt(29 - 1);
+    if (/^\d+$/.test(char29)) {
+        retVal = retVal + Number(char29);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char29));
+    }
+	
+    var char30 = uuidWithoutDash.charAt(30 - 1);
+    if (/^\d+$/.test(char30)) {
+        retVal = retVal + Number(char30);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char30));
+    }
+	
+    var char31 = uuidWithoutDash.charAt(31 - 1);
+    if (/^\d+$/.test(char31)) {
+        retVal = retVal + Number(char31);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char31));
+    }
+	
+    var char32 = uuidWithoutDash.charAt(32 - 1);
+    if (/^\d+$/.test(char32)) {
+        retVal = retVal + Number(char32);
+    } else {
+        retVal = retVal + Number(getNumberEquivalent(char32));
+    }
+    
+    return ((retVal * 3485038 * Math.floor(getSecureRandomNumber() * 100)) + (new Date().getFullYear() + (new Date().getMonth() + 1) + new Date().getDay() + new Date().getTime())) % 100;
+}
+
+</script>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<div style="text-align:center">
+   <button id="randomButton" onclick="openStuff();" >RDR</button>
+   <button id="econRated" onclick="econRated();" class="btn btn-success btn-lg">econRated</button>
+</div>
+
+</body>
+</html>
