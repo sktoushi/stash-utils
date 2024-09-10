@@ -162,6 +162,7 @@ openStuff = function () {
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
     const repository = urlParams.get('repository');
+    const username = urlParams.get('username') || "cjcaf1995";
     const startIndex = Number(urlParams.get('startIndex'));
     const endIndex = Number(urlParams.get('endIndex'));
     // let randomInt = randomIntFromInterval2(startIndex, endIndex);
@@ -170,7 +171,7 @@ openStuff = function () {
     // let randomInt = randomIntFromInterval2(randomRange[0], randomRange[1]);
     const selectedPartition = scalerFunction(startIndex, endIndex)["selectedPartition"];
     let randomInt = randomIntFromInterval2(selectedPartition[0], selectedPartition[1])
-    window.open("https://github.com/cjcaf1995/" + repository + "/issues/" + randomInt);
+    window.open("https://github.com/" + username + "/" + repository + "/issues/" + randomInt);
 };
 
 window.onload = function() {
