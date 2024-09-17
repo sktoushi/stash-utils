@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Issue Randomizer</title>
+    <script>
+        function getURLParams() {
+            const params = new URLSearchParams(window.location.search);
+            const username = params.get('username');
+            const repository = params.get('repository');
+            const issueNumbers = params.get('issueNumbers');
+
+            if (!username || !repository || !issueNumbers) {
+                alert('Missing required URL parameters.');
+                return null;
+            }
+
+            const issueList = issueNumbers.split(',').map(Number).filter(num => !isNaN(num));
+
+            if (issueList.length === 0) {
+                alert('No valid issue numbers found.');
+                return null;
+            }
+
+            // Randomly select an issue number
+            const randomIssue = issueList[Math.floor(Math.random() * issueList.length)];
+
+            // Construct the GitHub issue URL
+            const url = `https://github.com/${username}/${repository}/issues/${randomIssue}`;
+
+            // Open the issue in a new window
+            window.open(url, '_blank');
+        }
+    </script>
+</head>
+<body onload="getURLParams()">
+    <h1>GitHub Issue Randomizer</h1>
+    <p>Randomizing and redirecting to a random issue...</p>
+</body>
+</html>
