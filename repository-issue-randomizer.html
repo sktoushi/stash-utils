@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GitHub Issue Randomizer</title>
     <script>
+
+        function getSecureRandomNumber() {
+          const array = new Uint32Array(1);
+          window.crypto.getRandomValues(array);
+          return array[0] / (0xFFFFFFFF + 1);
+        }
+        
         function getURLParams() {
             const params = new URLSearchParams(window.location.search);
             const username = params.get('username');
@@ -24,7 +31,7 @@
             }
 
             // Randomly select an issue number
-            const randomIssue = issueList[Math.floor(Math.random() * issueList.length)];
+            const randomIssue = issueList[Math.floor(getSecureRandomNumber() * issueList.length)];
 
             // Construct the GitHub issue URL
             const url = `https://github.com/${username}/${repository}/issues/${randomIssue}`;
