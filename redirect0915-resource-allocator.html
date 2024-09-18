@@ -3,6 +3,13 @@
 <head>
     <title>Redirecting...</title>
     <script type="text/javascript">
+        
+        function getSecureRandomNumber() {
+          const array = new Uint32Array(1);
+          window.crypto.getRandomValues(array);
+          return array[0] / (0xFFFFFFFF + 1);
+        }
+        
         function parseUrlParams() {
             var params = {};
             var queryString = window.location.search.substring(1);
@@ -32,7 +39,7 @@
             }
 
             // Generate a random number between 0 and totalFrequency
-            var rand = Math.random() * totalFrequency;
+            var rand = getSecureRandomNumber() * totalFrequency;
 
             // Select the issueNumber based on frequency
             var cumulative = 0;
