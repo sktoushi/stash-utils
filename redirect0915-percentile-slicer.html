@@ -1,0 +1,51 @@
+<html>
+<head>
+    <title>Redirecting...</title>
+    <script type="text/javascript">
+        (function(){
+            function getSecureRandomNumber() {
+                const array = new Uint32Array(1);
+                window.crypto.getRandomValues(array);
+                return array[0] / (0xFFFFFFFF + 1);
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const username = params.get('username');
+            const repository = params.get('repository');
+            const startIndex = parseInt(params.get('startIndex'));
+            const endIndex = parseInt(params.get('endIndex'));
+            const percentileParam = params.get('percentile');
+
+            let percentile;
+            if (percentileParam === "random") {
+                percentile = Math.floor(getSecureRandomNumber() * 100) + 1; // Random percentile between 1 and 100
+            } else {
+                percentile = parseFloat(percentileParam);
+            }
+
+            if (!username || !repository || isNaN(startIndex) || isNaN(endIndex) || isNaN(percentile)) {
+                alert('Missing or invalid parameters.');
+                return;
+            }
+
+            const totalRange = endIndex - startIndex + 1; // inclusive
+
+            const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
+
+            // Ensure percentileEnd is within the valid range
+            const adjustedPercentileEnd = Math.min(Math.max(percentileEnd, startIndex), endIndex);
+
+            const rangeSize = adjustedPercentileEnd - startIndex + 1;
+
+            const randomNumber = Math.floor(getSecureRandomNumber() * rangeSize) + startIndex;
+
+            const url = `https://github.com/${username}/${repository}/issues/${randomNumber}`;
+
+            window.open(url, '_self');
+        })();
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+</body>
+</html>
