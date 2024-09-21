@@ -82,9 +82,12 @@
                 }
             }
 
-            if (!username || !repository || isNaN(startIndex) || isNaN(endIndex) || isNaN(percentile)) {
-                alert('Missing or invalid parameters.');
-                return;
+            let isCustomUrl = customUrlPrefix || customUrlSuffix;
+            if(!isCustomUrl) {
+                if (!username || !repository || isNaN(startIndex) || isNaN(endIndex) || isNaN(percentile)) {
+                    alert('Missing or invalid parameters.');
+                    return;
+                }
             }
 
             percentile = Math.min(Math.max(percentile, 1), 100);
