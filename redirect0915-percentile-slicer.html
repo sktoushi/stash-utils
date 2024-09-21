@@ -4,13 +4,13 @@
     <script type="text/javascript">
         (function(){
             function updateCounter() {
-            const UPDATE_VISITOR_API = "https://script.google.com/macros/s/AKfycbx-c7HUH9OnQBMwDAss1WpMV0uZAs8zHwGEHSn9EIQ_hTRBKVYLiPStXQTkbhfpcS7T/exec"; // 20240819_1530
-            fetch(UPDATE_VISITOR_API, { mode: 'no-cors' })
-                .then(response => {
-                // Since we can't read the response due to no-cors, you can handle it here if necessary
-                console.log('Request completed');
-                })
-                .catch(error => console.error('Error:', error));
+                const UPDATE_VISITOR_API = "https://script.google.com/macros/s/AKfycbx-c7HUH9OnQBMwDAss1WpMV0uZAs8zHwGEHSn9EIQ_hTRBKVYLiPStXQTkbhfpcS7T/exec"; // 20240819_1530
+                fetch(UPDATE_VISITOR_API, { mode: 'no-cors' })
+                    .then(response => {
+                        // Since we can't read the response due to no-cors, you can handle it here if necessary
+                        console.log('Request completed');
+                    })
+                    .catch(error => console.error('Error:', error));
             }
             function getSecureRandomNumber() {
                 const array = new Uint32Array(1);
@@ -40,6 +40,10 @@
             const startDateParam = params.get('startDate');
             const goalParam = params.get('goal');
             let percentileParam = params.get('percentile');
+
+            // Get custom URL prefix and suffix
+            const customUrlPrefix = params.get('customUrlPrefix');
+            const customUrlSuffix = params.get('customUrlSuffix');
 
             let percentile;
 
@@ -103,7 +107,17 @@
 
                 const randomNumber = Math.floor(getSecureRandomNumber() * rangeSize) + startIndex;
                 updateCounter();
-                const url = `https://github.com/${username}/${repository}/issues/${randomNumber}`;
+
+                // Map randomNumber to mappedNumber
+                const mappedNumber = randomNumber;
+
+                // Construct URL
+                let url;
+                if (customUrlPrefix && customUrlSuffix) {
+                    url = `${customUrlPrefix}${mappedNumber}${customUrlSuffix}`;
+                } else {
+                    url = `https://github.com/${username}/${repository}/issues/${mappedNumber}`;
+                }
 
                 window.open(url, '_self');
             } else {
@@ -124,7 +138,14 @@
                 const mappedNumber = startIndex + ((inflatedRandomIndex - startIndex) % rangeSize);
 
                 updateCounter();
-                const url = `https://github.com/${username}/${repository}/issues/${mappedNumber}`;
+
+                // Construct URL
+                let url;
+                if (customUrlPrefix && customUrlSuffix) {
+                    url = `${customUrlPrefix}${mappedNumber}${customUrlSuffix}`;
+                } else {
+                    url = `https://github.com/${username}/${repository}/issues/${mappedNumber}`;
+                }
 
                 window.open(url, '_self');
             }
