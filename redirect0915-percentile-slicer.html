@@ -18,6 +18,19 @@
                 return array[0] / (0xFFFFFFFF + 1);
             }
 
+            // New hashing function that returns a unique four-digit number based on URL parameters
+            function hashUrlParams(params) {
+                const str = params.toString();
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                    hash |= 0; // Convert to 32bit integer
+                }
+                hash = Math.abs(hash);
+                // Ensure it's a four-digit number between 1000 and 9999
+                return (hash % 9000) + 1000;
+            }
+
             const params = new URLSearchParams(window.location.search);
             const username = params.get('username');
             const repository = params.get('repository');
@@ -76,18 +89,45 @@
 
             const totalRange = endIndex - startIndex + 1; // Inclusive
 
-            const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
+            // New: Calculate hash result
+            const hashResult = hashUrlParams(params);
 
-            // Ensure percentileEnd is within the valid range
-            const adjustedPercentileEnd = Math.min(Math.max(percentileEnd, startIndex), endIndex);
+            if (totalRange >= hashResult) {
+                // Leave everything working the same way
+                const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
 
-            const rangeSize = adjustedPercentileEnd - startIndex + 1;
+                // Ensure percentileEnd is within the valid range
+                const adjustedPercentileEnd = Math.min(Math.max(percentileEnd, startIndex), endIndex);
 
-            const randomNumber = Math.floor(getSecureRandomNumber() * rangeSize) + startIndex;
-            updateCounter();
-            const url = `https://github.com/${username}/${repository}/issues/${randomNumber}`;
+                const rangeSize = adjustedPercentileEnd - startIndex + 1;
 
-            window.open(url, '_self');
+                const randomNumber = Math.floor(getSecureRandomNumber() * rangeSize) + startIndex;
+                updateCounter();
+                const url = `https://github.com/${username}/${repository}/issues/${randomNumber}`;
+
+                window.open(url, '_self');
+            } else {
+                // Artificially inflate the range
+                const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
+                const adjustedPercentileEnd = Math.min(Math.max(percentileEnd, startIndex), endIndex);
+                const rangeSize = adjustedPercentileEnd - startIndex + 1;
+
+                // Inflate the range to reach the hashResult as upper bound
+                const inflatedRangeSize = hashResult;
+                const inflatedRangeStart = startIndex;
+                const inflatedRangeEnd = startIndex + inflatedRangeSize - 1;
+
+                // Randomly pick from the inflated range
+                const inflatedRandomIndex = Math.floor(getSecureRandomNumber() * inflatedRangeSize) + startIndex;
+
+                // Map back to the original percentile range
+                const mappedNumber = startIndex + ((inflatedRandomIndex - startIndex) % rangeSize);
+
+                updateCounter();
+                const url = `https://github.com/${username}/${repository}/issues/${mappedNumber}`;
+
+                window.open(url, '_self');
+            }
         })();
     </script>
 </head>
