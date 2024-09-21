@@ -119,7 +119,10 @@
 
             // Apply zeroPadding if present
             if (zeroPadding !== null) {
-                mappedNumber = zeroPadding + mappedNumber;
+                const zeroPaddingThreshold = parseInt(zeroPadding);
+                if (mappedNumber <= zeroPaddingThreshold) {
+                    mappedNumber = '0' + mappedNumber;
+                }
             }
 
             // Construct URL
