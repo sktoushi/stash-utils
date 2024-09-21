@@ -64,6 +64,13 @@
                 startDate.setHours(0, 0, 0, 0);
                 currentDate.setHours(0, 0, 0, 0);
 
+                // Check if today exceeds the deadline
+                const deadlineDate = new Date(startDate);
+                deadlineDate.setDate(startDate.getDate() + goal);
+                if (currentDate > deadlineDate) {
+                    alert("Today exceeds the deadline. Adjust it accordingly.");
+                }
+
                 const timeDiff = currentDate - startDate;
                 const daysSinceStart = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 
