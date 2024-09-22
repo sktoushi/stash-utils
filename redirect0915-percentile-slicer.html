@@ -13,6 +13,12 @@
                     .catch(error => console.error('Error:', error));
             }
 
+            function getSecureRandomNumber() {
+                const array = new Uint32Array(1);
+                window.crypto.getRandomValues(array);
+                return array[0] / (0xFFFFFFFF + 1);
+            }
+
             // Linear Congruential Generator
             function LCG(seed) {
                 this.m = 0x80000000; // 2**31
