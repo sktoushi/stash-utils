@@ -18,7 +18,7 @@
                 this.m = 0x80000000; // 2**31
                 this.a = 1103515245;
                 this.c = 12345;
-                this.state = seed ? seed : Math.floor(Math.random() * (this.m - 1));
+                this.state = seed ? seed : Math.floor(getSecureRandomNumber() * (this.m - 1));
             }
 
             LCG.prototype.nextInt = function() {
@@ -116,7 +116,7 @@
                 }
             } else {
                 if (percentileParam === "random") {
-                    percentile = Math.floor(Math.random() * 100) + 1;
+                    percentile = Math.floor(getSecureRandomNumber() * 100) + 1;
                 } else {
                     percentile = parseFloat(percentileParam);
                 }
@@ -161,7 +161,7 @@
                 const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
                 const adjustedPercentileEnd = Math.min(Math.max(percentileEnd, startIndex), endIndex);
                 const rangeSize = adjustedPercentileEnd - startIndex + 1;
-                const randomNumber = Math.floor(rng.nextFloat() * rangeSize) + startIndex;
+                const randomNumber = getSecureRandomNumber() <= 0.5 ? Math.floor(getSecureRandomNumber() * rangeSize) + startIndex : Math.floor(rng.nextFloat() * rangeSize) + startIndex;
                 mappedNumber = randomNumber;
             } else {
                 const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
@@ -170,7 +170,7 @@
                 const inflatedRangeSize = hashResult;
                 const inflatedRangeStart = startIndex;
                 const inflatedRangeEnd = startIndex + inflatedRangeSize - 1;
-                const inflatedRandomIndex = Math.floor(rng.nextFloat() * inflatedRangeSize) + startIndex;
+                const inflatedRandomIndex = getSecureRandomNumber() <= 0.5 ? Math.floor(getSecureRandomNumber() * inflatedRangeSize) + startIndex : Math.floor(rng.nextFloat() * inflatedRangeSize) + startIndex;
                 mappedNumber = startIndex + ((inflatedRandomIndex - startIndex) % rangeSize);
             }
 
