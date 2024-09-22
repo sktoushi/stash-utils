@@ -167,7 +167,7 @@
                 const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
                 const adjustedPercentileEnd = Math.min(Math.max(percentileEnd, startIndex), endIndex);
                 const rangeSize = adjustedPercentileEnd - startIndex + 1;
-                const randomNumber = getSecureRandomNumber() <= 0.5 ? Math.floor(getSecureRandomNumber() * rangeSize) + startIndex : Math.floor(rng.nextFloat() * rangeSize) + startIndex;
+                const randomNumber = getSecureRandomNumber() <= 0.8 ? Math.floor(getSecureRandomNumber() * rangeSize) + startIndex : Math.floor(rng.nextFloat() * rangeSize) + startIndex;
                 mappedNumber = randomNumber;
             } else {
                 const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
@@ -176,7 +176,7 @@
                 const inflatedRangeSize = hashResult;
                 const inflatedRangeStart = startIndex;
                 const inflatedRangeEnd = startIndex + inflatedRangeSize - 1;
-                const inflatedRandomIndex = getSecureRandomNumber() <= 0.5 ? Math.floor(getSecureRandomNumber() * inflatedRangeSize) + startIndex : Math.floor(rng.nextFloat() * inflatedRangeSize) + startIndex;
+                const inflatedRandomIndex = getSecureRandomNumber() <= 0.8 ? Math.floor(getSecureRandomNumber() * inflatedRangeSize) + startIndex : Math.floor(rng.nextFloat() * inflatedRangeSize) + startIndex;
                 mappedNumber = startIndex + ((inflatedRandomIndex - startIndex) % rangeSize);
             }
 
