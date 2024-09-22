@@ -12,23 +12,56 @@
                     })
                     .catch(error => console.error('Error:', error));
             }
-            function getSecureRandomNumber() {
-                const array = new Uint32Array(1);
-                window.crypto.getRandomValues(array);
-                return array[0] / (0xFFFFFFFF + 1);
+
+            // Linear Congruential Generator
+            function LCG(seed) {
+                this.m = 0x80000000; // 2**31
+                this.a = 1103515245;
+                this.c = 12345;
+                this.state = seed ? seed : Math.floor(Math.random() * (this.m - 1));
             }
 
-            // New hashing function that returns a unique four-digit number based on URL parameters
-            function hashUrlParams(params) {
+            LCG.prototype.nextInt = function() {
+                this.state = (this.a * this.state + this.c) % this.m;
+                return this.state;
+            }
+
+            LCG.prototype.nextFloat = function() {
+                // returns in range [0,1)
+                return this.nextInt() / (this.m - 1);
+            }
+
+            // Function to generate a UUID based on URL parameters
+            function generateUuidFromParams(params) {
                 const str = params.toString();
-                let hash = 0;
+                const bytes = [];
                 for (let i = 0; i < str.length; i++) {
-                    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                    hash |= 0; // Convert to 32bit integer
+                    bytes.push(str.charCodeAt(i));
                 }
-                hash = Math.abs(hash);
-                // Ensure it's a four-digit number between 1000 and 9999
-                return (hash % 9000) + 1000;
+                // Pad bytes to at least 16 bytes
+                while (bytes.length < 16) {
+                    bytes.push(0);
+                }
+                // Trim bytes to 16 bytes
+                bytes.length = 16;
+                // Format as UUID
+                const hex = bytes.map(b => b.toString(16).padStart(2, '0'));
+                return [
+                    hex.slice(0, 4).join(''),
+                    hex.slice(4, 6).join(''),
+                    hex.slice(6, 8).join(''),
+                    hex.slice(8, 10).join(''),
+                    hex.slice(10, 16).join('')
+                ].join('-');
+            }
+
+            function seedFromUuid(uuid) {
+                // Remove dashes
+                const hex = uuid.replace(/-/g, '');
+                // Take first 8 characters as seed
+                const seedStr = hex.slice(0, 8);
+                const seed = parseInt(seedStr, 16);
+                return seed;
             }
 
             const params = new URLSearchParams(window.location.search);
@@ -83,7 +116,7 @@
                 }
             } else {
                 if (percentileParam === "random") {
-                    percentile = Math.floor(getSecureRandomNumber() * 100) + 1;
+                    percentile = Math.floor(Math.random() * 100) + 1;
                 } else {
                     percentile = parseFloat(percentileParam);
                 }
@@ -101,6 +134,25 @@
 
             const totalRange = endIndex - startIndex + 1;
 
+            // Generate UUID from params
+            const uuid = generateUuidFromParams(params);
+            // Generate seed from UUID
+            const seed = seedFromUuid(uuid);
+            // Initialize PRNG with seed
+            const rng = new LCG(seed);
+
+            // Calculate hashResult for inflated range size
+            // Modify hashUrlParams to produce a positive integer
+            function hashUrlParams(params) {
+                const str = params.toString();
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                    hash |= 0; // Convert to 32bit integer
+                }
+                return Math.abs(hash);
+            }
+
             const hashResult = hashUrlParams(params);
 
             let mappedNumber;
@@ -109,7 +161,7 @@
                 const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
                 const adjustedPercentileEnd = Math.min(Math.max(percentileEnd, startIndex), endIndex);
                 const rangeSize = adjustedPercentileEnd - startIndex + 1;
-                const randomNumber = Math.floor(getSecureRandomNumber() * rangeSize) + startIndex;
+                const randomNumber = Math.floor(rng.nextFloat() * rangeSize) + startIndex;
                 mappedNumber = randomNumber;
             } else {
                 const percentileEnd = startIndex + Math.ceil(totalRange * (percentile / 100)) - 1;
@@ -118,7 +170,7 @@
                 const inflatedRangeSize = hashResult;
                 const inflatedRangeStart = startIndex;
                 const inflatedRangeEnd = startIndex + inflatedRangeSize - 1;
-                const inflatedRandomIndex = Math.floor(getSecureRandomNumber() * inflatedRangeSize) + startIndex;
+                const inflatedRandomIndex = Math.floor(rng.nextFloat() * inflatedRangeSize) + startIndex;
                 mappedNumber = startIndex + ((inflatedRandomIndex - startIndex) % rangeSize);
             }
 
