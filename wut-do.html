@@ -1,13 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- [Your existing head content remains the same] -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compact Activity Picker</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            text-align: center;
+            padding: 20px;
+        }
+        table {
+            margin: 0 auto;
+            width: 100%;
+        }
+        th, td {
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-    <!-- [Your existing body content remains the same] -->
+
+    <div class="container">
+        <h1 id="pickerTitle">Random Activity Picker</h1>
+        <button id="rollButton" class="btn btn-primary mb-3">Roll for an activity</button>
+        <p id="result"></p>
+
+        <!-- Table to display activities -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Activity</th>
+                        <th>Weight</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="activityTable">
+                    <!-- Dynamic content will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <script>
-        // [Your existing JavaScript functions remain the same up to updateURL]
+        // Initialize activities with default weights set at 'initialWeight'
+        function initializeActivities(maxIssueNumber, initialWeight) {
+            let activities = {};
+            for (let i = 1; i <= maxIssueNumber; i++) {
+                activities[i] = initialWeight; // Only store weight 'w'
+            }
+            return activities;
+        }
+
+        // Serialize the activities using minimal URL params by storing only modified weights
+        function serializeActivities(activities, initialWeight) {
+            let modifiedActivities = {};
+            for (let activity in activities) {
+                if (activities[activity] !== initialWeight) {
+                    modifiedActivities[activity] = activities[activity];
+                }
+            }
+            return btoa(JSON.stringify(modifiedActivities)); // Base64 encoding for compactness
+        }
+
+        // Deserialize URL params back into the activities object
+        function deserializeActivities(encodedData, maxIssueNumber, initialWeight) {
+            let activities = initializeActivities(maxIssueNumber, initialWeight);
+            if (encodedData) {
+                let decoded = JSON.parse(atob(encodedData));
+                for (let activity in decoded) {
+                    activities[activity] = decoded[activity];
+                }
+            }
+            return activities;
+        }
+
+        // Function to pick a random activity based on weights
+        function getRandomActivity(activities) {
+            let totalWeight = Object.values(activities).reduce((sum, w) => sum + w, 0);
+            let random = Math.random() * totalWeight;
+            let cumulativeWeight = 0;
+
+            for (let activity in activities) {
+                cumulativeWeight += activities[activity];
+                if (random <= cumulativeWeight) {
+                    return activity;
+                }
+            }
+        }
+
+        // Update the activity weight based on reductionCoefficient
+        function updateActivityWeight(activity, activities, reductionCoefficient) {
+            activities[activity] *= reductionCoefficient; // Reduce based on user-defined coefficient
+            if (activities[activity] < 0.1) {
+                activities[activity] = 0.1; // Minimum weight threshold
+            }
+        }
 
         // Update URL with the serialized activities and include initial URL params
         function updateURL(activities, initialWeight) {
@@ -19,7 +109,33 @@
             window.history.replaceState({ path: newUrl }, '', newUrl);
         }
 
-        // [Rest of your JavaScript code remains the same]
+        // Copy the current URL to the clipboard
+        function copyToClipboard(text) {
+            const tempInput = document.createElement('input');
+            document.body.appendChild(tempInput);
+            tempInput.value = text;
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+        }
+
+        // Render the activity table dynamically, sorted by weight in descending order
+        function renderTable(activities, githubPrefix) {
+            let tableBody = document.getElementById('activityTable');
+            tableBody.innerHTML = ''; // Clear table before rendering
+
+            // Convert activities object to an array and sort by weight in descending order
+            let sortedActivities = Object.entries(activities).sort((a, b) => b[1] - a[1]);
+
+            for (let [activity, weight] of sortedActivities) {
+                let row = `<tr>
+                    <td>${activity}</td>
+                    <td>${weight.toFixed(2)}</td>
+                    <td><a href="${githubPrefix + activity}" target="_blank" class="btn btn-sm btn-secondary">Go to Activity</a></td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            }
+        }
 
         // Main function to handle activity selection, updating weights, and updating URL
         function main() {
@@ -62,9 +178,15 @@
             });
         }
 
-        // [Rest of your JavaScript code remains the same]
+        // Run the main function when the page loads
+        window.onload = main;
     </script>
 
-    <!-- [Your existing scripts for Bootstrap JS and dependencies remain the same] -->
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <!-- Updated Popper.js CDN link to avoid errors -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <!-- Corrected Bootstrap JS CDN link -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
