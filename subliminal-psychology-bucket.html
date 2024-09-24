@@ -61,14 +61,14 @@
         const BASE_URL = "https://github.com/sktoushi/subliminal-psychology/blob/main/subliminal-psychology-";
         const SUFFIX = ".pdf";
         
-		// Initialize an empty array
-		const initialFiles = [];
+	// Initialize an empty array
+	let initialFiles = [];
 
-		// Loop from 1 to 141
-		for (let i = 1; i <= 141; i++) {
-			// Push a sub-array with [number, string, 1] into initialFiles
-			initialFiles.push([i, BASE_URL + i.toString() + SUFFIX, 1]);
-		}
+	// Loop from 1 to 141
+	for (let i = 1; i <= 141; i++) {
+		// Push a sub-array with [number, string, 1] into initialFiles
+		initialFiles.push([i, BASE_URL + i.toString() + SUFFIX, 1]);
+	}
         
         // Function to expand the array based on frequency
         function expandArray(original) {
