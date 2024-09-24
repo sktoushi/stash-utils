@@ -159,8 +159,8 @@
             [39, "pjm-pres-11-agile-project-management-1-13.pdf", 13],
             [40, "pjm-pres-11-software-project-management-1-22.pdf", 22],
             [41, "pjm-pres-12-software-project-management-1-3.pdf", 3],
-            [42, "Risk Assessment Worksheet and Management Plan-1-12.pdf", 12],
-            [43, "Risk Management Plan Preparation Guidelines-1-17.PDF", 17],
+            [42, "Risk+Assessment+Worksheet+and+Management+Plan-1-12.pdf", 12],
+            [43, "Risk+Management+Plan+Preparation+Guidelines-1-17.PDF", 17],
             [44, "sw-dev-pres-02-sw-dev-models-1-3.pdf", 3],
             [45, "sw-dev-pres-02-sw-dev-models-agile-model-1-9.pdf", 9],
             [46, "sw-dev-pres-02-sw-dev-models-incremental-model-1-9.pdf", 9],
@@ -177,18 +177,18 @@
             [57, "sw-dev-pres-11-change-mgmt-v2-1-16.pdf", 16],
             [58, "sw-dev-pres-12-depl-v2-1-26.pdf", 26]
         ];
-
+        
         // Function to expand the array based on frequency
         function expandArray(original) {
             const expanded = [];
-            let globalIndex = 1; // To keep track of the nthIndex across all elements
+            let globalIndex = 1; // To keep track of the sequential id across all elements
         
             original.forEach(item => {
                 const [id, fileName, frequency] = item;
-                for (let i = 0; i < frequency; i++) {
+                for (let nthIndex = 1; nthIndex <= frequency; nthIndex++) {
                     expanded.push([
                         globalIndex,
-                        `${BASE_URL}${fileName}&startIdx={${globalIndex}}&endIdx={${globalIndex}}`,
+                        `${BASE_URL}${fileName}&startIdx=${nthIndex}&endIdx=${nthIndex}`,
                         1
                     ]);
                     globalIndex++;
