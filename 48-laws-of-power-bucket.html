@@ -61,18 +61,18 @@
         const BASE_URL = "https://github.com/cjcaf1995/greene-mix/blob/main/48-laws-of-power-";
         const SUFFIX = ".jpg";
         
-		// Initialize an empty array
-		const initialFiles = [];
+	// Initialize an empty array
+	let initialFiles = [];
 
-		// Loop from 25 to 454
-		for (let i = 25; i <= 454; i++) {
-			// Push a sub-array with [number, string, 1] into initialFiles
-			if (i >= 100) {
-				initialFiles.push([i, BASE_URL + i.toString() + SUFFIX , 1]);
-			} else {
-				initialFiles.push([i, BASE_URL + "0" + i.toString() + SUFFIX , 1]);
-			}
+	// Loop from 25 to 454
+	for (let i = 25; i <= 454; i++) {
+		// Push a sub-array with [number, string, 1] into initialFiles
+		if (i >= 100) {
+			initialFiles.push([i, BASE_URL + i.toString() + SUFFIX , 1]);
+		} else {
+			initialFiles.push([i, BASE_URL + "0" + i.toString() + SUFFIX , 1]);
 		}
+	}
         
         // Function to expand the array based on frequency
         function expandArray(original) {
