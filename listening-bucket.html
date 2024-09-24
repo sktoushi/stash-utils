@@ -116,14 +116,14 @@
         // Constants for repetitive parts of the URLs
         const BASE_URL = "https://github.com/cjcaf1995/listening/issues/";
         
-		// Initialize an empty array
-		const initialFiles = [];
+	// Initialize an empty array
+	let initialFiles = [];
 
-		// Loop from 1 to 286
-		for (let i = 1; i <= 286; i++) {
-			// Push a sub-array with [number, string, 1] into initialFiles
-			initialFiles.push([i, BASE_URL + i.toString(), 1]);
-		}
+	// Loop from 1 to 286
+	for (let i = 1; i <= 286; i++) {
+		// Push a sub-array with [number, string, 1] into initialFiles
+		initialFiles.push([i, BASE_URL + i.toString(), 1]);
+	}
         
         // Function to expand the array based on frequency
         function expandArray(original) {
