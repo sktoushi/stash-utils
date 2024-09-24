@@ -172,11 +172,11 @@
                 urlSuffix: urlSuffix,
                 initialFiles: initialFiles
             };
-            localStorage.setItem('randomUrlPickerState', JSON.stringify(state));
+            localStorage.setItem('randomUrlPickerStatestash2', JSON.stringify(state));
         }
 
         function loadState() {
-            const state = JSON.parse(localStorage.getItem('randomUrlPickerState'));
+            const state = JSON.parse(localStorage.getItem('randomUrlPickerStatestash2'));
             if (state) {
                 b1 = state.b1 || {};
                 b2 = state.b2 || {};
@@ -193,7 +193,7 @@
         }
 
         function resetState() {
-            localStorage.removeItem('randomUrlPickerState');
+            localStorage.removeItem('randomUrlPickerStatestash2');
             defaultFrequency = 1;
             urlPrefix = '';
             urlSuffix = '';
