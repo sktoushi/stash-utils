@@ -198,13 +198,14 @@
             return expanded;
         }
 
+        // Generate the expanded array
+        const initialFiles = expandArray(originalArray);
+        
         function initBuckets() {
             b1 = {};
             b2 = {};
             initB2Total = 0;
-            
-            // Generate the expanded array
-            const initialFiles = expandArray(originalArray);
+
             initialFiles.forEach(file => {
                 const id = file[0];
                 const freq = file[2] !== null ? file[2] : defaultFrequency;
