@@ -2,6 +2,1851 @@
   "sliderValue": 50,
   "records": [
     {
+      "id": 1727264965785.7405,
+      "selected": true,
+      "name": "xperimental-features",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/experimental-features/index.html#experimental-traits_experimental-features",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727265138914
+    },
+    {
+      "id": 1727264965785.2527,
+      "selected": true,
+      "name": "odes-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#rule-execution-modes-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1646,
+      "selected": true,
+      "name": "tion-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#rule-base-configuration-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4055,
+      "selected": true,
+      "name": "ners-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#property-change-listeners-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1863,
+      "selected": true,
+      "name": "mode-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#phreak-sequential-mode-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6172,
+      "selected": true,
+      "name": "tion-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#phreak-rule-evaluation-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7192,
+      "selected": true,
+      "name": "ithm-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#phreak-algorithm-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4885,
+      "selected": true,
+      "name": "gine-ref_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#performance-tuning-rule-engine-ref_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.303,
+      "selected": true,
+      "name": "ing-proc_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#logging-proc_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4211,
+      "selected": true,
+      "name": "less-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#kie-sessions-stateless-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0718,
+      "selected": true,
+      "name": "eful-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#kie-sessions-stateful-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1702,
+      "selected": true,
+      "name": "ools-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#kie-sessions-pools-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3027,
+      "selected": true,
+      "name": "ions-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#kie-sessions-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8826,
+      "selected": true,
+      "name": "ntenance_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#inference-and-truth-maintenance_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6292,
+      "selected": true,
+      "name": "odes-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#fact-propagation-modes-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9976,
+      "selected": true,
+      "name": "odes-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#fact-equality-modes-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2058,
+      "selected": true,
+      "name": "trol-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#execution-control-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5063,
+      "selected": true,
+      "name": "ries-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#engine-queries-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2053,
+      "selected": true,
+      "name": "ment-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#engine-event-listeners-development-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.704,
+      "selected": true,
+      "name": "ners-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#engine-event-listeners-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.541,
+      "selected": true,
+      "name": "perators_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#cep-temporal-operators_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3877,
+      "selected": true,
+      "name": "dows-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#cep-sliding-windows-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9575,
+      "selected": true,
+      "name": "odes-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#cep-modes-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9233,
+      "selected": true,
+      "name": "ment-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#cep-memory-management-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7634,
+      "selected": true,
+      "name": "nts-proc_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#cep-events-proc_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7944,
+      "selected": true,
+      "name": "ents-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#cep-events-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.044,
+      "selected": true,
+      "name": "eams-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#cep-event-streams-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7253,
+      "selected": true,
+      "name": "#cep-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#cep-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5564,
+      "selected": true,
+      "name": "lock-ref_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#cep-clock-ref_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1633,
+      "selected": true,
+      "name": "ters-con_rule-engine",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#agenda-filters-con_rule-engine",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4739,
+      "selected": true,
+      "name": "#_salience_for_rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#_salience_for_rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.695,
+      "selected": true,
+      "name": "overnment_id_example",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#_government_id_example",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.552,
+      "selected": true,
+      "name": "nda_groups_for_rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#_agenda_groups_for_rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2542,
+      "selected": true,
+      "name": "ion_groups_for_rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html#_activation_groups_for_rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0928,
+      "selected": true,
+      "name": "le-engine/index.html",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/rule-engine/index.html",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7363,
+      "selected": true,
+      "name": "mml-ref_pragmatic-ai",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/pragmatic-ai/index.html#ai-pmml-ref_pragmatic-ai",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5042,
+      "selected": true,
+      "name": "#ai-gsg_pragmatic-ai",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/pragmatic-ai/index.html#ai-gsg_pragmatic-ai",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2754,
+      "selected": true,
+      "name": "ard-con_pragmatic-ai",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/pragmatic-ai/index.html#ai-credit-card-con_pragmatic-ai",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3928,
+      "selected": true,
+      "name": "#ai-con_pragmatic-ai",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/pragmatic-ai/index.html#ai-con_pragmatic-ai",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8357,
+      "selected": true,
+      "name": "additional_resources",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/pragmatic-ai/index.html#_additional_resources",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9365,
+      "selected": true,
+      "name": "gmatic-ai/index.html",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/pragmatic-ai/index.html",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6726,
+      "selected": true,
+      "name": "unit_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#traditional-to-ruleunit_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0227,
+      "selected": true,
+      "name": "ions_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#spreadsheet_file_extensions_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9216,
+      "selected": true,
+      "name": "ions_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#ref-migrate-drl-to-kogito-considerations_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6917,
+      "selected": true,
+      "name": "ions_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#ref-migrate-dmn-to-kogito-considerations_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6472,
+      "selected": true,
+      "name": "ject_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#ref-kogito-migrate-example-loan-application-project_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5203,
+      "selected": true,
+      "name": "gito_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#ref-example-bind-external-app-kogito_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.188,
+      "selected": true,
+      "name": "REST_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#proc-kogito-migrate-external-application-REST_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9275,
+      "selected": true,
+      "name": "kjar_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#proc-kogito-migrate-dmn-model-kjar_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9507,
+      "selected": true,
+      "name": "odel_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#nonexec-model-to-exec-model_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5437,
+      "selected": true,
+      "name": "rver_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#kie-server_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.873,
+      "selected": true,
+      "name": "view_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#con-migration-to-kogito-overview_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.995,
+      "selected": true,
+      "name": "tegy_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#con-migration-drl-strategy_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3826,
+      "selected": true,
+      "name": "tegy_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#con-migration-dmn-strategy_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7559,
+      "selected": true,
+      "name": "view_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#con-migrate-drl-to-kogito-loan-overview_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4246,
+      "selected": true,
+      "name": "view_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#con-migrate-dmn-to-kogito-overview_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7363,
+      "selected": true,
+      "name": "tral_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#business-central_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.52,
+      "selected": true,
+      "name": "tion_migration-guide",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#bpmn-integration_migration-guide",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4426,
+      "selected": true,
+      "name": "ndex.html#_rule_unit",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html#_rule_unit",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5596,
+      "selected": true,
+      "name": "ion-guide/index.html",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/migration-guide/index.html",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.364,
+      "selected": true,
+      "name": "attributes_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#ref-rules-attributes_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.849,
+      "selected": true,
+      "name": "les-errors_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#ref-drl-rules-errors_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3794,
+      "selected": true,
+      "name": "ral-create_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#proc-drl-rules-central-create_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.413,
+      "selected": true,
+      "name": "ng-drl-ref_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#performance-tuning-drl-ref_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3943,
+      "selected": true,
+      "name": "nal-syntax_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#new-and-traditional-syntax_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3225,
+      "selected": true,
+      "name": "iables-ref_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#drl-rules-THEN-methods-variables-ref_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9924,
+      "selected": true,
+      "name": "ethods-ref_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#drl-rules-THEN-methods-ref_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2207,
+      "selected": true,
+      "name": "-tables-use-case-con",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#decision-tables-use-case-con",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.536,
+      "selected": true,
+      "name": "tables-defining-proc",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#decision-tables-defining-proc",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3435,
+      "selected": true,
+      "name": "-con_decision-tables",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#decision-tables-con_decision-tables",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1301,
+      "selected": true,
+      "name": "ml#con-drl_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.164,
+      "selected": true,
+      "name": "conditions_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl-rules-conditions_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.467,
+      "selected": true,
+      "name": "s-comments_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl-rules-comments_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9407,
+      "selected": true,
+      "name": "es-actions_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl-rules-actions_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.117,
+      "selected": true,
+      "name": "rule-units_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl-rule-units_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5076,
+      "selected": true,
+      "name": "rl-queries_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl-queries_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.873,
+      "selected": true,
+      "name": "l-packages_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl-packages_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0146,
+      "selected": true,
+      "name": "drl-legacy_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl-legacy_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9224,
+      "selected": true,
+      "name": "rl-imports_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl-imports_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.797,
+      "selected": true,
+      "name": "clarations_drl-rules",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#con-drl-declarations_drl-rules",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3909,
+      "selected": true,
+      "name": "spreadsheet_features",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#_using_spreadsheet_features",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7224,
+      "selected": true,
+      "name": "dex.html#_dsl_basics",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#_dsl_basics",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8225,
+      "selected": true,
+      "name": "l_and_dslr_reference",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#_dsl_and_dslr_reference",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5688,
+      "selected": true,
+      "name": "n_specific_languages",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#_domain_specific_languages",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6821,
+      "selected": true,
+      "name": "ml#_developing_a_dsl",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#_developing_a_dsl",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.377,
+      "selected": true,
+      "name": "ow_and_collaboration",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#_decision_table_workflow_and_collaboration",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0518,
+      "selected": true,
+      "name": "heet_decision_tables",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#_creating_and_integrating_spreadsheet_decision_tables",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.964,
+      "selected": true,
+      "name": "constraints_to_facts",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html#_adding_constraints_to_facts",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9207,
+      "selected": true,
+      "name": "reference/index.html",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/language-reference/index.html",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5044,
+      "selected": true,
+      "name": "nvolved_introduction",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/introduction/index.html#intro-getting-involved_introduction",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4695,
+      "selected": true,
+      "name": "-source_introduction",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/introduction/index.html#intro-building-the-source_introduction",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.038,
+      "selected": true,
+      "name": "_enhancement_request",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/introduction/index.html#_submitting_an_issue_or_enhancement_request",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.822,
+      "selected": true,
+      "name": "ce_code_contribution",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/introduction/index.html#_submitting_a_source_code_contribution",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1228,
+      "selected": true,
+      "name": "x.html#_requirements",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/introduction/index.html#_requirements",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.47,
+      "selected": true,
+      "name": "additional_resources",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/introduction/index.html#_additional_resources",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0796,
+      "selected": true,
+      "name": "ed-decision-services",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/getting-started/index.html#test-scenarios-intro-con_getting-started-decision-services",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3694,
+      "selected": true,
+      "name": "ed-decision-services",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/getting-started/index.html#gs-evaluating-dmn_getting-started-decision-services",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9668,
+      "selected": true,
+      "name": "ject_getting-started",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/getting-started/index.html#first-rule-project_getting-started",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6213,
+      "selected": true,
+      "name": "ed-decision-services",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/getting-started/index.html#dmn_getting-started-decision-services",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.683,
+      "selected": true,
+      "name": "ed-decision-services",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/getting-started/index.html#dmn-gs-new-project-creating-proc_getting-started-decision-services",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6023,
+      "selected": true,
+      "name": "ed-decision-services",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/getting-started/index.html#assembly-getting-started-decision-services",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9165,
+      "selected": true,
+      "name": ".html#_prerequisites",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/getting-started/index.html#_prerequisites",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5017,
+      "selected": true,
+      "name": "with_maven_archetype",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/getting-started/index.html#_creating_a_project_with_maven_archetype",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1726,
+      "selected": true,
+      "name": "g-started/index.html",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/getting-started/index.html",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8613,
+      "selected": true,
+      "name": "xperimental-features",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/experimental-features/index.html#experimental-impact-analysis_experimental-features",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.574,
+      "selected": true,
+      "name": "xperimental-features",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/experimental-features/index.html#experimental-declarative-agenda_experimental-features",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.212,
+      "selected": true,
+      "name": "act_analysis_feature",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/experimental-features/index.html#_using_the_impact_analysis_feature",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0522,
+      "selected": true,
+      "name": "tml#_troubleshooting",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/experimental-features/index.html#_troubleshooting",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5369,
+      "selected": true,
+      "name": "ml#_cascading_traits",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/experimental-features/index.html#_cascading_traits",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.733,
+      "selected": true,
+      "name": "-features/index.html",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/experimental-features/index.html",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9011,
+      "selected": true,
+      "name": "_packaging-deploying",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#rule-unit-dsl_packaging-deploying",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1174,
+      "selected": true,
+      "name": "_packaging-deploying",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#rule-unit-api_packaging-deploying",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.483,
+      "selected": true,
+      "name": "_packaging-deploying",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#kie-scanner-proc_packaging-deploying",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.427,
+      "selected": true,
+      "name": "_packaging-deploying",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#executable-model-upgrading-proc_packaging-deploying",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6067,
+      "selected": true,
+      "name": "_packaging-deploying",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#executable-model-modify-proc_packaging-deploying",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6814,
+      "selected": true,
+      "name": "_packaging-deploying",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#executable-model-con_packaging-deploying",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.065,
+      "selected": true,
+      "name": "l#_thekmodulexmlfile",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_thekmodulexmlfile",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1746,
+      "selected": true,
+      "name": "_statelesskiesession",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_statelesskiesession",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.459,
+      "selected": true,
+      "name": "ote_repository_setup",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_settings_xml_and_remote_repository_setup",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3342,
+      "selected": true,
+      "name": "tml#_securitymanager",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_securitymanager",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.18,
+      "selected": true,
+      "name": "x.html#_ruleunitdata",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_ruleunitdata",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0007,
+      "selected": true,
+      "name": "module_with_defaults",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_programmatically_build_a_simple_kiemodule_with_defaults",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4482,
+      "selected": true,
+      "name": "le_using_meta_models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_programmatically_build_a_kiemodule_using_meta_models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4888,
+      "selected": true,
+      "name": "nce_and_transactions",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_persistence_and_transactions",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1318,
+      "selected": true,
+      "name": "kiesession_from_file",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_named_kiesession_from_file",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1565,
+      "selected": true,
+      "name": "ml#_named_kiesession",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_named_kiesession",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1108,
+      "selected": true,
+      "name": "l#_multiple_kiebases",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_multiple_kiebases",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.868,
+      "selected": true,
+      "name": "ons_and_dependencies",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_maven_versions_and_dependencies",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8042,
+      "selected": true,
+      "name": "ex.html#_marshalling",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_marshalling",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5398,
+      "selected": true,
+      "name": "iebase_modifications",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiesessions_and_kiebase_modifications",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2036,
+      "selected": true,
+      "name": "dex.html#_kiesession",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiesession",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2698,
+      "selected": true,
+      "name": "dex.html#_kiescanner",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiescanner",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0657,
+      "selected": true,
+      "name": "ml#_kieruntimelogger",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kieruntimelogger",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8628,
+      "selected": true,
+      "name": "dex.html#_kieruntime",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kieruntime",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5352,
+      "selected": true,
+      "name": "l#_kierunningsection",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kierunningsection",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3513,
+      "selected": true,
+      "name": "gintroductionsection",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiemoduleintroductionbuildingintroductionsection",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8625,
+      "selected": true,
+      "name": "_dependent_kiemodule",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiemodule_with_dependent_kiemodule",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1504,
+      "selected": true,
+      "name": "#_kieexamplessection",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kieexamplessection",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3923,
+      "selected": true,
+      "name": "_kiedeployingsection",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiedeployingsection",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9666,
+      "selected": true,
+      "name": "r_from_kierepository",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiecontainer_from_kierepository",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4268,
+      "selected": true,
+      "name": "#_kiebuildingsection",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiebuildingsection",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8738,
+      "selected": true,
+      "name": "_kiebase_inheritance",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiebase_inheritance",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7988,
+      "selected": true,
+      "name": "ndex.html#_kiebase_2",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiebase_2",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3093,
+      "selected": true,
+      "name": "/index.html#_kiebase",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_kiebase",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9346,
+      "selected": true,
+      "name": "howtodefinekiepolicy",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_howtodefinekiepolicy",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9077,
+      "selected": true,
+      "name": "ex.html#_event_model",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_event_model",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6135,
+      "selected": true,
+      "name": "ml#_enginedependency",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_enginedependency",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6182,
+      "selected": true,
+      "name": "duleprogrammatically",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_definingakiemoduleprogrammatically",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.067,
+      "selected": true,
+      "name": "kiesession_from_file",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_default_kiesession_from_file",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.767,
+      "selected": true,
+      "name": "#_default_kiesession",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_default_kiesession",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.946,
+      "selected": true,
+      "name": "re_rule_units_in_drl",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_declare_rule_units_in_drl",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9004,
+      "selected": true,
+      "name": "x.html#_data_sources",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_data_sources",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9475,
+      "selected": true,
+      "name": "dbuildingakieproject",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_creatingandbuildingakieproject",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8533,
+      "selected": true,
+      "name": "_the_commandexecutor",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_commands_and_the_commandexecutor",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2598,
+      "selected": true,
+      "name": "ex.html#_client_code",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_client_code",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8987,
+      "selected": true,
+      "name": "tbuildresultseverity",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_changingthedefaultbuildresultseverity",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3218,
+      "selected": true,
+      "name": "lsinauberjarorfatjar",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_buildingwithmavenandrunningdroolsinauberjarorfatjar",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7898,
+      "selected": true,
+      "name": "l#_buildingwithmaven",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html#_buildingwithmaven",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4995,
+      "selected": true,
+      "name": "rools/KIE/index.html",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/KIE/index.html",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2927,
+      "selected": true,
+      "name": "functions_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#ref-dmn-feel-builtin-functions_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9182,
+      "selected": true,
+      "name": "ation-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-validation-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1118,
+      "selected": true,
+      "name": "pport-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-support-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.313,
+      "selected": true,
+      "name": "sions-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-relation-expressions-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5854,
+      "selected": true,
+      "name": "rties-ref_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-properties-ref_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6243,
+      "selected": true,
+      "name": "ample-ref_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-model-example-ref_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.871,
+      "selected": true,
+      "name": "ments-ref_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-model-enhancements-ref_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.244,
+      "selected": true,
+      "name": "ting-proc_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-model-creating-proc_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7957,
+      "selected": true,
+      "name": "ples-proc_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-model-creating-multiples-proc_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.9175,
+      "selected": true,
+      "name": "ning-proc_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-logic-defining-proc_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.703,
+      "selected": true,
+      "name": "sions-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-literal-expressions-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.449,
+      "selected": true,
+      "name": "sions-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-list-expressions-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0535,
+      "selected": true,
+      "name": "sions-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-invocation-expressions-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2273,
+      "selected": true,
+      "name": "pmml-proc_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-included-models-pmml-proc_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7375,
+      "selected": true,
+      "name": "-dmn-proc_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-included-models-dmn-proc_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5686,
+      "selected": true,
+      "name": "odels-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-included-models-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7666,
+      "selected": true,
+      "name": "sions-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-function-expressions-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2502,
+      "selected": true,
+      "name": "names-ref_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-feel-variable-function-names-ref_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2048,
+      "selected": true,
+      "name": "ments-ref_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-feel-enhancements-ref_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.4968,
+      "selected": true,
+      "name": "types-ref_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-feel-data-types-ref_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3162,
+      "selected": true,
+      "name": "-feel-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-feel-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.626,
+      "selected": true,
+      "name": "gito-proc_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-execution-kogito-proc_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.1611,
+      "selected": true,
+      "name": "cution-embedded-proc",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-execution-embedded-proc",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.0425,
+      "selected": true,
+      "name": "ution-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-execution-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5696,
+      "selected": true,
+      "name": "nents-ref_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-drd-components-ref_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6316,
+      "selected": true,
+      "name": "ation-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-documentation-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2627,
+      "selected": true,
+      "name": "r-nav-ref_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-designer-nav-ref_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.605,
+      "selected": true,
+      "name": "ables-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-decision-tables-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6736,
+      "selected": true,
+      "name": "ning-proc_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-data-types-defining-proc_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3206,
+      "selected": true,
+      "name": "sions-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-context-expressions-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.665,
+      "selected": true,
+      "name": "evels-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-conformance-levels-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.688,
+      "selected": true,
+      "name": "sions-con_dmn-models",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html#dmn-boxed-expressions-con_dmn-models",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.725,
+      "selected": true,
+      "name": "rools/DMN/index.html",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/DMN/index.html",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.127,
+      "selected": true,
+      "name": "samples-ref_kie-apis",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#runtime-commands-samples-ref_kie-apis",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8755,
+      "selected": true,
+      "name": "ommands-con_kie-apis",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#runtime-commands-con_kie-apis",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2957,
+      "selected": true,
+      "name": "ml#_setglobalcommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_setglobalcommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.6406,
+      "selected": true,
+      "name": "html#_retractcommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_retractcommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.2024,
+      "selected": true,
+      "name": "x.html#_querycommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_querycommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.874,
+      "selected": true,
+      "name": ".html#_modifycommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_modifycommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.8696,
+      "selected": true,
+      "name": "_insertobjectcommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_insertobjectcommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.547,
+      "selected": true,
+      "name": "nsertelementscommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_insertelementscommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.73,
+      "selected": true,
+      "name": "l#_getobjectscommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_getobjectscommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.7998,
+      "selected": true,
+      "name": "ml#_getobjectcommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_getobjectcommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.654,
+      "selected": true,
+      "name": "_fireallrulescommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_fireallrulescommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.3186,
+      "selected": true,
+      "name": "atchexecutioncommand",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html#_batchexecutioncommand",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
+      "id": 1727264965785.5017,
+      "selected": true,
+      "name": "/Commands/index.html",
+      "link": "https://docs.drools.org/8.44.0.Final/drools-docs/drools/Commands/index.html",
+      "type": "Generator",
+      "frequency": 10,
+      "lastPicked": 1727264965785
+    },
+    {
       "id": 1727260405218,
       "selected": true,
       "name": "japanese-alloc",
@@ -94,32 +1939,17 @@
   ],
   "topRecords": [
     {
-      "id": 4,
-      "count": 5
-    },
-    {
-      "id": 1,
-      "count": 3
-    },
-    {
-      "id": 3,
-      "count": 2
-    },
-    {
-      "id": 1727260766179,
-      "totalCount": 5,
-      "reviewCount": 5,
-      "generatorCount": 0
-    },
-    {
-      "id": 1727260405218,
-      "totalCount": 2,
+      "id": 1727264965785.7405,
+      "totalCount": 1,
       "reviewCount": 0,
-      "generatorCount": 2
+      "generatorCount": 1
     }
   ],
-  "totalRolls": 17,
+  "totalRolls": 18,
   "totalReviewRolls": 5,
-  "totalGeneratorRolls": 2,
-  "storageDestination": "https://github.com/sktoushi/stash-utils/upload/main"
+  "totalGeneratorRolls": 3,
+  "storageDestination": "https://github.com/sktoushi/stash-utils/upload/main",
+  "localStorageKey": "lsk240925",
+  "maxRecordsShown": 5,
+  "jsonPrefix": "drools"
 }
