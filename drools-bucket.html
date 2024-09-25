@@ -114,54 +114,7 @@
             [46, DMN_INDEX + "#ref-dmn-feel-builtin-functions_dmn-models", 1],
             [47, KIE_INDEX, 1],
             [48, KIE_INDEX + "#_buildingwithmaven", 1],
-            [49, KIE_INDEX + "#_buildingwithmavenandrunningdroolsinauberjarorfatjar", 1],
-            [50, KIE_INDEX + "#_changingthedefaultbuildresultseverity", 1],
-            [51, KIE_INDEX + "#_client_code", 1],
-            [52, KIE_INDEX + "#_commands_and_the_commandexecutor", 1],
-            [53, KIE_INDEX + "#_creatingandbuildingakieproject", 1],
-            [54, KIE_INDEX + "#_data_sources", 1],
-            [55, KIE_INDEX + "#_declare_rule_units_in_drl", 1],
-            [56, KIE_INDEX + "#_default_kiesession", 1],
-            [57, KIE_INDEX + "#_default_kiesession_from_file", 1],
-            [58, KIE_INDEX + "#_definingakiemoduleprogrammatically", 1],
-            [59, KIE_INDEX + "#_enginedependency", 1],
-            [60, KIE_INDEX + "#_event_model", 1],
-            [61, KIE_INDEX + "#_howtodefinekiepolicy", 1],
-            [62, KIE_INDEX + "#_kiebase", 1],
-            [63, KIE_INDEX + "#_kiebase_2", 1],
-            [64, KIE_INDEX + "#_kiebase_inheritance", 1],
-            [65, KIE_INDEX + "#_kiebuildingsection", 1],
-            [66, KIE_INDEX + "#_kiecontainer_from_kierepository", 1],
-            [67, KIE_INDEX + "#_kiedeployingsection", 1],
-            [68, KIE_INDEX + "#_kieexamplessection", 1],
-            [69, KIE_INDEX + "#_kiemodule_with_dependent_kiemodule", 1],
-            [70, KIE_INDEX + "#_kiemoduleintroductionbuildingintroductionsection", 1],
-            [71, KIE_INDEX + "#_kierunningsection", 1],
-            [72, KIE_INDEX + "#_kieruntime", 1],
-            [73, KIE_INDEX + "#_kieruntimelogger", 1],
-            [74, KIE_INDEX + "#_kiescanner", 1],
-            [75, KIE_INDEX + "#_kiesession", 1],
-            [76, KIE_INDEX + "#_kiesessions_and_kiebase_modifications", 1],
-            [77, KIE_INDEX + "#_marshalling", 1],
-            [78, KIE_INDEX + "#_maven_versions_and_dependencies", 1],
-            [79, KIE_INDEX + "#_multiple_kiebases", 1],
-            [80, KIE_INDEX + "#_named_kiesession", 1],
-            [81, KIE_INDEX + "#_named_kiesession_from_file", 1],
-            [82, KIE_INDEX + "#_persistence_and_transactions", 1],
-            [83, KIE_INDEX + "#_programmatically_build_a_kiemodule_using_meta_models", 1],
-            [84, KIE_INDEX + "#_programmatically_build_a_simple_kiemodule_with_defaults", 1],
-            [85, KIE_INDEX + "#_ruleunitdata", 1],
-            [86, KIE_INDEX + "#_securitymanager", 1],
-            [87, KIE_INDEX + "#_settings_xml_and_remote_repository_setup", 1],
-            [88, KIE_INDEX + "#_statelesskiesession", 1],
-            [89, KIE_INDEX + "#_thekmodulexmlfile", 1],
-            [90, KIE_INDEX + "#executable-model-con_packaging-deploying", 1],
-            [91, KIE_INDEX + "#executable-model-modify-proc_packaging-deploying", 1],
-            [92, KIE_INDEX + "#executable-model-upgrading-proc_packaging-deploying", 1],
-            [93, KIE_INDEX + "#kie-scanner-proc_packaging-deploying", 1],
-            [94, KIE_INDEX + "#rule-unit-api_packaging-deploying", 1],
-            [95, KIE_INDEX + "#rule-unit-dsl_packaging-deploying", 1],
-            // Add the rest of your URLs here following the same pattern
+            // Continue adding the rest of your URLs following the same pattern
             // ...
         ];
 
@@ -178,9 +131,6 @@
             });
         }
 
-        // The rest of your JavaScript code remains the same, ensuring that initialFiles is used as the source of URLs.
-
-        // Save and load state functions
         function saveState() {
             const state = {
                 b1: b1,
@@ -192,11 +142,11 @@
                 urlSuffix: urlSuffix,
                 initialFiles: initialFiles
             };
-            localStorage.setItem('randomUrlPickerStatefinetuning', JSON.stringify(state));
+            localStorage.setItem('3f8a67b06ed74875b97f8c2e9e542af5', JSON.stringify(state));
         }
 
         function loadState() {
-            const state = JSON.parse(localStorage.getItem('randomUrlPickerStatefinetuning'));
+            const state = JSON.parse(localStorage.getItem('3f8a67b06ed74875b97f8c2e9e542af5'));
             if (state) {
                 b1 = state.b1 || {};
                 b2 = state.b2 || {};
@@ -212,12 +162,231 @@
             }
         }
 
-        // Rest of your functions (updateProbabilities, pickRandom, updateDisplay, etc.)
+        function resetState() {
+            localStorage.removeItem('3f8a67b06ed74875b97f8c2e9e542af5');
+            defaultFrequency = 1;
+            urlPrefix = '';
+            urlSuffix = '';
+            document.getElementById('defaultFrequency').value = defaultFrequency;
+            document.getElementById('urlPrefix').value = urlPrefix;
+            document.getElementById('urlSuffix').value = urlSuffix;
+            document.getElementById('defaultFrequency').disabled = true;
+            b1Prob = 0.66;
+            b2Prob = 0.34;
+            initBuckets();
+            updateDisplay();
+            initializeSlider();
+            alert('State has been reset.');
+        }
+
+        function exportState() {
+            const state = {
+                b1: b1,
+                b2: b2,
+                b1Prob: b1Prob,
+                b2Prob: b2Prob,
+                defaultFrequency: defaultFrequency,
+                urlPrefix: urlPrefix,
+                urlSuffix: urlSuffix,
+                initialFiles: initialFiles
+            };
+            const stateStr = btoa(JSON.stringify(state));
+
+            // Get current date and time for filename
+            const now = new Date();
+            const timestamp = now.toISOString().replace(/[:.]/g, '-');
+            const filename = `state_${timestamp}.txt`;
+
+            const blob = new Blob([stateStr], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        function importState() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.txt';
+            fileInput.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = event => {
+                        try {
+                            const stateStr = event.target.result;
+                            const state = JSON.parse(atob(stateStr));
+                            b1 = state.b1 || {};
+                            b2 = state.b2 || {};
+                            b1Prob = state.b1Prob || 0.66;
+                            b2Prob = state.b2Prob || 0.34;
+                            defaultFrequency = state.defaultFrequency || 1;
+                            urlPrefix = state.urlPrefix || '';
+                            urlSuffix = state.urlSuffix || '';
+                            initialFiles = state.initialFiles || initialFiles;
+                            initB2Total = getTotalFreq(b2);
+                            document.getElementById('defaultFrequency').value = defaultFrequency;
+                            document.getElementById('urlPrefix').value = urlPrefix;
+                            document.getElementById('urlSuffix').value = urlSuffix;
+                            document.getElementById('defaultFrequency').disabled = true;
+                            saveState();
+                            updateDisplay();
+                            initializeSlider();
+                            alert('State has been imported successfully.');
+                        } catch (e) {
+                            alert('Invalid state data.');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            fileInput.click();
+        }
+
+        function getTotalFreq(bucket) {
+            return Object.values(bucket).reduce((sum, freq) => sum + freq, 0);
+        }
+
+        function updateProbabilities() {
+            const sliderValue = parseInt(document.getElementById('probSlider').value);
+            b1Prob = sliderValue / 100;
+            b2Prob = 1 - b1Prob;
+            document.getElementById('probBucket1').innerText = (b1Prob * 100).toFixed(0) + '%';
+            document.getElementById('probBucket2').innerText = (b2Prob * 100).toFixed(0) + '%';
+            saveState();
+        }
+
+        function pickRandom() {
+            updateProbabilities(); // Ensure probabilities are up to date
+
+            const rand = getSecureRandomNumber();
+            let selectedBucket = rand < b1Prob ? 'b1' : 'b2';
+            let bucket = selectedBucket === 'b1' ? b1 : b2;
+
+            if (getTotalFreq(bucket) === 0) {
+                bucket = selectedBucket === 'b1' ? b2 : b1;
+            }
+
+            if (getTotalFreq(bucket) === 0) {
+                alert('Both buckets are empty!');
+                return;
+            }
+
+            const cumulativeFreqs = [];
+            let cumulative = 0;
+            for (const id in bucket) {
+                cumulative += bucket[id];
+                cumulativeFreqs.push([parseInt(id), cumulative]);
+            }
+
+            const totalFreq = cumulative;
+            const randomPick = Math.floor(getSecureRandomNumber() * totalFreq);
+            let selectedId;
+            for (const [id, cumFreq] of cumulativeFreqs) {
+                if (randomPick < cumFreq) {
+                    selectedId = id;
+                    break;
+                }
+            }
+
+            if (selectedId in b1) {
+                b1[selectedId] += 1;
+            } else {
+                b1[selectedId] = 1;
+            }
+
+            if (selectedId in b2) {
+                b2[selectedId] = Math.max(1, b2[selectedId] - 1);
+            }
+
+            saveState();
+
+            const fileDetails = initialFiles.find(file => file[0] === selectedId);
+            const urlBody = fileDetails[1];
+
+            // Updated URL construction
+            let url = urlBody;
+            if (urlPrefix) {
+                url = urlPrefix + url;
+            }
+            if (urlSuffix) {
+                url = url + urlSuffix;
+            }
+
+            updateDisplay();
+            window.open(url, '_blank');
+        }
+
+        function updateDisplay() {
+            const b1Total = getTotalFreq(b1);
+            const b2Total = getTotalFreq(b2);
+            let progress = (b1Total / (b1Total + b2Total)) * 100;
+            if (progress > 100) progress = 100;
+
+            document.getElementById('gauge').value = progress;
+            document.getElementById('gaugeText').innerText = progress.toFixed(2) + '%';
+            document.getElementById('bucket1Freq').innerText = b1Total;
+            document.getElementById('bucket2Freq').innerText = b2Total;
+        }
+
+        function initializeSlider() {
+            const initialSliderValue = (b1Prob * 100).toFixed(0);
+            document.getElementById('probSlider').value = initialSliderValue;
+            document.getElementById('probBucket1').innerText = initialSliderValue + '%';
+            document.getElementById('probBucket2').innerText = (100 - initialSliderValue) + '%';
+        }
+
+        function toggleDefaultFrequency() {
+            const dfInput = document.getElementById('defaultFrequency');
+            if (dfInput.disabled) {
+                dfInput.disabled = false;
+            } else {
+                dfInput.disabled = true;
+                dfInput.value = defaultFrequency;
+            }
+        }
+
+        function saveDefaultFrequency() {
+            const dfInput = document.getElementById('defaultFrequency');
+            const dfValue = dfInput.value.trim();
+            if (dfValue !== '') {
+                const df = parseInt(dfValue);
+                if (!isNaN(df) && df > 0) {
+                    defaultFrequency = df;
+                    // Apply default frequency to elements with null frequency
+                    initialFiles.forEach(file => {
+                        if (file[2] === null || file[2] === defaultFrequency) {
+                            const id = file[0];
+                            const oldFreq = b2[id] || 0;
+                            const freqDifference = defaultFrequency - oldFreq;
+                            b2[id] = defaultFrequency;
+                            initB2Total += freqDifference;
+                        }
+                    });
+                    dfInput.disabled = true;
+                    saveState();
+                    updateDisplay();
+                    alert('Default frequency saved and applied.');
+                } else {
+                    alert('Please enter a valid positive integer for default frequency.');
+                }
+            } else {
+                alert('Default frequency cannot be empty.');
+            }
+        }
+
+        function saveUrlPrefixSuffix() {
+            urlPrefix = document.getElementById('urlPrefix').value.trim();
+            urlSuffix = document.getElementById('urlSuffix').value.trim();
+            saveState();
+            alert('URL prefix and suffix saved.');
+        }
 
         function main() {
             loadState();
             updateDisplay();
             initializeSlider();
+            // Set initial values for inputs
             document.getElementById('defaultFrequency').value = defaultFrequency;
             document.getElementById('urlPrefix').value = urlPrefix;
             document.getElementById('urlSuffix').value = urlSuffix;
