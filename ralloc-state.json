@@ -4,6 +4,7 @@
     {
       "id": 1,
       "selected": true,
+      "name": "Review Topic 1",
       "link": "https://www.example.com/review1",
       "type": "Review",
       "frequency": 50,
@@ -12,6 +13,7 @@
     {
       "id": 2,
       "selected": false,
+      "name": "Generator Topic 1",
       "link": "https://www.example.com/generator1",
       "type": "Generator",
       "frequency": 50,
@@ -20,6 +22,7 @@
     {
       "id": 3,
       "selected": true,
+      "name": "Review Topic 2",
       "link": "https://www.example.com/review2",
       "type": "Review",
       "frequency": 25,
@@ -28,6 +31,7 @@
     {
       "id": 4,
       "selected": true,
+      "name": "Generator Topic 2",
       "link": "https://www.example.com/generator2",
       "type": "Generator",
       "frequency": 75,
