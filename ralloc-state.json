@@ -60,5 +60,6 @@
   ],
   "totalRolls": 10,
   "totalReviewRolls": 7,
-  "totalGeneratorRolls": 3
+  "totalGeneratorRolls": 3,
+  "storageDestination": "https://github.com/sktoushi/stash-utils/upload/main"
 }

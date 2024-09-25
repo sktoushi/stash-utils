@@ -66,6 +66,13 @@
             height: 400px;
             width: 100%;
         }
+        /* Configuration section styles */
+        #configuration-section {
+            margin-top: 30px;
+        }
+        #editDestinationBtn {
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -134,6 +141,24 @@
                 <!-- Top records will be dynamically added here -->
             </ol>
         </div>
+        <!-- Configuration Section -->
+        <div id="configuration-section">
+            <h3>Configuration</h3>
+            <div class="form-group">
+                <label for="storageDestination">State Storage Destination:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="storageDestination" disabled>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" id="editDestinationBtn">Edit</button>
+                        <button class="btn btn-outline-secondary" id="saveDestinationBtn" style="display: none;">Save</button>
+                        <button class="btn btn-outline-secondary" id="cancelDestinationBtn" style="display: none;">Cancel</button>
+                    </div>
+                </div>
+                <small class="form-text text-muted">
+                    This value will be the destination page upon clicking the <strong>Export State</strong> button after the JSON file has been downloaded.
+                </small>
+            </div>
+        </div>
     </div>
     <!-- Include necessary scripts -->
     <!-- Include jQuery and Bootstrap JS -->
@@ -149,6 +174,7 @@
             let totalReviewRolls = 0;
             let totalGeneratorRolls = 0;
             let topRecordsChart;
+            let defaultStorageDestination = "https://github.com/sktoushi/stash-utils/upload/main";
 
             // Update slider value display
             $('#typeSlider').on('input change', function() {
@@ -173,6 +199,8 @@
                     $('#typeSlider').trigger('change');
                     populateRecords(data.records);
                     populateTopRecords(data.topRecords);
+                    // Load storage destination
+                    $('#storageDestination').val(data.storageDestination || defaultStorageDestination);
                 } else {
                     // Try to fetch ralloc-state.json
                     $.ajax({
@@ -189,6 +217,8 @@
                             $('#typeSlider').trigger('change');
                             populateRecords(jsonData.records);
                             populateTopRecords(jsonData.topRecords);
+                            // Load storage destination
+                            $('#storageDestination').val(jsonData.storageDestination || defaultStorageDestination);
                         },
                         error: function() {
                             // No data available, initialize empty data
@@ -198,9 +228,11 @@
                                 topRecords: [],
                                 totalRolls: 0,
                                 totalReviewRolls: 0,
-                                totalGeneratorRolls: 0
+                                totalGeneratorRolls: 0,
+                                storageDestination: defaultStorageDestination
                             };
                             localStorage.setItem('rallocStorageKey', JSON.stringify(initialData));
+                            $('#storageDestination').val(defaultStorageDestination);
                         }
                     });
                 }
@@ -356,6 +388,7 @@
                 data.totalRolls = totalRolls;
                 data.totalReviewRolls = totalReviewRolls;
                 data.totalGeneratorRolls = totalGeneratorRolls;
+                data.storageDestination = $('#storageDestination').val();
                 return data;
             }
 
@@ -529,6 +562,12 @@
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+
+                // After downloading, redirect to the storage destination
+                let destination = $('#storageDestination').val();
+                if (destination) {
+                    window.open(destination, '_blank');
+                }
             });
 
             // Import State button handler
@@ -567,7 +606,114 @@
             });
 
             // Algorithm Buttons Handlers
-            // ... (Algorithm functions remain unchanged)
+            $('#smootheningBtn').click(function() {
+                // Inverse the frequencies based on total picks
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let totalCount = recordStat ? recordStat.totalCount : 0;
+                    record.frequency = 1 / (totalCount + 1) * 100;
+                    record.selected = true;
+                });
+                data.sliderValue = 50;
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#solidifyingBtn').click(function() {
+                // Increase frequency of records with fewer Generator picks
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let generatorCount = recordStat ? recordStat.generatorCount || 0 : 0;
+                    record.frequency = 1 / (generatorCount + 1) * 100;
+                    record.selected = true;
+                });
+                data.sliderValue = 30; // Favor Review
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#reviewingBtn').click(function() {
+                // Focus on records with most Review picks
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let reviewCount = recordStat ? recordStat.reviewCount || 0 : 0;
+                    record.frequency = reviewCount > 0 ? reviewCount * 10 : 1;
+                    record.selected = true;
+                });
+                data.sliderValue = 100; // Exclusively Review
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#exploringBtn').click(function() {
+                // Focus on new or least picked records
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let totalCount = recordStat ? recordStat.totalCount : 0;
+                    record.frequency = 1 / (totalCount + 1) * 100;
+                    record.selected = true;
+                });
+                data.sliderValue = 0; // Exclusively Generator
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#randomizingBtn').click(function() {
+                // Randomize frequencies and checkboxes
+                let data = getCurrentData();
+                let hasSelected = false;
+                data.records.forEach(function(record) {
+                    record.frequency = Math.floor(Math.random() * 100) + 1;
+                    record.selected = Math.random() < 0.5;
+                    if (record.selected) hasSelected = true;
+                });
+                if (!hasSelected) {
+                    // Ensure at least one record is selected
+                    data.records[0].selected = true;
+                }
+                data.sliderValue = Math.floor(Math.random() * 101);
+                applyDataToUI(data);
+                saveData();
+            });
+
+            // Additional Strategies
+            $('#spacedRepetitionBtn').click(function() {
+                // Increase frequency for records not recently picked
+                let data = getCurrentData();
+                let now = Date.now();
+                data.records.forEach(function(record) {
+                    let lastPicked = record.lastPicked || 0;
+                    let daysSincePicked = (now - lastPicked) / (1000 * 60 * 60 * 24);
+                    record.frequency = Math.min(daysSincePicked * 10, 100);
+                    record.selected = true;
+                });
+                data.sliderValue = 50;
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#focusWeakestBtn').click(function() {
+                // Focus on records with fewest total picks
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let totalCount = recordStat ? recordStat.totalCount : 0;
+                    record.frequency = 1 / (totalCount + 1) * 100;
+                    record.selected = true;
+                });
+                data.sliderValue = 50;
+                applyDataToUI(data);
+                saveData();
+            });
 
             // Apply data to UI
             function applyDataToUI(data) {
@@ -587,6 +733,29 @@
                     }
                 });
             }
+
+            // Configuration Section Handlers
+            $('#editDestinationBtn').click(function() {
+                $('#storageDestination').prop('disabled', false);
+                $('#editDestinationBtn').hide();
+                $('#saveDestinationBtn, #cancelDestinationBtn').show();
+            });
+
+            $('#saveDestinationBtn').click(function() {
+                $('#storageDestination').prop('disabled', true);
+                $('#editDestinationBtn').show();
+                $('#saveDestinationBtn, #cancelDestinationBtn').hide();
+                saveData();
+            });
+
+            $('#cancelDestinationBtn').click(function() {
+                $('#storageDestination').prop('disabled', true);
+                $('#editDestinationBtn').show();
+                $('#saveDestinationBtn, #cancelDestinationBtn').hide();
+                // Reload the value from localStorage
+                let data = JSON.parse(localStorage.getItem('rallocStorageKey') || '{}');
+                $('#storageDestination').val(data.storageDestination || defaultStorageDestination);
+            });
         });
     </script>
 </body>
