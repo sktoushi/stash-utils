@@ -1,0 +1,125 @@
+{
+  "sliderValue": 50,
+  "records": [
+    {
+      "id": 1727260405218,
+      "selected": true,
+      "name": "japanese-alloc",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/9",
+      "type": "Generator",
+      "frequency": 13,
+      "lastPicked": null
+    },
+    {
+      "id": 1727260766179,
+      "selected": true,
+      "name": "spreadsheet",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/10",
+      "type": "Generator",
+      "frequency": 24,
+      "lastPicked": null
+    },
+    {
+      "id": 1727261244027,
+      "selected": true,
+      "name": "baseball strat",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/12",
+      "type": "Generator",
+      "frequency": 1,
+      "lastPicked": null
+    },
+    {
+      "id": 1727261269418,
+      "selected": true,
+      "name": "hangul",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/13",
+      "type": "Generator",
+      "frequency": 1,
+      "lastPicked": null
+    },
+    {
+      "id": 1727261310302,
+      "selected": true,
+      "name": "mental-math",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/14",
+      "type": "Generator",
+      "frequency": 4,
+      "lastPicked": null
+    },
+    {
+      "id": 1727261334891,
+      "selected": true,
+      "name": "stash2-scaled",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/15",
+      "type": "Review",
+      "frequency": 8,
+      "lastPicked": null
+    },
+    {
+      "id": 1727261349294,
+      "selected": true,
+      "name": "inhouse1-scaled",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/16",
+      "type": "Review",
+      "frequency": 8,
+      "lastPicked": null
+    },
+    {
+      "id": 1727261417956,
+      "selected": true,
+      "name": "verbatim-project",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/23",
+      "type": "Review",
+      "frequency": 15,
+      "lastPicked": null
+    },
+    {
+      "id": 1727261449262,
+      "selected": true,
+      "name": "bucket+guidedStudy",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/47",
+      "type": "Review",
+      "frequency": 36,
+      "lastPicked": null
+    },
+    {
+      "id": 1727261480850,
+      "selected": true,
+      "name": "gpt bestsellers",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/32",
+      "type": "Generator",
+      "frequency": 5,
+      "lastPicked": null
+    }
+  ],
+  "topRecords": [
+    {
+      "id": 4,
+      "count": 5
+    },
+    {
+      "id": 1,
+      "count": 3
+    },
+    {
+      "id": 3,
+      "count": 2
+    },
+    {
+      "id": 1727260766179,
+      "totalCount": 5,
+      "reviewCount": 5,
+      "generatorCount": 0
+    },
+    {
+      "id": 1727260405218,
+      "totalCount": 2,
+      "reviewCount": 0,
+      "generatorCount": 2
+    }
+  ],
+  "totalRolls": 17,
+  "totalReviewRolls": 5,
+  "totalGeneratorRolls": 2,
+  "storageDestination": "https://github.com/sktoushi/stash-utils/upload/main"
+}
