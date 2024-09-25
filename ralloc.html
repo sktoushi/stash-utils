@@ -27,6 +27,26 @@
                 margin-top: 5px;
             }
         }
+        textarea.record-link {
+            width: 100%;
+            resize: vertical;
+        }
+        .record-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        #controls-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        #rollBtn {
+            margin-left: 10px;
+        }
+        .top-records-percentage {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -43,16 +63,13 @@
         </div>
         <br>
         <!-- Buttons for state management -->
-        <div class="text-center">
+        <div id="controls-row">
             <button class="btn btn-primary" id="importStateBtn">Import State</button>
             <button class="btn btn-primary" id="exportStateBtn">Export State</button>
             <button class="btn btn-danger" id="resetStateBtn">Reset State</button>
-            <input type="file" id="importFileInput" accept="application/json" style="display: none;">
-        </div>
-        <br>
-        <!-- Button to add new records -->
-        <div class="text-center">
             <button class="btn btn-secondary" id="addRecordBtn">Add Record</button>
+            <button class="btn btn-success" id="rollBtn">Roll</button>
+            <input type="file" id="importFileInput" accept="application/json" style="display: none;">
         </div>
         <br>
         <!-- Table of records -->
@@ -63,16 +80,13 @@
                     <th>Link</th>
                     <th>Type</th>
                     <th>Frequency</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="recordsTableBody">
                 <!-- Records will be dynamically added here -->
             </tbody>
         </table>
-        <!-- Roll button -->
-        <div class="text-center">
-            <button class="btn btn-success" id="rollBtn">Roll</button>
-        </div>
         <br>
         <!-- Top 10 most-picked records -->
         <h3>Top 10 Most-Picked Records</h3>
@@ -89,6 +103,9 @@
     <!-- Custom JavaScript -->
     <script>
         $(document).ready(function() {
+            // Global variables
+            let totalRolls = 0;
+
             // Update slider value display
             $('#typeSlider').on('input change', function() {
                 let reviewPercent = $(this).val();
@@ -104,6 +121,7 @@
                 let data = localStorage.getItem('rallocStorageKey');
                 if (data) {
                     data = JSON.parse(data);
+                    totalRolls = data.totalRolls || 0;
                     // Use the data
                     $('#typeSlider').val(data.sliderValue || 66);
                     $('#typeSlider').trigger('change');
@@ -117,6 +135,7 @@
                         success: function(jsonData) {
                             // Store in LocalStorage
                             localStorage.setItem('rallocStorageKey', JSON.stringify(jsonData));
+                            totalRolls = jsonData.totalRolls || 0;
                             // Use the data
                             $('#typeSlider').val(jsonData.sliderValue || 66);
                             $('#typeSlider').trigger('change');
@@ -128,7 +147,8 @@
                             let initialData = {
                                 sliderValue: 66,
                                 records: [],
-                                topRecords: []
+                                topRecords: [],
+                                totalRolls: 0
                             };
                             localStorage.setItem('rallocStorageKey', JSON.stringify(initialData));
                         }
@@ -142,7 +162,7 @@
             function createRecordRow(record) {
                 let row = $('<tr></tr>');
                 let checkbox = $('<input type="checkbox" class="record-select">').prop('checked', record.selected);
-                let linkInput = $('<input type="text" class="form-control record-link">').val(record.link);
+                let linkInput = $('<textarea class="form-control record-link"></textarea>').val(record.link);
                 let typeSelect = $('<select class="form-control record-type"><option value="Review">Review</option><option value="Generator">Generator</option></select>').val(record.type);
                 let frequencyInput = $('<input type="range" class="custom-range record-frequency" min="1" max="100">').val(record.frequency || 1);
                 let frequencyLabel = $('<span class="frequency-label">' + (record.frequency || 1) + '</span>');
@@ -150,11 +170,20 @@
                     frequencyLabel.text($(this).val());
                 });
                 let frequencyCell = $('<td></td>').append(frequencyInput).append(frequencyLabel);
+                let deleteBtn = $('<button class="btn btn-danger btn-sm">Delete</button>');
+                deleteBtn.click(function() {
+                    if (confirm('Are you sure you want to delete this record?')) {
+                        row.remove();
+                        saveData();
+                    }
+                });
+                let actionsCell = $('<td></td>').append(deleteBtn);
 
                 row.append($('<td></td>').append(checkbox));
                 row.append($('<td></td>').append(linkInput));
                 row.append($('<td></td>').append(typeSelect));
                 row.append(frequencyCell);
+                row.append(actionsCell);
                 row.data('recordId', record.id);
                 return row;
             }
@@ -172,14 +201,21 @@
             // Function to populate top records list
             function populateTopRecords(topRecords) {
                 $('#topRecordsList').empty();
-                if (!topRecords) return;
+                if (!topRecords || totalRolls === 0) return;
                 // Sort topRecords by count descending
                 topRecords.sort(function(a, b) {
                     return b.count - a.count;
                 });
                 topRecords.slice(0, 10).forEach(function(recordStat) {
-                    let listItem = $('<li></li>').text('Link ID: ' + recordStat.id + ', Picked: ' + recordStat.count + ' times');
-                    $('#topRecordsList').append(listItem);
+                    let record = getRecordById(recordStat.id);
+                    if (record) {
+                        let percentage = ((recordStat.count / totalRolls) * 100).toFixed(2);
+                        let listItem = $('<li></li>').append(
+                            $('<a href="' + record.link + '" target="_blank">' + record.link + '</a>'),
+                            $('<span> - Picked: ' + recordStat.count + ' times (' + percentage + '%)</span>').addClass('top-records-percentage')
+                        );
+                        $('#topRecordsList').append(listItem);
+                    }
                 });
             }
 
@@ -199,15 +235,39 @@
                     };
                     data.records.push(record);
                 });
-                data.topRecords = data.topRecords || [];
+                data.topRecords = JSON.parse(localStorage.getItem('rallocStorageKey') || '{}').topRecords || [];
+                data.totalRolls = totalRolls;
                 return data;
             }
 
             // Save data when inputs change
-            $('#recordsTableBody').on('change', 'input, select', function() {
+            $('#recordsTableBody').on('change', 'input, select, textarea', function() {
+                saveData();
+            });
+
+            function saveData() {
                 let data = getCurrentData();
                 localStorage.setItem('rallocStorageKey', JSON.stringify(data));
-            });
+            }
+
+            // Get record by ID
+            function getRecordById(id) {
+                let records = [];
+                $('#recordsTableBody tr').each(function() {
+                    let row = $(this);
+                    if (row.data('recordId') === id) {
+                        let record = {
+                            id: row.data('recordId'),
+                            selected: row.find('.record-select').is(':checked'),
+                            link: row.find('.record-link').val(),
+                            type: row.find('.record-type').val(),
+                            frequency: parseInt(row.find('.record-frequency').val())
+                        };
+                        records.push(record);
+                    }
+                });
+                return records[0];
+            }
 
             // Add Record button handler
             $('#addRecordBtn').click(function() {
@@ -221,8 +281,7 @@
                 let row = createRecordRow(newRecord);
                 $('#recordsTableBody').append(row);
                 // Save data
-                let data = getCurrentData();
-                localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+                saveData();
             });
 
             // Roll button handler
@@ -274,8 +333,11 @@
                     } else {
                         topRecords.push({id: selectedRecord.id, count: 1});
                     }
-                    // Save topRecords to data and LocalStorage
+                    totalRolls += 1;
+
+                    // Save topRecords and totalRolls to data and LocalStorage
                     data.topRecords = topRecords;
+                    data.totalRolls = totalRolls;
                     localStorage.setItem('rallocStorageKey', JSON.stringify(data));
 
                     // Update the top records list

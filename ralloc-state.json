@@ -4,40 +4,45 @@
     {
       "id": 1,
       "selected": true,
-      "link": "https://github.com/cjcaf1995/redirect0915/issues/1",
+      "link": "https://www.example.com/review1",
       "type": "Review",
       "frequency": 50
     },
     {
       "id": 2,
       "selected": false,
-      "link": "https://github.com/cjcaf1995/redirect0915/issues/2",
+      "link": "https://www.example.com/generator1",
       "type": "Generator",
       "frequency": 50
     },
     {
       "id": 3,
       "selected": true,
-      "link": "https://github.com/cjcaf1995/redirect0915/issues/3",
+      "link": "https://www.example.com/review2",
       "type": "Review",
       "frequency": 25
     },
     {
       "id": 4,
       "selected": true,
-      "link": "https://github.com/cjcaf1995/redirect0915/issues/4",
+      "link": "https://www.example.com/generator2",
       "type": "Generator",
       "frequency": 75
     }
   ],
   "topRecords": [
     {
+      "id": 4,
+      "count": 5
+    },
+    {
       "id": 1,
       "count": 3
     },
     {
-      "id": 4,
-      "count": 5
+      "id": 3,
+      "count": 2
     }
-  ]
+  ],
+  "totalRolls": 10
 }
