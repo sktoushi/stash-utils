@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Random URL Picker with Customizable Settings</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin-top: 30px;
+        }
+        .progress-container {
+            margin-bottom: 20px;
+        }
+        .btn-draw {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .slider-container, .input-container {
+            margin-bottom: 20px;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+        }
+        .btn-export {
+            margin-top: 10px;
+        }
+        .input-group-text {
+            width: 100px;
+        }
+    </style>
+    <script>
+        let b1 = {}; // Bucket 1 (reviews)
+        let b2 = {}; // Bucket 2 (new elements)
+        let initB2Total = 0; // Initial total frequency of Bucket 2
+        let b1Prob = 0.66; // Default probability for Bucket 1
+        let b2Prob = 0.34; // Default probability for Bucket 2
+        let defaultFrequency = 1; // Default frequency
+        let urlPrefix = ''; // URL Prefix
+        let urlSuffix = ''; // URL Suffix
+
+        function getSecureRandomNumber() {
+          const array = new Uint32Array(1);
+          window.crypto.getRandomValues(array);
+          return array[0] / (0xFFFFFFFF + 1);
+        }
+
+        // Constants for repetitive parts of the URLs
+        const BASE_URL = "https://docs.drools.org/8.44.0.Final/drools-docs/";
+
+        const COMMANDS_INDEX = BASE_URL + "drools/Commands/index.html";
+        const DMN_INDEX = BASE_URL + "drools/DMN/index.html";
+        const KIE_INDEX = BASE_URL + "drools/KIE/index.html";
+        const EXPERIMENTAL_FEATURES_INDEX = BASE_URL + "drools/experimental-features/index.html";
+        const GETTING_STARTED_INDEX = BASE_URL + "drools/getting-started/index.html";
+        const INTRODUCTION_INDEX = BASE_URL + "drools/introduction/index.html";
+        const LANGUAGE_REFERENCE_INDEX = BASE_URL + "drools/language-reference/index.html";
+        const MIGRATION_GUIDE_INDEX = BASE_URL + "drools/migration-guide/index.html";
+        const PRAGMATIC_AI_INDEX = BASE_URL + "drools/pragmatic-ai/index.html";
+        const RULE_ENGINE_INDEX = BASE_URL + "drools/rule-engine/index.html";
+
+        // Simplified list of URL bodies and frequencies
+        let initialFiles = [
+            [1, COMMANDS_INDEX, 1],
+            [2, COMMANDS_INDEX + "#_batchexecutioncommand", 1],
+            [3, COMMANDS_INDEX + "#_fireallrulescommand", 1],
+            [4, COMMANDS_INDEX + "#_getobjectcommand", 1],
+            [5, COMMANDS_INDEX + "#_getobjectscommand", 1],
+            [6, COMMANDS_INDEX + "#_insertelementscommand", 1],
+            [7, COMMANDS_INDEX + "#_insertobjectcommand", 1],
+            [8, COMMANDS_INDEX + "#_modifycommand", 1],
+            [9, COMMANDS_INDEX + "#_querycommand", 1],
+            [10, COMMANDS_INDEX + "#_retractcommand", 1],
+            [11, COMMANDS_INDEX + "#_setglobalcommand", 1],
+            [12, COMMANDS_INDEX + "#runtime-commands-con_kie-apis", 1],
+            [13, COMMANDS_INDEX + "#runtime-commands-samples-ref_kie-apis", 1],
+            [14, DMN_INDEX, 1],
+            [15, DMN_INDEX + "#dmn-boxed-expressions-con_dmn-models", 1],
+            [16, DMN_INDEX + "#dmn-conformance-levels-con_dmn-models", 1],
+            [17, DMN_INDEX + "#dmn-context-expressions-con_dmn-models", 1],
+            [18, DMN_INDEX + "#dmn-data-types-defining-proc_dmn-models", 1],
+            [19, DMN_INDEX + "#dmn-decision-tables-con_dmn-models", 1],
+            [20, DMN_INDEX + "#dmn-designer-nav-ref_dmn-models", 1],
+            [21, DMN_INDEX + "#dmn-documentation-con_dmn-models", 1],
+            [22, DMN_INDEX + "#dmn-drd-components-ref_dmn-models", 1],
+            [23, DMN_INDEX + "#dmn-execution-con_dmn-models", 1],
+            [24, DMN_INDEX + "#dmn-execution-embedded-proc", 1],
+            [25, DMN_INDEX + "#dmn-execution-kogito-proc_dmn-models", 1],
+            [26, DMN_INDEX + "#dmn-feel-con_dmn-models", 1],
+            [27, DMN_INDEX + "#dmn-feel-data-types-ref_dmn-models", 1],
+            [28, DMN_INDEX + "#dmn-feel-enhancements-ref_dmn-models", 1],
+            [29, DMN_INDEX + "#dmn-feel-variable-function-names-ref_dmn-models", 1],
+            [30, DMN_INDEX + "#dmn-function-expressions-con_dmn-models", 1],
+            [31, DMN_INDEX + "#dmn-included-models-con_dmn-models", 1],
+            [32, DMN_INDEX + "#dmn-included-models-dmn-proc_dmn-models", 1],
+            [33, DMN_INDEX + "#dmn-included-models-pmml-proc_dmn-models", 1],
+            [34, DMN_INDEX + "#dmn-invocation-expressions-con_dmn-models", 1],
+            [35, DMN_INDEX + "#dmn-list-expressions-con_dmn-models", 1],
+            [36, DMN_INDEX + "#dmn-literal-expressions-con_dmn-models", 1],
+            [37, DMN_INDEX + "#dmn-logic-defining-proc_dmn-models", 1],
+            [38, DMN_INDEX + "#dmn-model-creating-multiples-proc_dmn-models", 1],
+            [39, DMN_INDEX + "#dmn-model-creating-proc_dmn-models", 1],
+            [40, DMN_INDEX + "#dmn-model-enhancements-ref_dmn-models", 1],
+            [41, DMN_INDEX + "#dmn-model-example-ref_dmn-models", 1],
+            [42, DMN_INDEX + "#dmn-properties-ref_dmn-models", 1],
+            [43, DMN_INDEX + "#dmn-relation-expressions-con_dmn-models", 1],
+            [44, DMN_INDEX + "#dmn-support-con_dmn-models", 1],
+            [45, DMN_INDEX + "#dmn-validation-con_dmn-models", 1],
+            [46, DMN_INDEX + "#ref-dmn-feel-builtin-functions_dmn-models", 1],
+            [47, KIE_INDEX, 1],
+            [48, KIE_INDEX + "#_buildingwithmaven", 1],
+            [49, KIE_INDEX + "#_buildingwithmavenandrunningdroolsinauberjarorfatjar", 1],
+            [50, KIE_INDEX + "#_changingthedefaultbuildresultseverity", 1],
+            [51, KIE_INDEX + "#_client_code", 1],
+            [52, KIE_INDEX + "#_commands_and_the_commandexecutor", 1],
+            [53, KIE_INDEX + "#_creatingandbuildingakieproject", 1],
+            [54, KIE_INDEX + "#_data_sources", 1],
+            [55, KIE_INDEX + "#_declare_rule_units_in_drl", 1],
+            [56, KIE_INDEX + "#_default_kiesession", 1],
+            [57, KIE_INDEX + "#_default_kiesession_from_file", 1],
+            [58, KIE_INDEX + "#_definingakiemoduleprogrammatically", 1],
+            [59, KIE_INDEX + "#_enginedependency", 1],
+            [60, KIE_INDEX + "#_event_model", 1],
+            [61, KIE_INDEX + "#_howtodefinekiepolicy", 1],
+            [62, KIE_INDEX + "#_kiebase", 1],
+            [63, KIE_INDEX + "#_kiebase_2", 1],
+            [64, KIE_INDEX + "#_kiebase_inheritance", 1],
+            [65, KIE_INDEX + "#_kiebuildingsection", 1],
+            [66, KIE_INDEX + "#_kiecontainer_from_kierepository", 1],
+            [67, KIE_INDEX + "#_kiedeployingsection", 1],
+            [68, KIE_INDEX + "#_kieexamplessection", 1],
+            [69, KIE_INDEX + "#_kiemodule_with_dependent_kiemodule", 1],
+            [70, KIE_INDEX + "#_kiemoduleintroductionbuildingintroductionsection", 1],
+            [71, KIE_INDEX + "#_kierunningsection", 1],
+            [72, KIE_INDEX + "#_kieruntime", 1],
+            [73, KIE_INDEX + "#_kieruntimelogger", 1],
+            [74, KIE_INDEX + "#_kiescanner", 1],
+            [75, KIE_INDEX + "#_kiesession", 1],
+            [76, KIE_INDEX + "#_kiesessions_and_kiebase_modifications", 1],
+            [77, KIE_INDEX + "#_marshalling", 1],
+            [78, KIE_INDEX + "#_maven_versions_and_dependencies", 1],
+            [79, KIE_INDEX + "#_multiple_kiebases", 1],
+            [80, KIE_INDEX + "#_named_kiesession", 1],
+            [81, KIE_INDEX + "#_named_kiesession_from_file", 1],
+            [82, KIE_INDEX + "#_persistence_and_transactions", 1],
+            [83, KIE_INDEX + "#_programmatically_build_a_kiemodule_using_meta_models", 1],
+            [84, KIE_INDEX + "#_programmatically_build_a_simple_kiemodule_with_defaults", 1],
+            [85, KIE_INDEX + "#_ruleunitdata", 1],
+            [86, KIE_INDEX + "#_securitymanager", 1],
+            [87, KIE_INDEX + "#_settings_xml_and_remote_repository_setup", 1],
+            [88, KIE_INDEX + "#_statelesskiesession", 1],
+            [89, KIE_INDEX + "#_thekmodulexmlfile", 1],
+            [90, KIE_INDEX + "#executable-model-con_packaging-deploying", 1],
+            [91, KIE_INDEX + "#executable-model-modify-proc_packaging-deploying", 1],
+            [92, KIE_INDEX + "#executable-model-upgrading-proc_packaging-deploying", 1],
+            [93, KIE_INDEX + "#kie-scanner-proc_packaging-deploying", 1],
+            [94, KIE_INDEX + "#rule-unit-api_packaging-deploying", 1],
+            [95, KIE_INDEX + "#rule-unit-dsl_packaging-deploying", 1],
+            // Add the rest of your URLs here following the same pattern
+            // ...
+        ];
+
+        function initBuckets() {
+            b1 = {};
+            b2 = {};
+            initB2Total = 0;
+
+            initialFiles.forEach(file => {
+                const id = file[0];
+                const freq = file[2] !== null ? file[2] : defaultFrequency;
+                b2[id] = freq;
+                initB2Total += freq;
+            });
+        }
+
+        // The rest of your JavaScript code remains the same, ensuring that initialFiles is used as the source of URLs.
+
+        // Save and load state functions
+        function saveState() {
+            const state = {
+                b1: b1,
+                b2: b2,
+                b1Prob: b1Prob,
+                b2Prob: b2Prob,
+                defaultFrequency: defaultFrequency,
+                urlPrefix: urlPrefix,
+                urlSuffix: urlSuffix,
+                initialFiles: initialFiles
+            };
+            localStorage.setItem('randomUrlPickerStatefinetuning', JSON.stringify(state));
+        }
+
+        function loadState() {
+            const state = JSON.parse(localStorage.getItem('randomUrlPickerStatefinetuning'));
+            if (state) {
+                b1 = state.b1 || {};
+                b2 = state.b2 || {};
+                b1Prob = state.b1Prob || 0.66;
+                b2Prob = state.b2Prob || 0.34;
+                defaultFrequency = state.defaultFrequency || 1;
+                urlPrefix = state.urlPrefix || '';
+                urlSuffix = state.urlSuffix || '';
+                initialFiles = state.initialFiles || initialFiles;
+                initB2Total = getTotalFreq(b2);
+            } else {
+                initBuckets();
+            }
+        }
+
+        // Rest of your functions (updateProbabilities, pickRandom, updateDisplay, etc.)
+
+        function main() {
+            loadState();
+            updateDisplay();
+            initializeSlider();
+            document.getElementById('defaultFrequency').value = defaultFrequency;
+            document.getElementById('urlPrefix').value = urlPrefix;
+            document.getElementById('urlSuffix').value = urlSuffix;
+            document.getElementById('defaultFrequency').disabled = true;
+        }
+
+        window.onload = main;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Random URL Picker</h1>
+
+        <div class="input-container">
+            <label class="form-label">URL Prefix:</label>
+            <input type="text" class="form-control" id="urlPrefix" placeholder="Enter URL Prefix">
+            <label class="form-label">URL Suffix:</label>
+            <input type="text" class="form-control" id="urlSuffix" placeholder="Enter URL Suffix">
+            <button class="btn btn-secondary mt-2" onclick="saveUrlPrefixSuffix()">Save URL Prefix/Suffix</button>
+        </div>
+
+        <div class="input-container">
+            <label class="form-label">Default Frequency:</label>
+            <div class="input-group">
+                <input type="number" class="form-control" id="defaultFrequency" value="1" min="1" disabled>
+                <button class="btn btn-secondary" onclick="toggleDefaultFrequency()">Edit</button>
+                <button class="btn btn-primary" onclick="saveDefaultFrequency()">Save</button>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <label for="probSlider" class="form-label">Adjust Probabilities:</label>
+            <input type="range" class="form-range" id="probSlider" min="0" max="100" value="66" oninput="updateProbabilities()">
+            <div class="slider-label">
+                <span>Bucket 1: <span id="probBucket1">66%</span></span>
+                <span>Bucket 2: <span id="probBucket2">34%</span></span>
+            </div>
+        </div>
+
+        <button class="btn btn-primary btn-draw" onclick="pickRandom()">Draw and Open URL</button>
+
+        <div class="progress-container">
+            <label for="gauge" class="form-label">Progress (Bucket 1 vs. Total):</label>
+            <progress id="gauge" class="form-range w-100" value="0" max="100"></progress>
+            <div class="text-center">
+                <span id="gaugeText">0%</span>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col text-center">
+                <h5>Bucket 1 Total Frequency</h5>
+                <span id="bucket1Freq">0</span>
+            </div>
+            <div class="col text-center">
+                <h5>Bucket 2 Total Frequency</h5>
+                <span id="bucket2Freq">0</span>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <button class="btn btn-secondary btn-export" onclick="exportState()">Export State</button>
+            <button class="btn btn-secondary btn-export" onclick="importState()">Import State</button>
+            <button class="btn btn-danger btn-export" onclick="resetState()">Reset State</button>
+        </div>
+    </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-wpsYrgENSMwvWDnK+0hqyc+8zhu+uZdzsOCS8KQmS1b2y2lZjY0Chvh6e+GD44G" crossorigin="anonymous"></script>
+</body>
+</html>
