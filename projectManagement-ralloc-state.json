@@ -1,0 +1,21 @@
+{
+  "sliderValue": 50,
+  "records": [
+
+  ],
+  "topRecords": [
+    {
+      "id": 1727264965785.7405,
+      "totalCount": 1,
+      "reviewCount": 0,
+      "generatorCount": 1
+    }
+  ],
+  "totalRolls": 18,
+  "totalReviewRolls": 5,
+  "totalGeneratorRolls": 3,
+  "storageDestination": "https://github.com/sktoushi/stash-utils/upload/main",
+  "localStorageKey": "projectManagementRalloc",
+  "maxRecordsShown": 5,
+  "jsonPrefix": "projectManagement"
+}
