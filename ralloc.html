@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ralloc</title>
+    <!-- Include Bootstrap CSS (Bootstrap 4 for compatibility) -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Custom CSS for styling -->
+    <style>
+        body {
+            padding: 20px;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+        }
+        .frequency-label {
+            margin-left: 10px;
+        }
+        .frequency-slider {
+            width: 100%;
+        }
+        @media (max-width: 576px) {
+            .frequency-label {
+                display: block;
+                margin-top: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Ralloc</h1>
+        <!-- Slider for Review/Generator split -->
+        <div class="slider-label">
+            <span>Review</span>
+            <span>Generator</span>
+        </div>
+        <input type="range" class="custom-range" id="typeSlider" min="0" max="100" value="66">
+        <div class="text-center">
+            <span id="sliderValue">66% Review / 34% Generator</span>
+        </div>
+        <br>
+        <!-- Buttons for state management -->
+        <div class="text-center">
+            <button class="btn btn-primary" id="importStateBtn">Import State</button>
+            <button class="btn btn-primary" id="exportStateBtn">Export State</button>
+            <button class="btn btn-danger" id="resetStateBtn">Reset State</button>
+            <input type="file" id="importFileInput" accept="application/json" style="display: none;">
+        </div>
+        <br>
+        <!-- Button to add new records -->
+        <div class="text-center">
+            <button class="btn btn-secondary" id="addRecordBtn">Add Record</button>
+        </div>
+        <br>
+        <!-- Table of records -->
+        <table class="table table-bordered" id="recordsTable">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Link</th>
+                    <th>Type</th>
+                    <th>Frequency</th>
+                </tr>
+            </thead>
+            <tbody id="recordsTableBody">
+                <!-- Records will be dynamically added here -->
+            </tbody>
+        </table>
+        <!-- Roll button -->
+        <div class="text-center">
+            <button class="btn btn-success" id="rollBtn">Roll</button>
+        </div>
+        <br>
+        <!-- Top 10 most-picked records -->
+        <h3>Top 10 Most-Picked Records</h3>
+        <ol id="topRecordsList">
+            <!-- Top records will be dynamically added here -->
+        </ol>
+    </div>
+    <!-- Include necessary scripts -->
+    <!-- Include jQuery and Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Popper and Bootstrap JS for Bootstrap 4 -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script>
+        $(document).ready(function() {
+            // Update slider value display
+            $('#typeSlider').on('input change', function() {
+                let reviewPercent = $(this).val();
+                let generatorPercent = 100 - reviewPercent;
+                $('#sliderValue').text(reviewPercent + '% Review / ' + generatorPercent + '% Generator');
+                // Save to LocalStorage
+                let data = getCurrentData();
+                localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+            });
+
+            // Load data from LocalStorage or ralloc-state.json
+            function loadData() {
+                let data = localStorage.getItem('rallocStorageKey');
+                if (data) {
+                    data = JSON.parse(data);
+                    // Use the data
+                    $('#typeSlider').val(data.sliderValue || 66);
+                    $('#typeSlider').trigger('change');
+                    populateRecords(data.records);
+                    populateTopRecords(data.topRecords);
+                } else {
+                    // Try to fetch ralloc-state.json
+                    $.ajax({
+                        url: 'ralloc-state.json',
+                        dataType: 'json',
+                        success: function(jsonData) {
+                            // Store in LocalStorage
+                            localStorage.setItem('rallocStorageKey', JSON.stringify(jsonData));
+                            // Use the data
+                            $('#typeSlider').val(jsonData.sliderValue || 66);
+                            $('#typeSlider').trigger('change');
+                            populateRecords(jsonData.records);
+                            populateTopRecords(jsonData.topRecords);
+                        },
+                        error: function() {
+                            // No data available, initialize empty data
+                            let initialData = {
+                                sliderValue: 66,
+                                records: [],
+                                topRecords: []
+                            };
+                            localStorage.setItem('rallocStorageKey', JSON.stringify(initialData));
+                        }
+                    });
+                }
+            }
+
+            loadData();
+
+            // Function to create a record row
+            function createRecordRow(record) {
+                let row = $('<tr></tr>');
+                let checkbox = $('<input type="checkbox" class="record-select">').prop('checked', record.selected);
+                let linkInput = $('<input type="text" class="form-control record-link">').val(record.link);
+                let typeSelect = $('<select class="form-control record-type"><option value="Review">Review</option><option value="Generator">Generator</option></select>').val(record.type);
+                let frequencyInput = $('<input type="range" class="custom-range record-frequency" min="1" max="100">').val(record.frequency || 1);
+                let frequencyLabel = $('<span class="frequency-label">' + (record.frequency || 1) + '</span>');
+                frequencyInput.on('input change', function() {
+                    frequencyLabel.text($(this).val());
+                });
+                let frequencyCell = $('<td></td>').append(frequencyInput).append(frequencyLabel);
+
+                row.append($('<td></td>').append(checkbox));
+                row.append($('<td></td>').append(linkInput));
+                row.append($('<td></td>').append(typeSelect));
+                row.append(frequencyCell);
+                row.data('recordId', record.id);
+                return row;
+            }
+
+            // Function to populate records table
+            function populateRecords(records) {
+                $('#recordsTableBody').empty();
+                if (!records) return;
+                records.forEach(function(record) {
+                    let row = createRecordRow(record);
+                    $('#recordsTableBody').append(row);
+                });
+            }
+
+            // Function to populate top records list
+            function populateTopRecords(topRecords) {
+                $('#topRecordsList').empty();
+                if (!topRecords) return;
+                // Sort topRecords by count descending
+                topRecords.sort(function(a, b) {
+                    return b.count - a.count;
+                });
+                topRecords.slice(0, 10).forEach(function(recordStat) {
+                    let listItem = $('<li></li>').text('Link ID: ' + recordStat.id + ', Picked: ' + recordStat.count + ' times');
+                    $('#topRecordsList').append(listItem);
+                });
+            }
+
+            // Function to get current data
+            function getCurrentData() {
+                let data = {};
+                data.sliderValue = parseInt($('#typeSlider').val());
+                data.records = [];
+                $('#recordsTableBody tr').each(function() {
+                    let row = $(this);
+                    let record = {
+                        id: row.data('recordId'),
+                        selected: row.find('.record-select').is(':checked'),
+                        link: row.find('.record-link').val(),
+                        type: row.find('.record-type').val(),
+                        frequency: parseInt(row.find('.record-frequency').val())
+                    };
+                    data.records.push(record);
+                });
+                data.topRecords = data.topRecords || [];
+                return data;
+            }
+
+            // Save data when inputs change
+            $('#recordsTableBody').on('change', 'input, select', function() {
+                let data = getCurrentData();
+                localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+            });
+
+            // Add Record button handler
+            $('#addRecordBtn').click(function() {
+                let newRecord = {
+                    id: Date.now(), // use timestamp as unique ID
+                    selected: false,
+                    link: '',
+                    type: 'Review',
+                    frequency: 1
+                };
+                let row = createRecordRow(newRecord);
+                $('#recordsTableBody').append(row);
+                // Save data
+                let data = getCurrentData();
+                localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+            });
+
+            // Roll button handler
+            $('#rollBtn').click(function() {
+                let data = getCurrentData();
+                let checkedRecords = data.records.filter(record => record.selected);
+
+                if (checkedRecords.length === 0) {
+                    alert('No records selected.');
+                    return;
+                }
+
+                // Separate checked records into Review and Generator types
+                let reviewRecords = checkedRecords.filter(record => record.type === 'Review');
+                let generatorRecords = checkedRecords.filter(record => record.type === 'Generator');
+
+                let selectedRecord;
+
+                if (reviewRecords.length === 0) {
+                    // Only generator records are selected
+                    selectedRecord = pickRecord(generatorRecords);
+                } else if (generatorRecords.length === 0) {
+                    // Only review records are selected
+                    selectedRecord = pickRecord(reviewRecords);
+                } else {
+                    // Both types are present, factor in their probabilities
+                    let reviewPercent = parseInt($('#typeSlider').val());
+                    let generatorPercent = 100 - reviewPercent;
+
+                    let typeRoll = Math.random() * 100;
+                    if (typeRoll < reviewPercent) {
+                        // Pick from reviewRecords
+                        selectedRecord = pickRecord(reviewRecords);
+                    } else {
+                        // Pick from generatorRecords
+                        selectedRecord = pickRecord(generatorRecords);
+                    }
+                }
+
+                if (selectedRecord) {
+                    // Open the link
+                    window.open(selectedRecord.link, '_blank');
+
+                    // Update the topRecords
+                    let topRecords = data.topRecords || [];
+                    let recordStat = topRecords.find(r => r.id === selectedRecord.id);
+                    if (recordStat) {
+                        recordStat.count += 1;
+                    } else {
+                        topRecords.push({id: selectedRecord.id, count: 1});
+                    }
+                    // Save topRecords to data and LocalStorage
+                    data.topRecords = topRecords;
+                    localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+
+                    // Update the top records list
+                    populateTopRecords(topRecords);
+                }
+            });
+
+            // Function to pick a record based on frequency
+            function pickRecord(records) {
+                // Calculate total weight
+                let totalWeight = records.reduce(function(sum, record) {
+                    return sum + (record.frequency || 1);
+                }, 0);
+                // Generate a random number between 0 and totalWeight
+                let randomNum = Math.random() * totalWeight;
+                let cumulativeWeight = 0;
+                for (let i = 0; i < records.length; i++) {
+                    cumulativeWeight += records[i].frequency || 1;
+                    if (randomNum < cumulativeWeight) {
+                        return records[i];
+                    }
+                }
+                return null; // Should not reach here
+            }
+
+            // Export State button handler
+            $('#exportStateBtn').click(function() {
+                let data = getCurrentData();
+                let dataStr = JSON.stringify(data, null, 2);
+                let blob = new Blob([dataStr], {type: "application/json"});
+                let url = URL.createObjectURL(blob);
+
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = 'ralloc-state.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            // Import State button handler
+            $('#importStateBtn').click(function() {
+                $('#importFileInput').click();
+            });
+
+            // File input change handler
+            $('#importFileInput').on('change', function(event) {
+                let file = event.target.files[0];
+                if (!file) {
+                    return;
+                }
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let content = e.target.result;
+                    try {
+                        let data = JSON.parse(content);
+                        // Save to LocalStorage
+                        localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+                        // Reload the page
+                        location.reload();
+                    } catch (error) {
+                        alert('Invalid JSON file.');
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            // Reset State button handler
+            $('#resetStateBtn').click(function() {
+                if (confirm('Are you sure you want to reset the state? This action cannot be undone.')) {
+                    localStorage.removeItem('rallocStorageKey');
+                    location.reload();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
