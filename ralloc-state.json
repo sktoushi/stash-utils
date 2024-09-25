@@ -1,0 +1,43 @@
+{
+  "sliderValue": 66,
+  "records": [
+    {
+      "id": 1,
+      "selected": true,
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/1",
+      "type": "Review",
+      "frequency": 50
+    },
+    {
+      "id": 2,
+      "selected": false,
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/2",
+      "type": "Generator",
+      "frequency": 50
+    },
+    {
+      "id": 3,
+      "selected": true,
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/3",
+      "type": "Review",
+      "frequency": 25
+    },
+    {
+      "id": 4,
+      "selected": true,
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/4",
+      "type": "Generator",
+      "frequency": 75
+    }
+  ],
+  "topRecords": [
+    {
+      "id": 1,
+      "count": 3
+    },
+    {
+      "id": 4,
+      "count": 5
+    }
+  ]
+}
