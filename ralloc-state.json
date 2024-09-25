@@ -6,43 +6,55 @@
       "selected": true,
       "link": "https://www.example.com/review1",
       "type": "Review",
-      "frequency": 50
+      "frequency": 50,
+      "lastPicked": 1609459200000
     },
     {
       "id": 2,
       "selected": false,
       "link": "https://www.example.com/generator1",
       "type": "Generator",
-      "frequency": 50
+      "frequency": 50,
+      "lastPicked": 1609545600000
     },
     {
       "id": 3,
       "selected": true,
       "link": "https://www.example.com/review2",
       "type": "Review",
-      "frequency": 25
+      "frequency": 25,
+      "lastPicked": 1609632000000
     },
     {
       "id": 4,
       "selected": true,
       "link": "https://www.example.com/generator2",
       "type": "Generator",
-      "frequency": 75
+      "frequency": 75,
+      "lastPicked": 1609718400000
     }
   ],
   "topRecords": [
     {
       "id": 4,
-      "count": 5
+      "totalCount": 5,
+      "reviewCount": 2,
+      "generatorCount": 3
     },
     {
       "id": 1,
-      "count": 3
+      "totalCount": 3,
+      "reviewCount": 3,
+      "generatorCount": 0
     },
     {
       "id": 3,
-      "count": 2
+      "totalCount": 2,
+      "reviewCount": 2,
+      "generatorCount": 0
     }
   ],
-  "totalRolls": 10
+  "totalRolls": 10,
+  "totalReviewRolls": 7,
+  "totalGeneratorRolls": 3
 }

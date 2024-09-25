@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Ralloc</title>
-    <!-- Include Bootstrap CSS (Bootstrap 4 for compatibility) -->
+    <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Include Chart.js for bar graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Custom CSS for styling -->
     <style>
@@ -39,13 +42,29 @@
         #controls-row {
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
             gap: 10px;
+        }
+        #additional-controls-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
         }
         #rollBtn {
             margin-left: 10px;
         }
         .top-records-percentage {
             font-weight: bold;
+        }
+        #topRecordsContainer {
+            display: none; /* Hidden by default */
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
         }
     </style>
 </head>
@@ -69,8 +88,18 @@
             <button class="btn btn-danger" id="resetStateBtn">Reset State</button>
             <button class="btn btn-secondary" id="addRecordBtn">Add Record</button>
             <button class="btn btn-success" id="rollBtn">Roll</button>
-            <input type="file" id="importFileInput" accept="application/json" style="display: none;">
         </div>
+        <!-- Additional algorithm buttons -->
+        <div id="additional-controls-row">
+            <button class="btn btn-info" id="smootheningBtn">Smoothening</button>
+            <button class="btn btn-info" id="solidifyingBtn">Solidifying</button>
+            <button class="btn btn-info" id="reviewingBtn">Reviewing</button>
+            <button class="btn btn-info" id="exploringBtn">Exploring</button>
+            <button class="btn btn-info" id="randomizingBtn">Randomizing</button>
+            <button class="btn btn-info" id="spacedRepetitionBtn">Spaced Repetition</button>
+            <button class="btn btn-info" id="focusWeakestBtn">Focus Weakest</button>
+        </div>
+        <input type="file" id="importFileInput" accept="application/json" style="display: none;">
         <br>
         <!-- Table of records -->
         <table class="table table-bordered" id="recordsTable">
@@ -89,10 +118,20 @@
         </table>
         <br>
         <!-- Top 10 most-picked records -->
-        <h3>Top 10 Most-Picked Records</h3>
-        <ol id="topRecordsList">
-            <!-- Top records will be dynamically added here -->
-        </ol>
+        <div id="topRecordsContainer">
+            <h3>Top 10 Most-Picked Records</h3>
+            <!-- Bar Graph -->
+            <div class="chart-container">
+                <canvas id="topRecordsChart"></canvas>
+            </div>
+            <!-- Historical reference text -->
+            <div id="historicalReferenceText">
+                <!-- Text will be dynamically added here -->
+            </div>
+            <ol id="topRecordsList">
+                <!-- Top records will be dynamically added here -->
+            </ol>
+        </div>
     </div>
     <!-- Include necessary scripts -->
     <!-- Include jQuery and Bootstrap JS -->
@@ -105,6 +144,9 @@
         $(document).ready(function() {
             // Global variables
             let totalRolls = 0;
+            let totalReviewRolls = 0;
+            let totalGeneratorRolls = 0;
+            let topRecordsChart;
 
             // Update slider value display
             $('#typeSlider').on('input change', function() {
@@ -122,6 +164,8 @@
                 if (data) {
                     data = JSON.parse(data);
                     totalRolls = data.totalRolls || 0;
+                    totalReviewRolls = data.totalReviewRolls || 0;
+                    totalGeneratorRolls = data.totalGeneratorRolls || 0;
                     // Use the data
                     $('#typeSlider').val(data.sliderValue || 66);
                     $('#typeSlider').trigger('change');
@@ -136,6 +180,8 @@
                             // Store in LocalStorage
                             localStorage.setItem('rallocStorageKey', JSON.stringify(jsonData));
                             totalRolls = jsonData.totalRolls || 0;
+                            totalReviewRolls = jsonData.totalReviewRolls || 0;
+                            totalGeneratorRolls = jsonData.totalGeneratorRolls || 0;
                             // Use the data
                             $('#typeSlider').val(jsonData.sliderValue || 66);
                             $('#typeSlider').trigger('change');
@@ -148,7 +194,9 @@
                                 sliderValue: 66,
                                 records: [],
                                 topRecords: [],
-                                totalRolls: 0
+                                totalRolls: 0,
+                                totalReviewRolls: 0,
+                                totalGeneratorRolls: 0
                             };
                             localStorage.setItem('rallocStorageKey', JSON.stringify(initialData));
                         }
@@ -198,25 +246,82 @@
                 });
             }
 
-            // Function to populate top records list
+            // Function to populate top records list and chart
             function populateTopRecords(topRecords) {
+                if (totalRolls === 0) {
+                    $('#topRecordsContainer').hide();
+                    return;
+                }
+                $('#topRecordsContainer').show();
                 $('#topRecordsList').empty();
-                if (!topRecords || totalRolls === 0) return;
-                // Sort topRecords by count descending
+                $('#historicalReferenceText').empty();
+                if (!topRecords) return;
+                // Sort topRecords by totalCount descending
                 topRecords.sort(function(a, b) {
-                    return b.count - a.count;
+                    return b.totalCount - a.totalCount;
                 });
+                let labels = [];
+                let reviewData = [];
+                let generatorData = [];
+                let historicalText = '';
+                let totalReviewPercentage = ((totalReviewRolls / totalRolls) * 100).toFixed(2);
+                let totalGeneratorPercentage = ((totalGeneratorRolls / totalRolls) * 100).toFixed(2);
+                historicalText = '<p>Overall: ' + totalReviewPercentage + '% Review, ' + totalGeneratorPercentage + '% Generator</p>';
+                $('#historicalReferenceText').html(historicalText);
                 topRecords.slice(0, 10).forEach(function(recordStat) {
                     let record = getRecordById(recordStat.id);
                     if (record) {
-                        let percentage = ((recordStat.count / totalRolls) * 100).toFixed(2);
+                        let percentage = ((recordStat.totalCount / totalRolls) * 100).toFixed(2);
                         let listItem = $('<li></li>').append(
                             $('<a href="' + record.link + '" target="_blank">' + record.link + '</a>'),
-                            $('<span> - Picked: ' + recordStat.count + ' times (' + percentage + '%)</span>').addClass('top-records-percentage')
+                            $('<span> - Picked: ' + recordStat.totalCount + ' times (' + percentage + '%)</span>').addClass('top-records-percentage')
                         );
                         $('#topRecordsList').append(listItem);
+                        labels.push('ID ' + recordStat.id);
+                        reviewData.push(recordStat.reviewCount || 0);
+                        generatorData.push(recordStat.generatorCount || 0);
                     }
                 });
+                // Create or update the chart
+                if (topRecordsChart) {
+                    topRecordsChart.data.labels = labels;
+                    topRecordsChart.data.datasets[0].data = reviewData;
+                    topRecordsChart.data.datasets[1].data = generatorData;
+                    topRecordsChart.update();
+                } else {
+                    let ctx = document.getElementById('topRecordsChart').getContext('2d');
+                    topRecordsChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Review',
+                                    backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                                    data: reviewData
+                                },
+                                {
+                                    label: 'Generator',
+                                    backgroundColor: 'rgba(255, 159, 64, 0.5)',
+                                    data: generatorData
+                                }
+                            ]
+                        },
+                        options: {
+                            scales: {
+                                xAxes: [{
+                                    stacked: true
+                                }],
+                                yAxes: [{
+                                    stacked: true,
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            }
+                        }
+                    });
+                }
             }
 
             // Function to get current data
@@ -231,12 +336,15 @@
                         selected: row.find('.record-select').is(':checked'),
                         link: row.find('.record-link').val(),
                         type: row.find('.record-type').val(),
-                        frequency: parseInt(row.find('.record-frequency').val())
+                        frequency: parseInt(row.find('.record-frequency').val()),
+                        lastPicked: row.data('lastPicked') || null
                     };
                     data.records.push(record);
                 });
                 data.topRecords = JSON.parse(localStorage.getItem('rallocStorageKey') || '{}').topRecords || [];
                 data.totalRolls = totalRolls;
+                data.totalReviewRolls = totalReviewRolls;
+                data.totalGeneratorRolls = totalGeneratorRolls;
                 return data;
             }
 
@@ -261,7 +369,8 @@
                             selected: row.find('.record-select').is(':checked'),
                             link: row.find('.record-link').val(),
                             type: row.find('.record-type').val(),
-                            frequency: parseInt(row.find('.record-frequency').val())
+                            frequency: parseInt(row.find('.record-frequency').val()),
+                            lastPicked: row.data('lastPicked') || null
                         };
                         records.push(record);
                     }
@@ -276,7 +385,8 @@
                     selected: false,
                     link: '',
                     type: 'Review',
-                    frequency: 1
+                    frequency: 1,
+                    lastPicked: null
                 };
                 let row = createRecordRow(newRecord);
                 $('#recordsTableBody').append(row);
@@ -299,12 +409,15 @@
                 let generatorRecords = checkedRecords.filter(record => record.type === 'Generator');
 
                 let selectedRecord;
+                let selectedType;
 
                 if (reviewRecords.length === 0) {
                     // Only generator records are selected
+                    selectedType = 'Generator';
                     selectedRecord = pickRecord(generatorRecords);
                 } else if (generatorRecords.length === 0) {
                     // Only review records are selected
+                    selectedType = 'Review';
                     selectedRecord = pickRecord(reviewRecords);
                 } else {
                     // Both types are present, factor in their probabilities
@@ -314,9 +427,11 @@
                     let typeRoll = Math.random() * 100;
                     if (typeRoll < reviewPercent) {
                         // Pick from reviewRecords
+                        selectedType = 'Review';
                         selectedRecord = pickRecord(reviewRecords);
                     } else {
                         // Pick from generatorRecords
+                        selectedType = 'Generator';
                         selectedRecord = pickRecord(generatorRecords);
                     }
                 }
@@ -329,18 +444,42 @@
                     let topRecords = data.topRecords || [];
                     let recordStat = topRecords.find(r => r.id === selectedRecord.id);
                     if (recordStat) {
-                        recordStat.count += 1;
+                        recordStat.totalCount += 1;
+                        if (selectedType === 'Review') {
+                            recordStat.reviewCount = (recordStat.reviewCount || 0) + 1;
+                        } else {
+                            recordStat.generatorCount = (recordStat.generatorCount || 0) + 1;
+                        }
                     } else {
-                        topRecords.push({id: selectedRecord.id, count: 1});
+                        let newRecordStat = {
+                            id: selectedRecord.id,
+                            totalCount: 1,
+                            reviewCount: selectedType === 'Review' ? 1 : 0,
+                            generatorCount: selectedType === 'Generator' ? 1 : 0
+                        };
+                        topRecords.push(newRecordStat);
                     }
                     totalRolls += 1;
+                    if (selectedType === 'Review') {
+                        totalReviewRolls += 1;
+                    } else {
+                        totalGeneratorRolls += 1;
+                    }
+
+                    // Update lastPicked
+                    let row = $('#recordsTableBody tr').filter(function() {
+                        return $(this).data('recordId') === selectedRecord.id;
+                    });
+                    row.data('lastPicked', Date.now());
 
                     // Save topRecords and totalRolls to data and LocalStorage
                     data.topRecords = topRecords;
                     data.totalRolls = totalRolls;
+                    data.totalReviewRolls = totalReviewRolls;
+                    data.totalGeneratorRolls = totalGeneratorRolls;
                     localStorage.setItem('rallocStorageKey', JSON.stringify(data));
 
-                    // Update the top records list
+                    // Update the top records list and chart
                     populateTopRecords(topRecords);
                 }
             });
@@ -413,6 +552,134 @@
                     location.reload();
                 }
             });
+
+            // Algorithm Buttons Handlers
+            $('#smootheningBtn').click(function() {
+                // Inverse the frequencies based on total picks
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let totalCount = recordStat ? recordStat.totalCount : 0;
+                    record.frequency = 1 / (totalCount + 1) * 100;
+                    record.selected = true;
+                });
+                data.sliderValue = 50;
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#solidifyingBtn').click(function() {
+                // Increase frequency of records with fewer Generator picks
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let generatorCount = recordStat ? recordStat.generatorCount || 0 : 0;
+                    record.frequency = 1 / (generatorCount + 1) * 100;
+                    record.selected = true;
+                });
+                data.sliderValue = 30; // Favor Review
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#reviewingBtn').click(function() {
+                // Focus on records with most Review picks
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let reviewCount = recordStat ? recordStat.reviewCount || 0 : 0;
+                    record.frequency = reviewCount > 0 ? reviewCount * 10 : 1;
+                    record.selected = true;
+                });
+                data.sliderValue = 100; // Exclusively Review
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#exploringBtn').click(function() {
+                // Focus on new or least picked records
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let totalCount = recordStat ? recordStat.totalCount : 0;
+                    record.frequency = 1 / (totalCount + 1) * 100;
+                    record.selected = true;
+                });
+                data.sliderValue = 0; // Exclusively Generator
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#randomizingBtn').click(function() {
+                // Randomize frequencies and checkboxes
+                let data = getCurrentData();
+                let hasSelected = false;
+                data.records.forEach(function(record) {
+                    record.frequency = Math.floor(Math.random() * 100) + 1;
+                    record.selected = Math.random() < 0.5;
+                    if (record.selected) hasSelected = true;
+                });
+                if (!hasSelected) {
+                    // Ensure at least one record is selected
+                    data.records[0].selected = true;
+                }
+                data.sliderValue = Math.floor(Math.random() * 101);
+                applyDataToUI(data);
+                saveData();
+            });
+
+            // Additional Strategies
+            $('#spacedRepetitionBtn').click(function() {
+                // Increase frequency for records not recently picked
+                let data = getCurrentData();
+                let now = Date.now();
+                data.records.forEach(function(record) {
+                    let lastPicked = record.lastPicked || 0;
+                    let daysSincePicked = (now - lastPicked) / (1000 * 60 * 60 * 24);
+                    record.frequency = Math.min(daysSincePicked * 10, 100);
+                    record.selected = true;
+                });
+                data.sliderValue = 50;
+                applyDataToUI(data);
+                saveData();
+            });
+
+            $('#focusWeakestBtn').click(function() {
+                // Focus on records with fewest total picks
+                let data = getCurrentData();
+                let topRecords = data.topRecords || [];
+                data.records.forEach(function(record) {
+                    let recordStat = topRecords.find(r => r.id === record.id);
+                    let totalCount = recordStat ? recordStat.totalCount : 0;
+                    record.frequency = 1 / (totalCount + 1) * 100;
+                    record.selected = true;
+                });
+                data.sliderValue = 50;
+                applyDataToUI(data);
+                saveData();
+            });
+
+            // Apply data to UI
+            function applyDataToUI(data) {
+                // Update slider
+                $('#typeSlider').val(data.sliderValue);
+                $('#typeSlider').trigger('change');
+                // Update records
+                $('#recordsTableBody tr').each(function() {
+                    let row = $(this);
+                    let recordId = row.data('recordId');
+                    let record = data.records.find(r => r.id === recordId);
+                    if (record) {
+                        row.find('.record-select').prop('checked', record.selected);
+                        row.find('.record-frequency').val(record.frequency);
+                        row.find('.record-frequency').trigger('change');
+                    }
+                });
+            }
         });
     </script>
 </body>
