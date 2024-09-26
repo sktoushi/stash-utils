@@ -93,14 +93,31 @@
         document.getElementById("result").textContent = `Decrypted Text: ${decryptedText}`;
     }
 
-    // Fetch external time from a trusted API (here using WorldTimeAPI for simplicity)
+    // Fetch external time from WorldTimeAPI for Manila timezone
     async function fetchExternalTime() {
         try {
-            const response = await fetch("http://worldtimeapi.org/api/timezone/Etc/UTC");
+            const response = await fetch("http://worldtimeapi.org/api/timezone/Asia/Manila");
             const data = await response.json();
-            return data.datetime; // Return the current time in UTC
+            return data.datetime; // Return the current time in Manila
         } catch (error) {
             console.error("Error fetching time:", error);
+            return null;
+        }
+    }
+
+    // Get encryption passphrase based on GitHub repo node_id for Torvalds' Linux repo
+    async function getEncryptionPassphrase() {
+        try {
+            const response = await fetch("https://api.github.com/users/torvalds/repos");
+            const repos = await response.json();
+            const linuxRepo = repos.find(repo => repo.name === "linux");
+            if (linuxRepo) {
+                return linuxRepo.node_id; // Use node_id as passphrase
+            } else {
+                throw new Error("Linux repository not found");
+            }
+        } catch (error) {
+            console.error("Error fetching repository data:", error);
             return null;
         }
     }
