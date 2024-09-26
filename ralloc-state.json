@@ -3,7 +3,7 @@
   "records": [
     {
       "id": 1727260405218,
-      "selected": true,
+      "selected": false,
       "name": "japanese-alloc",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/9",
       "type": "Generator",
@@ -12,7 +12,7 @@
     },
     {
       "id": 1727260766179,
-      "selected": true,
+      "selected": false,
       "name": "spreadsheet",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/10",
       "type": "Generator",
@@ -21,7 +21,7 @@
     },
     {
       "id": 1727261244027,
-      "selected": true,
+      "selected": false,
       "name": "baseball strat",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/12",
       "type": "Generator",
@@ -30,7 +30,7 @@
     },
     {
       "id": 1727261269418,
-      "selected": true,
+      "selected": false,
       "name": "hangul",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/13",
       "type": "Generator",
@@ -48,7 +48,7 @@
     },
     {
       "id": 1727261334891,
-      "selected": true,
+      "selected": false,
       "name": "stash2-scaled",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/15",
       "type": "Review",
@@ -57,7 +57,7 @@
     },
     {
       "id": 1727261349294,
-      "selected": true,
+      "selected": false,
       "name": "inhouse1-scaled",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/16",
       "type": "Review",
@@ -75,7 +75,7 @@
     },
     {
       "id": 1727261449262,
-      "selected": true,
+      "selected": false,
       "name": "bucket+guidedStudy",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/47",
       "type": "Review",
@@ -84,7 +84,7 @@
     },
     {
       "id": 1727261480850,
-      "selected": true,
+      "selected": false,
       "name": "gpt bestsellers",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/32",
       "type": "Generator",
@@ -94,8 +94,8 @@
     {
       "id": 1727267870604,
       "selected": true,
-      "name": "rAlloc randomizers",
-      "link": "https://github.com/cjcaf1995/redirect0915/issues/53",
+      "name": "Drools",
+      "link": "https://sktoushi.github.io/stash-utils/drools-bucket.html",
       "type": "Generator",
       "frequency": 1,
       "lastPicked": null
