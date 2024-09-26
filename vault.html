@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time-Locked Vault</title>
     <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
 </head>
@@ -39,9 +38,10 @@
     }
 
     // Lock the vault
-    function lockVault() {
+    async function lockVault() {
         const text = document.getElementById("vaultText").value;
-        const unlockDate = new Date(document.getElementById("unlockDate").value);
+        const unlockDateInput = document.getElementById("unlockDate").value;
+        const unlockDate = new Date(unlockDateInput);
         const now = new Date();
 
         if (unlockDate <= now) {
@@ -49,7 +49,12 @@
             return;
         }
 
-        const passphrase = unlockDate.getTime().toString(); // Use the unlock time as the passphrase
+        const passphrase = await getEncryptionPassphrase();
+        if (!passphrase) {
+            alert("Failed to get encryption passphrase.");
+            return;
+        }
+
         const encryptedText = encryptText(text, passphrase);
 
         localStorage.setItem("vault", JSON.stringify({
@@ -82,7 +87,12 @@
             return;
         }
 
-        const passphrase = unlockDate.toString(); // Use unlock time as passphrase
+        const passphrase = await getEncryptionPassphrase();
+        if (!passphrase) {
+            alert("Failed to get encryption passphrase.");
+            return;
+        }
+
         const decryptedText = decryptText(vaultData.encryptedText, passphrase);
 
         if (!decryptedText) {
@@ -93,12 +103,12 @@
         document.getElementById("result").textContent = `Decrypted Text: ${decryptedText}`;
     }
 
-    // Fetch external time from WorldTimeAPI for Manila timezone
+    // Fetch external time from a reliable API (TimeAPI.io)
     async function fetchExternalTime() {
         try {
-            const response = await fetch("http://worldtimeapi.org/api/timezone/Asia/Manila");
+            const response = await fetch("https://timeapi.io/api/Time/current/zone?timeZone=Asia/Manila");
             const data = await response.json();
-            return data.datetime; // Return the current time in Manila
+            return data.dateTime; // ISO 8601 format
         } catch (error) {
             console.error("Error fetching time:", error);
             return null;
@@ -108,14 +118,9 @@
     // Get encryption passphrase based on GitHub repo node_id for Torvalds' Linux repo
     async function getEncryptionPassphrase() {
         try {
-            const response = await fetch("https://api.github.com/users/torvalds/repos");
-            const repos = await response.json();
-            const linuxRepo = repos.find(repo => repo.name === "linux");
-            if (linuxRepo) {
-                return linuxRepo.node_id; // Use node_id as passphrase
-            } else {
-                throw new Error("Linux repository not found");
-            }
+            const response = await fetch("https://api.github.com/repos/torvalds/linux");
+            const repoData = await response.json();
+            return repoData.node_id; // Use node_id as passphrase
         } catch (error) {
             console.error("Error fetching repository data:", error);
             return null;
