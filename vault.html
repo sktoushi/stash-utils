@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time-Locked Vault</title>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
+</head>
+<body>
+
+<h1>Time-Locked Vault</h1>
+
+<div>
+    <label for="vaultText">Enter your secret text:</label><br>
+    <textarea id="vaultText" rows="4" cols="50"></textarea><br><br>
+    
+    <label for="unlockDate">Select unlock date:</label><br>
+    <input type="datetime-local" id="unlockDate"><br><br>
+    
+    <button onclick="lockVault()">Lock Vault</button>
+</div>
+
+<div>
+    <h2>Unlock your vault</h2>
+    <button onclick="unlockVault()">Unlock Vault</button>
+    <p id="result"></p>
+</div>
+
+<script>
+    // Encrypt the text
+    function encryptText(text, passphrase) {
+        return CryptoJS.AES.encrypt(text, passphrase).toString();
+    }
+
+    // Decrypt the text
+    function decryptText(encryptedText, passphrase) {
+        const bytes = CryptoJS.AES.decrypt(encryptedText, passphrase);
+        return bytes.toString(CryptoJS.enc.Utf8);
+    }
+
+    // Lock the vault
+    function lockVault() {
+        const text = document.getElementById("vaultText").value;
+        const unlockDate = new Date(document.getElementById("unlockDate").value);
+        const now = new Date();
+
+        if (unlockDate <= now) {
+            alert("Unlock date must be in the future!");
+            return;
+        }
+
+        const passphrase = unlockDate.getTime().toString(); // Use the unlock time as the passphrase
+        const encryptedText = encryptText(text, passphrase);
+
+        localStorage.setItem("vault", JSON.stringify({
+            unlockDate: unlockDate.getTime(),
+            encryptedText: encryptedText
+        }));
+
+        alert("Vault locked! You can't open it until the set time.");
+    }
+
+    // Unlock the vault
+    async function unlockVault() {
+        const vaultData = JSON.parse(localStorage.getItem("vault"));
+        if (!vaultData) {
+            alert("No vault data found.");
+            return;
+        }
+
+        const externalTime = await fetchExternalTime();
+        if (!externalTime) {
+            alert("Failed to get external time.");
+            return;
+        }
+
+        const currentTime = new Date(externalTime).getTime();
+        const unlockDate = vaultData.unlockDate;
+
+        if (currentTime < unlockDate) {
+            alert("Vault is still locked! Try again later.");
+            return;
+        }
+
+        const passphrase = unlockDate.toString(); // Use unlock time as passphrase
+        const decryptedText = decryptText(vaultData.encryptedText, passphrase);
+
+        if (!decryptedText) {
+            alert("Failed to decrypt vault data.");
+            return;
+        }
+
+        document.getElementById("result").textContent = `Decrypted Text: ${decryptedText}`;
+    }
+
+    // Fetch external time from a trusted API (here using WorldTimeAPI for simplicity)
+    async function fetchExternalTime() {
+        try {
+            const response = await fetch("http://worldtimeapi.org/api/timezone/Etc/UTC");
+            const data = await response.json();
+            return data.datetime; // Return the current time in UTC
+        } catch (error) {
+            console.error("Error fetching time:", error);
+            return null;
+        }
+    }
+</script>
+
+</body>
+</html>
