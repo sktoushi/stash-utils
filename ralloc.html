@@ -70,17 +70,20 @@
         }
         /* Styles for third row buttons */
         #third-controls-row .btn {
-            width: 150px;
-            height: 70px;
-            font-size: 1.5rem;
-            padding: 15px;
+            width: 160px; /* Reduced width from 180px to 160px */
+            height: 70px; /* Reduced height from 80px to 70px */
+            font-size: 1.3rem; /* Reduced font-size from 1.5rem to 1.3rem */
+            padding: 15px; /* Reduced padding from 20px to 15px */
+            white-space: nowrap; /* Prevent text from wrapping */
+            overflow: hidden; /* Hide overflow text */
+            text-overflow: ellipsis; /* Add ellipsis (...) for overflow */
         }
         @media (max-width: 576px) {
             #third-controls-row .btn {
-                width: 120px;
-                height: 60px;
-                font-size: 1.2rem;
-                padding: 10px;
+                width: 130px; /* Adjusted width for smaller screens */
+                height: 55px; /* Adjusted height for smaller screens */
+                font-size: 1.1rem; /* Adjusted font-size for smaller screens */
+                padding: 10px; /* Adjusted padding for smaller screens */
             }
         }
         /* Styles for enhanced lottery animation */
@@ -89,8 +92,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 300px;
-            height: 300px;
+            width: 400px; /* Increased size from 300px to 400px */
+            height: 400px; /* Increased size from 300px to 400px */
             background: url('lottery-bg.png') no-repeat center center;
             background-size: cover;
             border-radius: 50%;
@@ -108,24 +111,20 @@
         #lotteryAnimation.hide {
             animation: fadeOut 0.5s forwards;
         }
-        #lotteryAnimation .spinner {
-            width: 100px;
-            height: 100px;
+        #lotteryAnimation .static-image {
+            width: 150px; /* Increased size from 100px to 150px */
+            height: 150px; /* Increased size from 100px to 150px */
             background: url('spinner.gif') no-repeat center center;
             background-size: contain;
-            animation: spin 3s linear;
+            /* Removed spinning animation */
         }
         #lotteryAnimation .record-name {
-            margin-top: 20px;
+            margin-top: 30px; /* Increased margin-top from 20px to 30px */
             color: #fff;
-            font-size: 1.5rem;
+            font-size: 1.8rem; /* Increased font-size from 1.5rem to 1.8rem */
             text-align: center;
             word-wrap: break-word;
             text-shadow: 2px 2px 4px #000;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -240,7 +239,7 @@
     <!-- Lottery Animation Overlay -->
     <div id="overlay"></div>
     <div id="lotteryAnimation">
-        <div class="spinner"></div>
+        <div class="static-image"></div>
         <div class="record-name" id="animationRecordName"></div>
     </div>
 
@@ -575,7 +574,7 @@
 
                 if (selectedRecord) {
                     // Show lottery animation
-                    showLotteryAnimation(selectedRecord.name, selectedRecord.link);
+                    showLotteryAnimation(selectedRecord.name, selectedRecord.link, selectedType);
                 }
             });
 
@@ -807,7 +806,7 @@
             });
 
             // Function to show lottery animation
-            function showLotteryAnimation(recordName, recordLink) {
+            function showLotteryAnimation(recordName, recordLink, selectedType) {
                 $('#animationRecordName').text(recordName || 'Unknown');
                 let animationDiv = $('#lotteryAnimation');
                 let overlayDiv = $('#overlay');
@@ -828,18 +827,16 @@
                         // Open the link after animation
                         window.open(recordLink, '_blank');
                         // Proceed with updating records
-                        proceedAfterRoll(recordLink);
+                        proceedAfterRoll(recordLink, selectedType);
                     }, 500); // Match fadeOut duration
                 }, animationDuration);
             }
 
             // Function to proceed with updating records after animation
-            function proceedAfterRoll(recordLink) {
+            function proceedAfterRoll(recordLink, selectedType) {
                 let data = getCurrentData();
                 let selectedRecord = data.records.find(record => record.link === recordLink);
                 if (!selectedRecord) return;
-
-                let selectedType = selectedRecord.type;
 
                 // Update the topRecords
                 let topRecords = data.topRecords || [];
