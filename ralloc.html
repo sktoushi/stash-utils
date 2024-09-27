@@ -40,13 +40,7 @@
             justify-content: center;
             gap: 10px;
         }
-        #controls-row {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        #additional-controls-row {
+        #controls-row, #additional-controls-row, #third-controls-row {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
@@ -74,49 +68,37 @@
         #editDestinationBtn {
             margin-left: 10px;
         }
-        /* New styles for top-right buttons */
-        .top-right-buttons {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 1000;
-        }
-        .top-right-buttons .btn {
-            width: 120px;
-            height: 60px;
-            font-size: 1.2rem;
-            padding: 10px;
+        /* Styles for third row buttons */
+        #third-controls-row .btn {
+            width: 150px;
+            height: 70px;
+            font-size: 1.5rem;
+            padding: 15px;
         }
         @media (max-width: 576px) {
-            .top-right-buttons {
-                position: fixed;
-                top: 10px;
-                right: 10px;
-            }
-            .top-right-buttons .btn {
-                width: 100px;
-                height: 50px;
-                font-size: 1rem;
+            #third-controls-row .btn {
+                width: 120px;
+                height: 60px;
+                font-size: 1.2rem;
+                padding: 10px;
             }
         }
-        /* Styles for lottery animation */
+        /* Styles for enhanced lottery animation */
         #lotteryAnimation {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 200px;
-            height: 200px;
-            background-color: rgba(0, 123, 255, 0.8);
+            width: 300px;
+            height: 300px;
+            background: url('lottery-bg.png') no-repeat center center;
+            background-size: cover;
             border-radius: 50%;
             display: none;
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            z-index: 2000;
+            z-index: 3000;
             animation: fadeIn 0.5s forwards;
         }
         #lotteryAnimation.show {
@@ -127,23 +109,23 @@
             animation: fadeOut 0.5s forwards;
         }
         #lotteryAnimation .spinner {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #ffffff;
-            border-radius: 50%;
-            width: 80px;
-            height: 80px;
-            animation: spin 2s linear infinite;
+            width: 100px;
+            height: 100px;
+            background: url('spinner.gif') no-repeat center center;
+            background-size: contain;
+            animation: spin 3s linear;
         }
         #lotteryAnimation .record-name {
             margin-top: 20px;
             color: #fff;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             text-align: center;
             word-wrap: break-word;
+            text-shadow: 2px 2px 4px #000;
         }
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -152,6 +134,17 @@
         @keyframes fadeOut {
             from { opacity: 1; }
             to { opacity: 0; }
+        }
+        /* Overlay to prevent interactions during animation */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 2500;
         }
     </style>
 </head>
@@ -183,6 +176,11 @@
             <button class="btn btn-info" id="exploringBtn">Exploring</button>
             <button class="btn btn-info" id="spacedRepetitionBtn">Spaced Repetition</button>
             <button class="btn btn-info" id="focusWeakestBtn">Focus Weakest</button>
+        </div>
+        <!-- Third row for Randomizing and Roll buttons -->
+        <div id="third-controls-row">
+            <button class="btn btn-warning" id="randomizingBtn">Randomizing</button>
+            <button class="btn btn-success" id="rollBtn">Roll</button>
         </div>
         <input type="file" id="importFileInput" accept="application/json" style="display: none;">
         <br>
@@ -239,13 +237,8 @@
         </div>
     </div>
 
-    <!-- Top Right Buttons -->
-    <div class="top-right-buttons">
-        <button class="btn btn-info" id="randomizingBtn">Randomizing</button>
-        <button class="btn btn-success" id="rollBtn">Roll</button>
-    </div>
-
-    <!-- Lottery Animation -->
+    <!-- Lottery Animation Overlay -->
+    <div id="overlay"></div>
     <div id="lotteryAnimation">
         <div class="spinner"></div>
         <div class="record-name" id="animationRecordName"></div>
@@ -582,52 +575,7 @@
 
                 if (selectedRecord) {
                     // Show lottery animation
-                    showLotteryAnimation(selectedRecord.name);
-
-                    // Open the link
-                    window.open(selectedRecord.link, '_blank');
-
-                    // Update the topRecords
-                    let topRecords = data.topRecords || [];
-                    let recordStat = topRecords.find(r => r.id === selectedRecord.id);
-                    if (recordStat) {
-                        recordStat.totalCount += 1;
-                        if (selectedType === 'Review') {
-                            recordStat.reviewCount = (recordStat.reviewCount || 0) + 1;
-                        } else {
-                            recordStat.generatorCount = (recordStat.generatorCount || 0) + 1;
-                        }
-                    } else {
-                        let newRecordStat = {
-                            id: selectedRecord.id,
-                            totalCount: 1,
-                            reviewCount: selectedType === 'Review' ? 1 : 0,
-                            generatorCount: selectedType === 'Generator' ? 1 : 0
-                        };
-                        topRecords.push(newRecordStat);
-                    }
-                    totalRolls += 1;
-                    if (selectedType === 'Review') {
-                        totalReviewRolls += 1;
-                    } else {
-                        totalGeneratorRolls += 1;
-                    }
-
-                    // Update lastPicked
-                    let row = $('#recordsTableBody tr').filter(function() {
-                        return $(this).data('recordId') === selectedRecord.id;
-                    });
-                    row.data('lastPicked', Date.now());
-
-                    // Save topRecords and totalRolls to data and LocalStorage
-                    data.topRecords = topRecords;
-                    data.totalRolls = totalRolls;
-                    data.totalReviewRolls = totalReviewRolls;
-                    data.totalGeneratorRolls = totalGeneratorRolls;
-                    localStorage.setItem('rallocStorageKey', JSON.stringify(data));
-
-                    // Update the top records list and chart
-                    populateTopRecords(topRecords);
+                    showLotteryAnimation(selectedRecord.name, selectedRecord.link);
                 }
             });
 
@@ -859,21 +807,83 @@
             });
 
             // Function to show lottery animation
-            function showLotteryAnimation(recordName) {
+            function showLotteryAnimation(recordName, recordLink) {
                 $('#animationRecordName').text(recordName || 'Unknown');
                 let animationDiv = $('#lotteryAnimation');
+                let overlayDiv = $('#overlay');
                 animationDiv.removeClass('hide').addClass('show');
+                overlayDiv.show();
 
-                // Hide after animation completes (e.g., 3 seconds)
+                // Duration of the animation (e.g., 4 seconds)
+                let animationDuration = 4000; // milliseconds
+
+                // After animation completes, hide the animation and open the link
                 setTimeout(function() {
                     animationDiv.removeClass('show').addClass('hide');
                     // Hide the animation after fade out
                     setTimeout(function() {
                         animationDiv.removeClass('hide');
                         $('#animationRecordName').text('');
+                        overlayDiv.hide();
+                        // Open the link after animation
+                        window.open(recordLink, '_blank');
+                        // Proceed with updating records
+                        proceedAfterRoll(recordLink);
                     }, 500); // Match fadeOut duration
-                }, 3000);
+                }, animationDuration);
             }
+
+            // Function to proceed with updating records after animation
+            function proceedAfterRoll(recordLink) {
+                let data = getCurrentData();
+                let selectedRecord = data.records.find(record => record.link === recordLink);
+                if (!selectedRecord) return;
+
+                let selectedType = selectedRecord.type;
+
+                // Update the topRecords
+                let topRecords = data.topRecords || [];
+                let recordStat = topRecords.find(r => r.id === selectedRecord.id);
+                if (recordStat) {
+                    recordStat.totalCount += 1;
+                    if (selectedType === 'Review') {
+                        recordStat.reviewCount = (recordStat.reviewCount || 0) + 1;
+                    } else {
+                        recordStat.generatorCount = (recordStat.generatorCount || 0) + 1;
+                    }
+                } else {
+                    let newRecordStat = {
+                        id: selectedRecord.id,
+                        totalCount: 1,
+                        reviewCount: selectedType === 'Review' ? 1 : 0,
+                        generatorCount: selectedType === 'Generator' ? 1 : 0
+                    };
+                    topRecords.push(newRecordStat);
+                }
+                totalRolls += 1;
+                if (selectedType === 'Review') {
+                    totalReviewRolls += 1;
+                } else {
+                    totalGeneratorRolls += 1;
+                }
+
+                // Update lastPicked
+                let row = $('#recordsTableBody tr').filter(function() {
+                    return $(this).data('recordId') === selectedRecord.id;
+                });
+                row.data('lastPicked', Date.now());
+
+                // Save topRecords and totalRolls to data and LocalStorage
+                data.topRecords = topRecords;
+                data.totalRolls = totalRolls;
+                data.totalReviewRolls = totalReviewRolls;
+                data.totalGeneratorRolls = totalGeneratorRolls;
+                localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+
+                // Update the top records list and chart
+                populateTopRecords(topRecords);
+            }
+
         });
     </script>
 </body>
