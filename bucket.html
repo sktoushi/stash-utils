@@ -147,9 +147,9 @@
         }
 
         /**
-         * Function to load the state from unified localStorage
+         * Function to load the state from unified localStorage or bucket-state.json
          */
-        function loadState() {
+        async function loadState() {
             const storedState = JSON.parse(localStorage.getItem(unifiedStorageKey));
             if (storedState) {
                 unifiedState = storedState;
@@ -159,7 +159,25 @@
                     initializeTargetState();
                 }
             } else {
-                initializeUnifiedState();
+                // Fetch bucket-state.json
+                try {
+                    const response = await fetch('bucket-state.json');
+                    if (!response.ok) {
+                        throw new Error('Unable to fetch bucket-state.json');
+                    }
+                    const data = await response.json();
+                    unifiedState = data;
+                    // Save to localStorage
+                    localStorage.setItem(unifiedStorageKey, JSON.stringify(unifiedState));
+                    if (currentTarget in unifiedState) {
+                        currentTargetState = { ...unifiedState[currentTarget] };
+                    } else {
+                        initializeTargetState();
+                    }
+                } catch (error) {
+                    alert('Error loading initial state: ' + error.message);
+                    initializeUnifiedState(); // Fallback
+                }
             }
         }
 
@@ -218,7 +236,7 @@
             // Get current date and time for filename
             const now = new Date();
             const timestamp = now.toISOString().replace(/[:.]/g, '-');
-            const filename = `bucket-state.json`;
+            const filename = `bucket-state-${timestamp}.json`;
 
             const blob = new Blob([stateStr], { type: 'application/json' });
             const link = document.createElement('a');
@@ -641,7 +659,7 @@
             }
 
             // Load the unified state and set up the current target's state
-            loadState();
+            await loadState();
             updateDisplay();
             initializeSlider();
             populateBucketLists();
