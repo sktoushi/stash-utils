@@ -94,7 +94,7 @@
 
             // Handle the reveal button
             revealButton.addEventListener('click', function() {
-                sumElement.parentElement.style.display = 'block';
+                sumElement.style.display = 'block'; // Correctly display the sum span
                 // Optionally, disable the button after revealing the sum
                 this.disabled = true;
             });
