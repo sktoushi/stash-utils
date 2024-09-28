@@ -8,6 +8,7 @@
     <!-- Font Awesome for Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Existing CSS styles remain unchanged */
         body {
             background-color: #f8f9fa;
         }
@@ -74,17 +75,10 @@
         }
     </style>
     <script>
-        let b1 = {}; // Bucket 1 (reviews)
-        let b2 = {}; // Bucket 2 (new elements)
-        let initB2Total = 0; // Initial total frequency of Bucket 2
-        let uniqueBucket1Count = 0; // Number of unique items moved to Bucket1
-        let b1Prob = 0.66; // Default probability for Bucket 1
-        let b2Prob = 0.34; // Default probability for Bucket 2
-        let defaultFrequency = 1; // Default frequency
-        let urlPrefix = ''; // URL Prefix
-        let urlSuffix = ''; // URL Suffix
+        let currentTargetState = {}; // State for the current target
         let initialFiles = []; // To be populated based on target
-        let localStorageKey = ''; // To be determined based on target
+        let unifiedState = {}; // Unified state object for all targets
+        const unifiedStorageKey = 'randomUrlPickerState'; // Unified localStorage key
         let drawHistory = []; // History of drawn URLs
         const historyLimit = 5; // Maximum number of history items
         let lastDrawnId = null; // To track last drawn item for undo
@@ -126,82 +120,88 @@
         }
 
         /**
-         * Function to initialize buckets based on initialFiles
+         * Function to calculate the total frequency of a bucket
          */
-        function initBuckets() {
-            b1 = {};
-            b2 = {};
-            uniqueBucket1Count = 0;
-            initB2Total = 0;
-            drawHistory = [];
-            lastDrawnId = null;
-
-            initialFiles.forEach(file => {
-                const id = file[0];
-                const freq = file[2] !== null ? file[2] : defaultFrequency;
-                b2[id] = freq;
-                initB2Total += freq;
-            });
+        function getTotalFreq(bucket) {
+            return Object.values(bucket).reduce((sum, freq) => sum + freq, 0);
         }
 
         /**
-         * Function to save the current state to localStorage
+         * Function to save the current state to unified localStorage
          */
         function saveState() {
-            const state = {
-                b1: b1,
-                b2: b2,
-                uniqueBucket1Count: uniqueBucket1Count,
-                b1Prob: b1Prob,
-                b2Prob: b2Prob,
-                defaultFrequency: defaultFrequency,
-                urlPrefix: urlPrefix,
-                urlSuffix: urlSuffix,
-                drawHistory: drawHistory
+            // Update the unified state with the current target's state
+            unifiedState[currentTarget] = {
+                b1: currentTargetState.b1,
+                b2: currentTargetState.b2,
+                uniqueBucket1Count: currentTargetState.uniqueBucket1Count,
+                b1Prob: currentTargetState.b1Prob,
+                b2Prob: currentTargetState.b2Prob,
+                defaultFrequency: currentTargetState.defaultFrequency,
+                urlPrefix: currentTargetState.urlPrefix,
+                urlSuffix: currentTargetState.urlSuffix,
+                drawHistory: currentTargetState.drawHistory
             };
-            localStorage.setItem(localStorageKey, JSON.stringify(state));
+            // Save the entire unified state back to localStorage
+            localStorage.setItem(unifiedStorageKey, JSON.stringify(unifiedState));
         }
 
         /**
-         * Function to load the state from localStorage
+         * Function to load the state from unified localStorage
          */
         function loadState() {
-            const state = JSON.parse(localStorage.getItem(localStorageKey));
-            if (state) {
-                b1 = state.b1 || {};
-                b2 = state.b2 || {};
-                uniqueBucket1Count = state.uniqueBucket1Count || 0;
-                b1Prob = state.b1Prob || 0.66;
-                b2Prob = state.b2Prob || 0.34;
-                defaultFrequency = state.defaultFrequency || 1;
-                urlPrefix = state.urlPrefix || '';
-                urlSuffix = state.urlSuffix || '';
-                drawHistory = state.drawHistory || [];
-                initB2Total = getTotalFreq(b2);
+            const storedState = JSON.parse(localStorage.getItem(unifiedStorageKey));
+            if (storedState) {
+                unifiedState = storedState;
+                if (currentTarget in unifiedState) {
+                    currentTargetState = { ...unifiedState[currentTarget] };
+                } else {
+                    initializeTargetState();
+                }
             } else {
-                initBuckets();
+                initializeUnifiedState();
             }
         }
 
         /**
-         * Function to reset the state
+         * Function to initialize the unified state if not present
+         */
+        function initializeUnifiedState() {
+            unifiedState = {};
+            initializeTargetState();
+            saveState();
+        }
+
+        /**
+         * Function to initialize the state for the current target
+         */
+        function initializeTargetState() {
+            currentTargetState = {
+                b1: {},
+                b2: {},
+                uniqueBucket1Count: 0,
+                b1Prob: 0.66,
+                b2Prob: 0.34,
+                defaultFrequency: 1,
+                urlPrefix: '',
+                urlSuffix: '',
+                drawHistory: []
+            };
+            initialFiles.forEach(file => {
+                const id = file[0];
+                const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
+                currentTargetState.b2[id] = freq;
+            });
+        }
+
+        /**
+         * Function to reset the state for the current target
          */
         function resetState() {
             if (!confirm('Are you sure you want to reset the state? This action cannot be undone.')) return;
-            localStorage.removeItem(localStorageKey);
-            defaultFrequency = 1;
-            urlPrefix = '';
-            urlSuffix = '';
-            uniqueBucket1Count = 0;
-            drawHistory = [];
-            lastDrawnId = null;
-            document.getElementById('defaultFrequency').value = defaultFrequency;
-            document.getElementById('urlPrefix').value = urlPrefix;
-            document.getElementById('urlSuffix').value = urlSuffix;
-            document.getElementById('defaultFrequency').disabled = true;
-            b1Prob = 0.66;
-            b2Prob = 0.34;
-            initBuckets();
+            delete unifiedState[currentTarget];
+            saveState();
+            initializeTargetState();
             updateDisplay();
             initializeSlider();
             populateBucketLists();
@@ -210,28 +210,15 @@
         }
 
         /**
-         * Function to export the current state to a JSON file
+         * Function to export the entire unified state to a JSON file
          */
         function exportState() {
-            const state = {
-                b1: b1,
-                b2: b2,
-                uniqueBucket1Count: uniqueBucket1Count,
-                b1Prob: b1Prob,
-                b2Prob: b2Prob,
-                defaultFrequency: defaultFrequency,
-                urlPrefix: urlPrefix,
-                urlSuffix: urlSuffix,
-                drawHistory: drawHistory,
-                target: getUrlParameter('target')
-            };
-
-            const stateStr = JSON.stringify(state, null, 4);
+            const stateStr = JSON.stringify(unifiedState, null, 4);
 
             // Get current date and time for filename
             const now = new Date();
             const timestamp = now.toISOString().replace(/[:.]/g, '-');
-            const filename = `state_${timestamp}.json`;
+            const filename = `randomUrlPickerState_${timestamp}.json`;
 
             const blob = new Blob([stateStr], { type: 'application/json' });
             const link = document.createElement('a');
@@ -243,7 +230,7 @@
         }
 
         /**
-         * Function to import the state from a JSON file
+         * Function to import the entire unified state from a JSON file
          */
         function importState() {
             const fileInput = document.createElement('input');
@@ -255,25 +242,25 @@
                     const reader = new FileReader();
                     reader.onload = event => {
                         try {
-                            const state = JSON.parse(event.target.result);
-                            if (state.target !== getUrlParameter('target')) {
-                                alert(`Imported state target (${state.target}) does not match current target (${getUrlParameter('target')}).`);
-                                return;
+                            const importedState = JSON.parse(event.target.result);
+                            // Merge imported state with existing unified state
+                            for (const [target, state] of Object.entries(importedState)) {
+                                if (unifiedState[target]) {
+                                    // Merge states for existing targets
+                                    unifiedState[target] = {
+                                        ...unifiedState[target],
+                                        ...state,
+                                        drawHistory: [...(unifiedState[target].drawHistory || []), ...(state.drawHistory || [])].slice(-historyLimit)
+                                    };
+                                } else {
+                                    // Add new targets
+                                    unifiedState[target] = state;
+                                }
                             }
-                            b1 = state.b1 || {};
-                            b2 = state.b2 || {};
-                            uniqueBucket1Count = state.uniqueBucket1Count || 0;
-                            b1Prob = state.b1Prob || 0.66;
-                            b2Prob = state.b2Prob || 0.34;
-                            defaultFrequency = state.defaultFrequency || 1;
-                            urlPrefix = state.urlPrefix || '';
-                            urlSuffix = state.urlSuffix || '';
-                            drawHistory = state.drawHistory || [];
-                            initB2Total = getTotalFreq(b2);
-                            document.getElementById('defaultFrequency').value = defaultFrequency;
-                            document.getElementById('urlPrefix').value = urlPrefix;
-                            document.getElementById('urlSuffix').value = urlSuffix;
-                            document.getElementById('defaultFrequency').disabled = true;
+                            // Update the current target's state if it was imported
+                            if (currentTarget in importedState) {
+                                currentTargetState = { ...unifiedState[currentTarget] };
+                            }
                             saveState();
                             updateDisplay();
                             initializeSlider();
@@ -291,21 +278,14 @@
         }
 
         /**
-         * Function to calculate the total frequency of a bucket
-         */
-        function getTotalFreq(bucket) {
-            return Object.values(bucket).reduce((sum, freq) => sum + freq, 0);
-        }
-
-        /**
          * Function to update the probabilities based on the slider
          */
         function updateProbabilities() {
             const sliderValue = parseInt(document.getElementById('probSlider').value);
-            b1Prob = sliderValue / 100;
-            b2Prob = 1 - b1Prob;
-            document.getElementById('probBucket1').innerText = (b1Prob * 100).toFixed(0) + '%';
-            document.getElementById('probBucket2').innerText = (b2Prob * 100).toFixed(0) + '%';
+            currentTargetState.b1Prob = sliderValue / 100;
+            currentTargetState.b2Prob = 1 - currentTargetState.b1Prob;
+            document.getElementById('probBucket1').innerText = (currentTargetState.b1Prob * 100).toFixed(0) + '%';
+            document.getElementById('probBucket2').innerText = (currentTargetState.b2Prob * 100).toFixed(0) + '%';
             saveState();
         }
 
@@ -316,11 +296,11 @@
             updateProbabilities(); // Ensure probabilities are up to date
 
             const rand = getSecureRandomNumber();
-            let selectedBucket = rand < b1Prob ? 'b1' : 'b2';
-            let bucket = selectedBucket === 'b1' ? b1 : b2;
+            let selectedBucket = rand < currentTargetState.b1Prob ? 'b1' : 'b2';
+            let bucket = selectedBucket === 'b1' ? currentTargetState.b1 : currentTargetState.b2;
 
             if (getTotalFreq(bucket) === 0) {
-                bucket = selectedBucket === 'b1' ? b2 : b1;
+                bucket = selectedBucket === 'b1' ? currentTargetState.b2 : currentTargetState.b1;
             }
 
             if (getTotalFreq(bucket) === 0) {
@@ -345,22 +325,22 @@
                 }
             }
 
-            const isDuplicate = selectedId in b1;
+            const isDuplicate = selectedId in currentTargetState.b1;
             if (isDuplicate) {
                 // Duplicate entry drawn; do not change gauges
-                b1[selectedId] += 1;
+                currentTargetState.b1[selectedId] += 1;
             } else {
                 // Unique entry drawn; update gauges
-                b1[selectedId] = 1;
-                uniqueBucket1Count += 1;
+                currentTargetState.b1[selectedId] = 1;
+                currentTargetState.uniqueBucket1Count += 1;
                 // Update History
                 addToHistory(selectedId);
             }
 
-            if (selectedId in b2) {
-                b2[selectedId] = Math.max(1, b2[selectedId] - 1);
-                if (b2[selectedId] === 0) {
-                    delete b2[selectedId];
+            if (selectedId in currentTargetState.b2) {
+                currentTargetState.b2[selectedId] = Math.max(1, currentTargetState.b2[selectedId] - 1);
+                if (currentTargetState.b2[selectedId] === 0) {
+                    delete currentTargetState.b2[selectedId];
                 }
             }
 
@@ -376,11 +356,11 @@
 
             // Updated URL construction
             let url = urlBody;
-            if (urlPrefix) {
-                url = urlPrefix + url;
+            if (currentTargetState.urlPrefix) {
+                url = currentTargetState.urlPrefix + url;
             }
-            if (urlSuffix) {
-                url = url + urlSuffix;
+            if (currentTargetState.urlSuffix) {
+                url = url + currentTargetState.urlSuffix;
             }
 
             updateDisplay();
@@ -394,16 +374,16 @@
          * Function to add a drawn URL to history
          */
         function addToHistory(id) {
-            const fileDetails = initialFiles.find(file => file[0] === id);
+            const fileDetails = initialFiles.find(file => file[0] == id);
             if (fileDetails) {
                 const entry = {
                     id: id,
                     url: fileDetails[1],
                     timestamp: new Date().toLocaleString()
                 };
-                drawHistory.unshift(entry);
-                if (drawHistory.length > historyLimit) {
-                    drawHistory.pop();
+                currentTargetState.drawHistory.unshift(entry);
+                if (currentTargetState.drawHistory.length > historyLimit) {
+                    currentTargetState.drawHistory.pop();
                 }
             }
         }
@@ -417,25 +397,25 @@
                 return;
             }
 
-            if (!(lastDrawnId in b1)) {
+            if (!(lastDrawnId in currentTargetState.b1)) {
                 alert('Invalid state. Cannot undo.');
                 return;
             }
 
-            b1[lastDrawnId] -= 1;
-            if (b1[lastDrawnId] === 0) {
-                delete b1[lastDrawnId];
-                uniqueBucket1Count -= 1;
+            currentTargetState.b1[lastDrawnId] -= 1;
+            if (currentTargetState.b1[lastDrawnId] === 0) {
+                delete currentTargetState.b1[lastDrawnId];
+                currentTargetState.uniqueBucket1Count -= 1;
             }
 
-            if (lastDrawnId in b2) {
-                b2[lastDrawnId] += 1;
+            if (lastDrawnId in currentTargetState.b2) {
+                currentTargetState.b2[lastDrawnId] += 1;
             } else {
-                b2[lastDrawnId] = 1;
+                currentTargetState.b2[lastDrawnId] = 1;
             }
 
             // Remove from history
-            drawHistory.shift();
+            currentTargetState.drawHistory.shift();
 
             lastDrawnId = null;
             saveState();
@@ -450,28 +430,41 @@
          */
         function updateDisplay() {
             // Update Review1 Gauge
-            const review1Value = ((uniqueBucket1Count / initB2Total) * 100).toFixed(2);
+            const review1Value = ((currentTargetState.uniqueBucket1Count / getInitialB2Total()) * 100).toFixed(2);
             document.getElementById('review1Gauge').value = review1Value;
             document.getElementById('review1Text').innerText = review1Value + '%';
 
             // Update Review2 Gauge
-            const review2Value = ((initB2Total - uniqueBucket1Count) / initB2Total * 100).toFixed(2);
+            const review2Value = (((getInitialB2Total() - currentTargetState.uniqueBucket1Count) / getInitialB2Total()) * 100).toFixed(2);
             document.getElementById('review2Gauge').value = review2Value;
             document.getElementById('review2Text').innerText = review2Value + '%';
 
             // Update frequencies display
-            const b1Total = getTotalFreq(b1);
-            const b2Total = getTotalFreq(b2);
+            const b1Total = getTotalFreq(currentTargetState.b1);
+            const b2Total = getTotalFreq(currentTargetState.b2);
 
             document.getElementById('bucket1Freq').innerText = b1Total;
             document.getElementById('bucket2Freq').innerText = b2Total;
         }
 
         /**
+         * Function to get the initial total frequency of Bucket2
+         */
+        function getInitialB2Total() {
+            // Calculate the initial total frequency based on initialFiles and defaultFrequency
+            let total = 0;
+            initialFiles.forEach(file => {
+                const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
+                total += freq;
+            });
+            return total;
+        }
+
+        /**
          * Function to initialize the probability slider
          */
         function initializeSlider() {
-            const initialSliderValue = (b1Prob * 100).toFixed(0);
+            const initialSliderValue = (currentTargetState.b1Prob * 100).toFixed(0);
             document.getElementById('probSlider').value = initialSliderValue;
             document.getElementById('probBucket1').innerText = initialSliderValue + '%';
             document.getElementById('probBucket2').innerText = (100 - initialSliderValue) + '%';
@@ -486,7 +479,7 @@
                 dfInput.disabled = false;
             } else {
                 dfInput.disabled = true;
-                dfInput.value = defaultFrequency;
+                dfInput.value = currentTargetState.defaultFrequency;
             }
         }
 
@@ -499,15 +492,14 @@
             if (dfValue !== '') {
                 const df = parseInt(dfValue);
                 if (!isNaN(df) && df > 0) {
-                    defaultFrequency = df;
+                    currentTargetState.defaultFrequency = df;
                     // Apply default frequency to elements with null frequency
                     initialFiles.forEach(file => {
-                        if (file[2] === null || file[2] === defaultFrequency) {
+                        if (file[2] === null || file[2] === currentTargetState.defaultFrequency) {
                             const id = file[0];
-                            const oldFreq = b2[id] || 0;
-                            const freqDifference = defaultFrequency - oldFreq;
-                            b2[id] = defaultFrequency;
-                            initB2Total += freqDifference;
+                            const oldFreq = currentTargetState.b2[id] || 0;
+                            const freqDifference = currentTargetState.defaultFrequency - oldFreq;
+                            currentTargetState.b2[id] = currentTargetState.defaultFrequency;
                         }
                     });
                     dfInput.disabled = true;
@@ -527,8 +519,8 @@
          * Function to save the URL prefix and suffix
          */
         function saveUrlPrefixSuffix() {
-            urlPrefix = document.getElementById('urlPrefix').value.trim();
-            urlSuffix = document.getElementById('urlSuffix').value.trim();
+            currentTargetState.urlPrefix = document.getElementById('urlPrefix').value.trim();
+            currentTargetState.urlSuffix = document.getElementById('urlSuffix').value.trim();
             saveState();
             showToast('URL prefix and suffix saved.');
         }
@@ -591,23 +583,23 @@
             bucket2List.innerHTML = '';
 
             // Populate Bucket1
-            for (const id in b1) {
+            for (const id in currentTargetState.b1) {
                 const fileDetails = initialFiles.find(file => file[0] == id);
                 if (fileDetails) {
                     const li = document.createElement('li');
                     li.className = 'list-group-item';
-                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${b1[id]})`;
+                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${currentTargetState.b1[id]})`;
                     bucket1List.appendChild(li);
                 }
             }
 
             // Populate Bucket2
-            for (const id in b2) {
+            for (const id in currentTargetState.b2) {
                 const fileDetails = initialFiles.find(file => file[0] == id);
                 if (fileDetails) {
                     const li = document.createElement('li');
                     li.className = 'list-group-item';
-                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${b2[id]})`;
+                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${currentTargetState.b2[id]})`;
                     bucket2List.appendChild(li);
                 }
             }
@@ -620,7 +612,7 @@
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
 
-            drawHistory.forEach(entry => {
+            currentTargetState.drawHistory.forEach(entry => {
                 const li = document.createElement('li');
                 li.className = 'list-group-item';
                 li.innerHTML = `<strong>${entry.timestamp}:</strong> <a href="${entry.url}" target="_blank">${entry.url}</a>`;
@@ -639,8 +631,7 @@
                 return;
             }
 
-            // Set the localStorage key based on target
-            localStorageKey = `randomUrlPickerState_${target}`;
+            currentTarget = target; // Set the current target
 
             // Fetch the initialFiles from the corresponding JSON file
             initialFiles = await fetchInitialFiles(target);
@@ -649,8 +640,7 @@
                 return;
             }
 
-            // Initialize buckets and load state
-            initBuckets();
+            // Load the unified state and set up the current target's state
             loadState();
             updateDisplay();
             initializeSlider();
@@ -658,11 +648,14 @@
             populateHistoryList();
 
             // Set initial values for inputs
-            document.getElementById('defaultFrequency').value = defaultFrequency;
-            document.getElementById('urlPrefix').value = urlPrefix;
-            document.getElementById('urlSuffix').value = urlSuffix;
+            document.getElementById('defaultFrequency').value = currentTargetState.defaultFrequency;
+            document.getElementById('urlPrefix').value = currentTargetState.urlPrefix;
+            document.getElementById('urlSuffix').value = currentTargetState.urlSuffix;
             document.getElementById('defaultFrequency').disabled = true;
         }
+
+        // Declare currentTarget globally
+        let currentTarget = '';
 
         window.onload = main;
     </script>
@@ -809,21 +802,21 @@
                         </ul>
                         <h6>How to Use</h6>
                         <ol>
-                            <li>**Set URL Prefix/Suffix**: Enter any prefix or suffix you want to add to the URLs and click "Save URL Prefix/Suffix".</li>
-                            <li>**Set Default Frequency**: Click the "Edit" button next to "Default Frequency", enter a positive integer, and click "Save".</li>
-                            <li>**Adjust Probabilities**: Use the slider to set the probability of selecting from Bucket1 and Bucket2.</li>
-                            <li>**Draw URL**: Click "Draw and Open URL" to randomly select and open a URL based on the current settings.</li>
-                            <li>**Undo Draw**: If you accidentally draw a URL, click "Undo Last Draw" to revert the last action.</li>
-                            <li>**View Buckets**: Check the lists under Bucket1 and Bucket2 to see current items and their frequencies.</li>
-                            <li>**View Draw History**: Scroll through the "Draw History" section to see the last 5 drawn URLs.</li>
-                            <li>**Import/Export State**: Use the respective buttons to save your current state or load a previously saved state.</li>
-                            <li>**Toggle Dark Mode**: Click the "Dark Mode" button at the top-right to switch themes.</li>
-                            <li>**Reset State**: Click "Reset State" to clear all settings and start fresh.</li>
+                            <li><strong>Set URL Prefix/Suffix</strong>: Enter any prefix or suffix you want to add to the URLs and click "Save URL Prefix/Suffix".</li>
+                            <li><strong>Set Default Frequency</strong>: Click the "Edit" button next to "Default Frequency", enter a positive integer, and click "Save".</li>
+                            <li><strong>Adjust Probabilities</strong>: Use the slider to set the probability of selecting from Bucket1 and Bucket2.</li>
+                            <li><strong>Draw URL</strong>: Click "Draw and Open URL" to randomly select and open a URL based on the current settings.</li>
+                            <li><strong>Undo Draw</strong>: If you accidentally draw a URL, click "Undo Last Draw" to revert the last action.</li>
+                            <li><strong>View Buckets</strong>: Check the lists under Bucket1 and Bucket2 to see current items and their frequencies.</li>
+                            <li><strong>View Draw History</strong>: Scroll through the "Draw History" section to see the last 5 drawn URLs.</li>
+                            <li><strong>Import/Export State</strong>: Use the respective buttons to save your current state or load a previously saved state.</li>
+                            <li><strong>Toggle Dark Mode</strong>: Click the "Dark Mode" button at the top-right to switch themes.</li>
+                            <li><strong>Reset State</strong>: Click "Reset State" to clear all settings and start fresh.</li>
                         </ol>
                         <h6>Notes</h6>
                         <ul>
                             <li>Ensure that the <code>target</code> parameter in the URL matches the JSON file you intend to use.</li>
-                            <li>Imported states must correspond to the current <code>target</code> parameter to ensure consistency.</li>
+                            <li>Imported states will merge with existing states. Ensure that the <code>target</code> parameter corresponds to the intended data.</li>
                             <li>Toast notifications will appear at the bottom-right corner for various actions.</li>
                         </ul>
                     </div>
