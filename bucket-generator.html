@@ -17,6 +17,8 @@
 <body class="bg-light">
     <div class="container mt-5">
         <h1 class="text-center">GitHub JSON Generator</h1>
+        
+        <!-- Existing Form for Username, Repo, Min, Max -->
         <form id="githubForm">
             <div class="mb-3">
                 <label for="githubUsername" class="form-label">GitHub Username</label>
@@ -37,6 +39,24 @@
             <div class="d-grid gap-2">
                 <button type="button" class="btn btn-danger" id="clearBtn">Clear</button>
                 <button type="button" class="btn btn-primary" id="generateBtn">Generate JSON</button>
+            </div>
+        </form>
+
+        <!-- New Section for GitHub Issue URLs -->
+        <hr>
+        <h2 class="text-center">Generate JSON from GitHub Issue URLs</h2>
+        <form id="urlForm">
+            <div class="mb-3">
+                <label for="issueURLs" class="form-label">GitHub Issue URLs</label>
+                <textarea class="form-control" id="issueURLs" rows="10" placeholder="Paste GitHub Issue URLs here, one per line"></textarea>
+                <div class="form-text">Example:
+                    <br>https://github.com/sktoushi/stash2/issues/67
+                    <br>https://github.com/sktoushi/stash2/issues/503
+                    <!-- Add more examples as needed -->
+                </div>
+            </div>
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-success" id="generateFromURLsBtn">Generate JSON from URLs</button>
             </div>
         </form>
 
@@ -68,7 +88,9 @@
 
     <script>
         // Function to show toast notification
-        function showToast() {
+        function showToast(message) {
+            const toastBody = document.querySelector('#successToast .toast-body');
+            toastBody.textContent = message || 'JSON generated successfully!';
             const toastElement = new bootstrap.Toast(document.getElementById('successToast'));
             toastElement.show();
         }
@@ -82,7 +104,7 @@
         document.getElementById('saveConfigBtn').addEventListener('click', function() {
             const storageLocation = document.getElementById('storageLocation').value;
             localStorage.setItem('storageLocation', storageLocation);
-            alert('Configuration saved!');
+            showToast('Configuration saved!');
         });
 
         // Load saved configuration if exists
@@ -93,16 +115,16 @@
             }
         });
 
-        // Generate JSON and trigger download
+        // Generate JSON from Username, Repo, Min, Max
         document.getElementById('generateBtn').addEventListener('click', function() {
-            const username = document.getElementById('githubUsername').value;
-            const repo = document.getElementById('githubRepo').value;
+            const username = document.getElementById('githubUsername').value.trim();
+            const repo = document.getElementById('githubRepo').value.trim();
             const min = parseInt(document.getElementById('repoMin').value);
             const max = parseInt(document.getElementById('repoMax').value);
-            const storageLocation = document.getElementById('storageLocation').value;
+            const storageLocation = document.getElementById('storageLocation').value.trim();
 
             if (!username || !repo || isNaN(min) || isNaN(max) || min > max) {
-                alert('Please provide valid inputs.');
+                alert('Please provide valid inputs for Username, Repository, Min, and Max.');
                 return;
             }
 
@@ -114,20 +136,75 @@
                 jsonData.initialFiles.push([i, `https://github.com/${username}/${repo}/issues/${i}`, 1]);
             }
 
-            const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `${repo}_issues.json`;
-            link.click();
-
-            // Show toast notification
-            showToast();
+            downloadJSON(jsonData, `${repo}_issues.json`);
+            showToast('JSON generated successfully from min-max inputs!');
 
             // Redirect after a delay
             setTimeout(function() {
                 window.location.href = storageLocation;
             }, 3000); // 3 second delay
         });
+
+        // Generate JSON from GitHub Issue URLs
+        document.getElementById('generateFromURLsBtn').addEventListener('click', function() {
+            const urlsText = document.getElementById('issueURLs').value.trim();
+            const storageLocation = document.getElementById('storageLocation').value.trim();
+
+            if (!urlsText) {
+                alert('Please paste at least one GitHub Issue URL.');
+                return;
+            }
+
+            const urls = urlsText.split('\n').map(url => url.trim()).filter(url => url !== '');
+            const issueNumbers = [];
+
+            const urlPattern = /^https:\/\/github\.com\/[^\/]+\/[^\/]+\/issues\/(\d+)$/;
+
+            for (let url of urls) {
+                const match = url.match(urlPattern);
+                if (match && match[1]) {
+                    issueNumbers.push(parseInt(match[1]));
+                } else {
+                    alert(`Invalid URL format: ${url}`);
+                    return;
+                }
+            }
+
+            if (issueNumbers.length === 0) {
+                alert('No valid issue numbers found in the provided URLs.');
+                return;
+            }
+
+            let jsonData = {
+                initialFiles: []
+            };
+
+            issueNumbers.forEach(issueNumber => {
+                // Extract username and repo from the URL
+                const urlParts = urls.find(url => url.includes(`/issues/${issueNumber}`)).split('/');
+                const username = urlParts[3];
+                const repo = urlParts[4];
+
+                jsonData.initialFiles.push([issueNumber, `https://github.com/${username}/${repo}/issues/${issueNumber}`, 1]);
+            });
+
+            downloadJSON(jsonData, `issues_from_urls.json`);
+            showToast('JSON generated successfully from URLs!');
+
+            // Redirect after a delay
+            setTimeout(function() {
+                window.location.href = storageLocation;
+            }, 3000); // 3 second delay
+        });
+
+        // Function to download JSON file
+        function downloadJSON(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
