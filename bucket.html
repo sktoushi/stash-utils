@@ -10,7 +10,7 @@
             background-color: #f8f9fa;
         }
         .container {
-            max-width: 600px;
+            max-width: 800px; /* Increased width to accommodate two gauges */
             margin-top: 30px;
         }
         .progress-container {
@@ -33,6 +33,19 @@
         .input-group-text {
             width: 100px;
         }
+        .gauge-section {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        .gauge-label {
+            margin-bottom: 10px;
+        }
+		#review1Gauge {
+			accent-color: #28a745; /* Green */
+		}
+		#review2Gauge {
+			accent-color: #00FFFF; /* Blue */
+		}
     </style>
     <script>
         let b1 = {}; // Bucket 1 (reviews)
@@ -45,6 +58,7 @@
         let urlSuffix = ''; // URL Suffix
         let initialFiles = []; // To be populated based on target
         let localStorageKey = ''; // To be determined based on target
+        let uniqueBucket1Count = 0; // Tracks unique items moved to Bucket1
 
         /**
          * Function to get a secure random number between 0 (inclusive) and 1 (exclusive)
@@ -96,6 +110,8 @@
                 b2[id] = freq;
                 initB2Total += freq;
             });
+
+            uniqueBucket1Count = 0; // Reset unique count during initialization
         }
 
         /**
@@ -110,7 +126,8 @@
                 defaultFrequency: defaultFrequency,
                 urlPrefix: urlPrefix,
                 urlSuffix: urlSuffix,
-                initialFiles: initialFiles
+                initialFiles: initialFiles,
+                uniqueBucket1Count: uniqueBucket1Count // Save unique count
             };
             localStorage.setItem(localStorageKey, JSON.stringify(state));
         }
@@ -129,6 +146,7 @@
                 urlPrefix = state.urlPrefix || '';
                 urlSuffix = state.urlSuffix || '';
                 initialFiles = state.initialFiles || initialFiles;
+                uniqueBucket1Count = state.uniqueBucket1Count || 0; // Load unique count
                 initB2Total = getTotalFreq(b2);
             } else {
                 initBuckets();
@@ -143,6 +161,7 @@
             defaultFrequency = 1;
             urlPrefix = '';
             urlSuffix = '';
+            uniqueBucket1Count = 0; // Reset unique count
             document.getElementById('defaultFrequency').value = defaultFrequency;
             document.getElementById('urlPrefix').value = urlPrefix;
             document.getElementById('urlSuffix').value = urlSuffix;
@@ -167,7 +186,8 @@
                 defaultFrequency: defaultFrequency,
                 urlPrefix: urlPrefix,
                 urlSuffix: urlSuffix,
-                initialFiles: initialFiles
+                initialFiles: initialFiles,
+                uniqueBucket1Count: uniqueBucket1Count // Include unique count
             };
             const stateStr = btoa(JSON.stringify(state));
 
@@ -206,6 +226,7 @@
                             urlPrefix = state.urlPrefix || '';
                             urlSuffix = state.urlSuffix || '';
                             initialFiles = state.initialFiles || initialFiles;
+                            uniqueBucket1Count = state.uniqueBucket1Count || 0; // Load unique count
                             initB2Total = getTotalFreq(b2);
                             document.getElementById('defaultFrequency').value = defaultFrequency;
                             document.getElementById('urlPrefix').value = urlPrefix;
@@ -281,9 +302,12 @@
             }
 
             if (selectedId in b1) {
+                // Duplicate draw; do not change uniqueBucket1Count
                 b1[selectedId] += 1;
             } else {
+                // Unique draw; increment uniqueBucket1Count
                 b1[selectedId] = 1;
+                uniqueBucket1Count += 1;
             }
 
             if (selectedId in b2) {
@@ -318,6 +342,8 @@
         function updateDisplay() {
             const b1Total = getTotalFreq(b1);
             const b2Total = getTotalFreq(b2);
+
+            // Existing Gauge (Bucket1 vs Total)
             let progress = (b1Total / (b1Total + b2Total)) * 100;
             if (progress > 100) progress = 100;
 
@@ -325,6 +351,18 @@
             document.getElementById('gaugeText').innerText = progress.toFixed(2) + '%';
             document.getElementById('bucket1Freq').innerText = b1Total;
             document.getElementById('bucket2Freq').innerText = b2Total;
+
+            // Review1 Gauge: uniqueBucket1Count / initB2Total
+            let review1Progress = (uniqueBucket1Count / initB2Total) * 100;
+            if (review1Progress > 100) review1Progress = 100;
+            document.getElementById('review1Gauge').value = review1Progress;
+            document.getElementById('review1Text').innerText = review1Progress.toFixed(2) + '%';
+
+            // Review2 Gauge: (initB2Total - uniqueBucket1Count) / initB2Total
+            let review2Progress = ((initB2Total - uniqueBucket1Count) / initB2Total) * 100;
+            if (review2Progress > 100) review2Progress = 100;
+            document.getElementById('review2Gauge').value = review2Progress;
+            document.getElementById('review2Text').innerText = review2Progress.toFixed(2) + '%';
         }
 
         /**
@@ -467,6 +505,28 @@
                 <span id="gaugeText">0%</span>
             </div>
         </div>
+
+        <!-- New Gauge Sections -->
+        <div class="gauge-section">
+            <!-- Review1 Gauge -->
+            <div class="progress-container">
+                <label for="review1Gauge" class="form-label gauge-label">Review1 Gauge (Unique Bucket1 Items / Total Bucket2):</label>
+                <progress id="review1Gauge" class="form-range w-100" value="0" max="100"></progress>
+                <div class="text-center">
+                    <span id="review1Text">0%</span>
+                </div>
+            </div>
+
+            <!-- Review2 Gauge -->
+            <div class="progress-container">
+                <label for="review2Gauge" class="form-label gauge-label">Review2 Gauge (Initial Bucket2 Total - Unique Bucket1 Items):</label>
+                <progress id="review2Gauge" class="form-range w-100" value="100" max="100"></progress>
+                <div class="text-center">
+                    <span id="review2Text">100%</span>
+                </div>
+            </div>
+        </div>
+        <!-- End of New Gauge Sections -->
 
         <div class="row">
             <div class="col text-center">
