@@ -14,6 +14,7 @@
         body {
             padding: 20px;
             position: relative;
+            transition: background-color 0.3s, color 0.3s;
         }
         .slider-label {
             display: flex;
@@ -31,16 +32,19 @@
                 margin-top: 5px;
             }
         }
-        textarea.record-link, input.record-name {
+        textarea.record-link, input.record-name, input.record-tags {
             width: 100%;
             resize: vertical;
+        }
+        .record-tags {
+            width: 100%;
         }
         .record-controls {
             display: flex;
             justify-content: center;
             gap: 10px;
         }
-        #controls-row, #additional-controls-row, #third-controls-row {
+        #controls-row, #additional-controls-row, #third-controls-row, #bulk-actions-row {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
@@ -145,41 +149,101 @@
             display: none;
             z-index: 2500;
         }
+        /* Dark mode styles */
+        body.dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        body.dark-mode .table {
+            color: #ffffff;
+        }
+        body.dark-mode .table thead {
+            background-color: #1f1f1f;
+        }
+        body.dark-mode .btn-primary {
+            background-color: #3a3a3a;
+            border-color: #3a3a3a;
+        }
+        body.dark-mode .btn-secondary {
+            background-color: #5a5a5a;
+            border-color: #5a5a5a;
+        }
+        body.dark-mode .btn-info {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        body.dark-mode .btn-warning {
+            background-color: #ffc107;
+            border-color: #ffc107;
+        }
+        body.dark-mode .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        /* Tooltip styles */
+        .tooltip-inner {
+            max-width: 200px;
+            /* Adjust as needed */
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center">Ralloc</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-center">Ralloc</h1>
+            <!-- Dark Mode Toggle -->
+            <div class="form-group mb-0">
+                <div class="custom-control custom-switch">
+                    <input type="checkbox" class="custom-control-input" id="darkModeToggle">
+                    <label class="custom-control-label" for="darkModeToggle">Dark Mode</label>
+                </div>
+            </div>
+        </div>
         <!-- Slider for Review/Generator split -->
         <div class="slider-label">
             <span>Review</span>
             <span>Generator</span>
         </div>
-        <input type="range" class="custom-range" id="typeSlider" min="0" max="100" value="66">
+        <input type="range" class="custom-range" id="typeSlider" min="0" max="100" value="66" aria-label="Review Generator Slider">
         <div class="text-center">
             <span id="sliderValue">66% Review / 34% Generator</span>
         </div>
         <br>
+        <!-- Search and Filter -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <input type="text" id="searchBar" class="form-control" placeholder="Search records by name or type" aria-label="Search Records">
+            </div>
+            <div class="col-md-6 text-right">
+                <!-- Bulk Actions -->
+                <div id="bulk-actions-row">
+                    <button class="btn btn-danger" id="bulkDeleteBtn" data-toggle="tooltip" data-placement="top" title="Delete selected records">
+                        Bulk Delete
+                    </button>
+                </div>
+            </div>
+        </div>
         <!-- Buttons for state management -->
         <div id="controls-row">
-            <button class="btn btn-primary" id="importStateBtn">Import State</button>
-            <button class="btn btn-primary" id="exportStateBtn">Export State</button>
-            <button class="btn btn-danger" id="resetStateBtn">Reset State</button>
-            <button class="btn btn-secondary" id="addRecordBtn">Add Record</button>
+            <button class="btn btn-primary" id="importStateBtn" data-toggle="tooltip" data-placement="top" title="Import state from a JSON file">Import State</button>
+            <button class="btn btn-primary" id="exportStateBtn" data-toggle="tooltip" data-placement="top" title="Export current state to a JSON file">Export State</button>
+            <button class="btn btn-secondary" id="exportCsvBtn" data-toggle="tooltip" data-placement="top" title="Export records to a CSV file">Export CSV</button>
+            <button class="btn btn-danger" id="resetStateBtn" data-toggle="tooltip" data-placement="top" title="Reset all data to default">Reset State</button>
+            <button class="btn btn-secondary" id="addRecordBtn" data-toggle="tooltip" data-placement="top" title="Add a new record">Add Record</button>
         </div>
         <!-- Additional algorithm buttons -->
         <div id="additional-controls-row">
-            <button class="btn btn-info" id="smootheningBtn">Smoothening</button>
-            <button class="btn btn-info" id="solidifyingBtn">Solidifying</button>
-            <button class="btn btn-info" id="reviewingBtn">Reviewing</button>
-            <button class="btn btn-info" id="exploringBtn">Exploring</button>
-            <button class="btn btn-info" id="spacedRepetitionBtn">Spaced Repetition</button>
-            <button class="btn btn-info" id="focusWeakestBtn">Focus Weakest</button>
+            <button class="btn btn-info" id="smootheningBtn" data-toggle="tooltip" data-placement="top" title="Adjust frequencies based on total picks">Smoothening</button>
+            <button class="btn btn-info" id="solidifyingBtn" data-toggle="tooltip" data-placement="top" title="Increase frequency of records with fewer Generator picks">Solidifying</button>
+            <button class="btn btn-info" id="reviewingBtn" data-toggle="tooltip" data-placement="top" title="Focus on records with the most Review picks">Reviewing</button>
+            <button class="btn btn-info" id="exploringBtn" data-toggle="tooltip" data-placement="top" title="Focus on new or least picked records">Exploring</button>
+            <button class="btn btn-info" id="spacedRepetitionBtn" data-toggle="tooltip" data-placement="top" title="Implement spaced repetition for better retention">Spaced Repetition</button>
+            <button class="btn btn-info" id="focusWeakestBtn" data-toggle="tooltip" data-placement="top" title="Focus on records with the fewest total picks">Focus Weakest</button>
         </div>
         <!-- Third row for Randomizing and Roll buttons -->
         <div id="third-controls-row">
-            <button class="btn btn-warning" id="randomizingBtn">Randomizing</button>
-            <button class="btn btn-success" id="rollBtn">Roll</button>
+            <button class="btn btn-warning" id="randomizingBtn" data-toggle="tooltip" data-placement="top" title="Randomize frequencies and selections">Randomizing</button>
+            <button class="btn btn-success" id="rollBtn" data-toggle="tooltip" data-placement="top" title="Roll to select a record">Roll</button>
         </div>
         <input type="file" id="importFileInput" accept="application/json" style="display: none;">
         <br>
@@ -187,12 +251,13 @@
         <table class="table table-bordered" id="recordsTable">
             <thead>
                 <tr>
-                    <th>Select</th>
+                    <th><input type="checkbox" id="selectAllCheckbox" aria-label="Select All Records"></th>
                     <th>Visit Link</th>
                     <th>Record Name</th>
                     <th>Link</th>
                     <th>Type</th>
                     <th>Frequency</th>
+                    <th>Tags</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -222,11 +287,11 @@
             <div class="form-group">
                 <label for="storageDestination">State Storage Destination:</label>
                 <div class="input-group">
-                    <input type="text" class="form-control" id="storageDestination" disabled>
+                    <input type="text" class="form-control" id="storageDestination" disabled aria-label="State Storage Destination">
                     <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" id="editDestinationBtn">Edit</button>
-                        <button class="btn btn-outline-secondary" id="saveDestinationBtn" style="display: none;">Save</button>
-                        <button class="btn btn-outline-secondary" id="cancelDestinationBtn" style="display: none;">Cancel</button>
+                        <button class="btn btn-outline-secondary" id="editDestinationBtn" data-toggle="tooltip" data-placement="top" title="Edit storage destination">Edit</button>
+                        <button class="btn btn-outline-secondary" id="saveDestinationBtn" style="display: none;" data-toggle="tooltip" data-placement="top" title="Save storage destination">Save</button>
+                        <button class="btn btn-outline-secondary" id="cancelDestinationBtn" style="display: none;" data-toggle="tooltip" data-placement="top" title="Cancel editing storage destination">Cancel</button>
                     </div>
                 </div>
                 <small class="form-text text-muted">
@@ -241,6 +306,23 @@
     <div id="lotteryAnimation">
         <div class="static-image"></div>
         <div class="record-name" id="animationRecordName"></div>
+    </div>
+
+    <!-- Flashcard Modal -->
+    <div class="modal fade" id="flashcardModal" tabindex="-1" role="dialog" aria-labelledby="flashcardModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body text-center">
+                    <div id="flashcardFront" class="mb-3">
+                        <h4 id="flashcardQuestion">Question</h4>
+                    </div>
+                    <div id="flashcardBack" class="mb-3" style="display: none;">
+                        <h4 id="flashcardAnswer">Answer</h4>
+                    </div>
+                    <button class="btn btn-primary" id="flipFlashcardBtn">Flip</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Include necessary scripts -->
@@ -259,12 +341,29 @@
         }
 
         $(document).ready(function() {
+            // Initialize tooltips
+            $('[data-toggle="tooltip"]').tooltip();
+
             // Global variables
             let totalRolls = 0;
             let totalReviewRolls = 0;
             let totalGeneratorRolls = 0;
             let topRecordsChart;
             let defaultStorageDestination = "https://github.com/sktoushi/stash-utils/upload/main";
+
+            // Dark Mode Toggle Handler
+            $('#darkModeToggle').change(function() {
+                $('body').toggleClass('dark-mode');
+                // Save preference
+                let darkMode = $(this).is(':checked');
+                localStorage.setItem('rallocDarkMode', darkMode);
+            });
+
+            // Load Dark Mode preference
+            if (localStorage.getItem('rallocDarkMode') === 'true') {
+                $('body').addClass('dark-mode');
+                $('#darkModeToggle').prop('checked', true);
+            }
 
             // Update slider value display
             $('#typeSlider').on('input change', function() {
@@ -333,20 +432,21 @@
             // Function to create a record row
             function createRecordRow(record) {
                 let row = $('<tr></tr>');
-                let checkbox = $('<input type="checkbox" class="record-select">').prop('checked', record.selected);
+                let checkbox = $('<input type="checkbox" class="record-select">').prop('checked', record.selected).attr('aria-label', 'Select Record');
                 let visitBtn = $('<button class="btn btn-link">Visit Link</button>');
                 visitBtn.click(function() {
                     window.open(record.link, '_blank');
                 });
-                let nameInput = $('<input type="text" class="form-control record-name">').val(record.name);
-                let linkInput = $('<textarea class="form-control record-link"></textarea>').val(record.link);
-                let typeSelect = $('<select class="form-control record-type"><option value="Review">Review</option><option value="Generator">Generator</option></select>').val(record.type);
-                let frequencyInput = $('<input type="range" class="custom-range record-frequency" min="1" max="100">').val(record.frequency || 1);
+                let nameInput = $('<input type="text" class="form-control record-name" required aria-label="Record Name">').val(record.name);
+                let linkInput = $('<input type="url" class="form-control record-link" required aria-label="Record Link">').val(record.link);
+                let typeSelect = $('<select class="form-control record-type" aria-label="Record Type"><option value="Review">Review</option><option value="Generator">Generator</option></select>').val(record.type);
+                let frequencyInput = $('<input type="range" class="custom-range record-frequency" min="1" max="100" aria-label="Frequency Slider">').val(record.frequency || 1);
                 let frequencyLabel = $('<span class="frequency-label">' + (record.frequency || 1) + '</span>');
                 frequencyInput.on('input change', function() {
                     frequencyLabel.text($(this).val());
                 });
                 let frequencyCell = $('<td></td>').append(frequencyInput).append(frequencyLabel);
+                let tagsInput = $('<input type="text" class="form-control record-tags" placeholder="e.g., math, science" aria-label="Record Tags">').val(record.tags || '');
                 let deleteBtn = $('<button class="btn btn-danger btn-sm">Delete</button>');
                 deleteBtn.click(function() {
                     if (confirm('Are you sure you want to delete this record?')) {
@@ -362,6 +462,7 @@
                 row.append($('<td></td>').append(linkInput));
                 row.append($('<td></td>').append(typeSelect));
                 row.append(frequencyCell);
+                row.append($('<td></td>').append(tagsInput));
                 row.append(actionsCell);
                 row.data('recordId', record.id);
                 return row;
@@ -450,7 +551,9 @@
                                         beginAtZero: true
                                     }
                                 }]
-                            }
+                            },
+                            responsive: true,
+                            maintainAspectRatio: false
                         }
                     });
                 }
@@ -470,6 +573,7 @@
                         link: row.find('.record-link').val(),
                         type: row.find('.record-type').val(),
                         frequency: parseInt(row.find('.record-frequency').val()),
+                        tags: row.find('.record-tags').val(),
                         lastPicked: row.data('lastPicked') || null
                     };
                     data.records.push(record);
@@ -505,6 +609,7 @@
                             link: row.find('.record-link').val(),
                             type: row.find('.record-type').val(),
                             frequency: parseInt(row.find('.record-frequency').val()),
+                            tags: row.find('.record-tags').val(),
                             lastPicked: row.data('lastPicked') || null
                         };
                         records.push(record);
@@ -522,12 +627,32 @@
                     link: '',
                     type: 'Review',
                     frequency: 1,
+                    tags: '',
                     lastPicked: null
                 };
                 let row = createRecordRow(newRecord);
                 $('#recordsTableBody').append(row);
                 // Save data
                 saveData();
+            });
+
+            // Bulk Delete Handler
+            $('#bulkDeleteBtn').click(function() {
+                let selectedRows = $('#recordsTableBody .record-select:checked').closest('tr');
+                if (selectedRows.length === 0) {
+                    alert('No records selected for deletion.');
+                    return;
+                }
+                if (confirm('Are you sure you want to delete the selected records?')) {
+                    selectedRows.remove();
+                    saveData();
+                }
+            });
+
+            // Select All Checkbox Handler
+            $('#selectAllCheckbox').change(function() {
+                let isChecked = $(this).is(':checked');
+                $('.record-select').prop('checked', isChecked);
             });
 
             // Roll button handler
@@ -618,6 +743,33 @@
                 }
             });
 
+            // Export CSV button handler
+            $('#exportCsvBtn').click(function() {
+                let data = getCurrentData();
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "ID,Selected,Name,Link,Type,Frequency,Tags,Last Picked\n";
+                data.records.forEach(function(record) {
+                    let row = [
+                        record.id,
+                        record.selected,
+                        `"${record.name.replace(/"/g, '""')}"`,
+                        record.link,
+                        record.type,
+                        record.frequency,
+                        `"${record.tags.replace(/"/g, '""')}"`,
+                        record.lastPicked ? new Date(record.lastPicked).toISOString() : ''
+                    ].join(",");
+                    csvContent += row + "\n";
+                });
+                let encodedUri = encodeURI(csvContent);
+                let a = document.createElement('a');
+                a.href = encodedUri;
+                a.download = 'ralloc-records.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+
             // Import State button handler
             $('#importStateBtn').click(function() {
                 $('#importFileInput').click();
@@ -634,6 +786,10 @@
                     let content = e.target.result;
                     try {
                         let data = JSON.parse(content);
+                        // Validate data structure
+                        if (!data.records || !Array.isArray(data.records)) {
+                            throw new Error('Invalid data structure.');
+                        }
                         // Save to LocalStorage
                         localStorage.setItem('rallocStorageKey', JSON.stringify(data));
                         // Reload the page
@@ -661,7 +817,7 @@
                 data.records.forEach(function(record) {
                     let recordStat = topRecords.find(r => r.id === record.id);
                     let totalCount = recordStat ? recordStat.totalCount : 0;
-                    record.frequency = 1 / (totalCount + 1) * 100;
+                    record.frequency = Math.max(Math.floor(100 / (totalCount + 1)), 1);
                     record.selected = true;
                 });
                 data.sliderValue = 50;
@@ -676,7 +832,7 @@
                 data.records.forEach(function(record) {
                     let recordStat = topRecords.find(r => r.id === record.id);
                     let generatorCount = recordStat ? recordStat.generatorCount || 0 : 0;
-                    record.frequency = 1 / (generatorCount + 1) * 100;
+                    record.frequency = Math.max(Math.floor(100 / (generatorCount + 1)), 1);
                     record.selected = true;
                 });
                 data.sliderValue = 30; // Favor Review
@@ -691,7 +847,7 @@
                 data.records.forEach(function(record) {
                     let recordStat = topRecords.find(r => r.id === record.id);
                     let reviewCount = recordStat ? recordStat.reviewCount || 0 : 0;
-                    record.frequency = reviewCount > 0 ? reviewCount * 10 : 1;
+                    record.frequency = reviewCount > 0 ? Math.min(reviewCount * 10, 100) : 1;
                     record.selected = true;
                 });
                 data.sliderValue = 100; // Exclusively Review
@@ -706,7 +862,7 @@
                 data.records.forEach(function(record) {
                     let recordStat = topRecords.find(r => r.id === record.id);
                     let totalCount = recordStat ? recordStat.totalCount : 0;
-                    record.frequency = 1 / (totalCount + 1) * 100;
+                    record.frequency = Math.max(Math.floor(100 / (totalCount + 1)), 1);
                     record.selected = true;
                 });
                 data.sliderValue = 0; // Exclusively Generator
@@ -740,7 +896,7 @@
                 data.records.forEach(function(record) {
                     let lastPicked = record.lastPicked || 0;
                     let daysSincePicked = (now - lastPicked) / (1000 * 60 * 60 * 24);
-                    record.frequency = Math.min(daysSincePicked * 10, 100);
+                    record.frequency = Math.min(Math.floor(daysSincePicked * 10), 100);
                     record.selected = true;
                 });
                 data.sliderValue = 50;
@@ -755,7 +911,7 @@
                 data.records.forEach(function(record) {
                     let recordStat = topRecords.find(r => r.id === record.id);
                     let totalCount = recordStat ? recordStat.totalCount : 0;
-                    record.frequency = 1 / (totalCount + 1) * 100;
+                    record.frequency = Math.max(Math.floor(100 / (totalCount + 1)), 1);
                     record.selected = true;
                 });
                 data.sliderValue = 50;
@@ -778,6 +934,7 @@
                         row.find('.record-frequency').val(record.frequency);
                         row.find('.record-frequency').trigger('change');
                         row.find('.record-name').val(record.name);
+                        row.find('.record-tags').val(record.tags);
                     }
                 });
             }
@@ -790,6 +947,12 @@
             });
 
             $('#saveDestinationBtn').click(function() {
+                // Validate URL
+                let url = $('#storageDestination').val();
+                if (!isValidURL(url)) {
+                    alert('Please enter a valid URL.');
+                    return;
+                }
                 $('#storageDestination').prop('disabled', true);
                 $('#editDestinationBtn').show();
                 $('#saveDestinationBtn, #cancelDestinationBtn').hide();
@@ -804,6 +967,12 @@
                 let data = JSON.parse(localStorage.getItem('rallocStorageKey') || '{}');
                 $('#storageDestination').val(data.storageDestination || defaultStorageDestination);
             });
+
+            // Function to validate URL
+            function isValidURL(string) {
+                var res = string.match(/(http|https):\/\/(\w+:?\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/);
+                return (res !== null)
+            };
 
             // Function to show lottery animation
             function showLotteryAnimation(recordName, recordLink, selectedType) {
@@ -879,6 +1048,83 @@
 
                 // Update the top records list and chart
                 populateTopRecords(topRecords);
+            }
+
+            // Search and Filter Handler
+            $('#searchBar').on('input', function() {
+                let query = $(this).val().toLowerCase();
+                $('#recordsTableBody tr').each(function() {
+                    let row = $(this);
+                    let name = row.find('.record-name').val().toLowerCase();
+                    let type = row.find('.record-type').val().toLowerCase();
+                    let tags = row.find('.record-tags').val().toLowerCase();
+                    if (name.includes(query) || type.includes(query) || tags.includes(query)) {
+                        row.show();
+                    } else {
+                        row.hide();
+                    }
+                });
+            });
+
+            // Flashcard Mode (Optional Feature)
+            // You can trigger flashcard mode based on certain conditions or add a button to activate it
+            // Here's a simple implementation to demonstrate the feature
+
+            // Add Flashcard Mode Button
+            let flashcardBtn = $('<button class="btn btn-outline-primary ml-2" id="flashcardModeBtn" data-toggle="tooltip" data-placement="top" title="Start Flashcard Mode">Flashcard Mode</button>');
+            $('#controls-row').append(flashcardBtn);
+
+            $('#flashcardModeBtn').click(function() {
+                startFlashcardMode();
+            });
+
+            function startFlashcardMode() {
+                let data = getCurrentData();
+                let selectedRecords = data.records.filter(record => record.selected);
+                if (selectedRecords.length === 0) {
+                    alert('No records selected for flashcards.');
+                    return;
+                }
+                // Pick a random record
+                let randomIndex = Math.floor(getSecureRandomNumber() * selectedRecords.length);
+                let flashcardRecord = selectedRecords[randomIndex];
+                if (!flashcardRecord) {
+                    alert('No record found.');
+                    return;
+                }
+                // Show flashcard modal
+                $('#flashcardQuestion').text(flashcardRecord.name);
+                $('#flashcardAnswer').text(flashcardRecord.link);
+                $('#flashcardModal').modal('show');
+
+                // Update frequency and stats
+                proceedAfterRoll(flashcardRecord.link, flashcardRecord.type);
+            }
+
+            // Flip Flashcard Button Handler
+            $('#flipFlashcardBtn').click(function() {
+                $('#flashcardFront').toggle();
+                $('#flashcardBack').toggle();
+            });
+
+            // Function to apply data to UI (used in algorithm buttons)
+            function applyDataToUI(data) {
+                // Update slider
+                $('#typeSlider').val(data.sliderValue);
+                $('#typeSlider').trigger('change');
+                // Update records
+                $('#recordsTableBody tr').each(function() {
+                    let row = $(this);
+                    let recordId = row.data('recordId');
+                    let record = data.records.find(r => r.id === recordId);
+                    if (record) {
+                        row.find('.record-select').prop('checked', record.selected);
+                        row.find('.record-frequency').val(record.frequency);
+                        row.find('.record-frequency').trigger('change');
+                        row.find('.record-name').val(record.name);
+                        row.find('.record-tags').val(record.tags);
+                    }
+                });
             }
 
         });
