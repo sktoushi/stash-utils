@@ -13,7 +13,7 @@
             align-items: center;
             justify-content: center;
         }
-        .container {
+        .container-custom {
             background: white;
             padding: 40px;
             border-radius: 15px;
@@ -38,7 +38,7 @@
 </head>
 <body>
 
-<div class="container">
+<div class="container-custom">
     <h1 class="mb-4">Random Divider</h1>
     <div class="number-display">
         <span id="number1">--</span> ÷ <span id="number2">--</span>
@@ -63,7 +63,7 @@
         if (isNaN(ceiling1) || ceiling1 < 4) { // Minimum ceiling1 is 4 to allow first number >=2
             ceiling1 = 9;
         }
-        if (isNaN(ceiling2) || ceiling2 < ceiling1 / 2 + 1) { // Ensure ceiling2 is sufficiently large
+        if (isNaN(ceiling2) || ceiling2 < Math.ceil(ceiling1 / 2) + 1) { // Ensure ceiling2 is sufficiently large
             ceiling2 = 9;
         }
 
@@ -92,11 +92,37 @@
     document.getElementById('number1').textContent = number1;
     document.getElementById('number2').textContent = number2;
 
+    // Variable to track if an answer has been revealed
+    let answerRevealed = false;
+
     // Handle the reveal button
     document.getElementById('revealBtn').addEventListener('click', function() {
-        const division = (number1 / number2).toFixed(3);
-        document.getElementById('divisionResult').textContent = division;
-        document.getElementById('result').style.display = 'block';
+        if (!answerRevealed) {
+            // Randomly decide the division direction: true for number1 / number2, false for number2 / number1
+            const divideFirstBySecond = Math.random() < 0.5;
+
+            let division;
+            if (divideFirstBySecond) {
+                division = (number1 / number2).toFixed(3);
+                document.getElementById('divisionResult').textContent = division;
+                // Update the display to show the division direction
+                document.querySelector('.number-display').innerHTML = `<span id="number1">${number1}</span> ÷ <span id="number2">${number2}</span>`;
+            } else {
+                division = (number2 / number1).toFixed(3);
+                document.getElementById('divisionResult').textContent = division;
+                // Update the display to show the division direction
+                document.querySelector('.number-display').innerHTML = `<span id="number2">${number2}</span> ÷ <span id="number1">${number1}</span>`;
+            }
+
+            // Show the result
+            document.getElementById('result').style.display = 'block';
+
+            // Optionally, disable the button after revealing the answer
+            // this.disabled = true;
+
+            // Set the flag to prevent multiple reveals
+            answerRevealed = true;
+        }
     });
 </script>
 
