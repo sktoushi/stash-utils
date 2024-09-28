@@ -75,7 +75,7 @@
     </style>
     <script>
         let b1 = {}; // Bucket 1 (reviews)
-        let b2 = {}; // Bucket 2 (new elements)
+        let b2 = {}; // Bucket 2 (new elements with freq >=2)
         let initB2Total = 0; // Initial total frequency of Bucket 2
         let uniqueBucket1Count = 0; // Number of unique items moved to Bucket1
         let b1Prob = 0.66; // Default probability for Bucket 1
@@ -127,6 +127,7 @@
 
         /**
          * Function to initialize buckets based on initialFiles
+         * Only store b2 items with frequency >=2
          */
         function initBuckets() {
             b1 = {};
@@ -139,18 +140,30 @@
             initialFiles.forEach(file => {
                 const id = file[0];
                 const freq = file[2] !== null ? file[2] : defaultFrequency;
-                b2[id] = freq;
-                initB2Total += freq;
+                if (freq >= 2) {
+                    b2[id] = freq;
+                    initB2Total += freq;
+                }
+                // Items with frequency 1 are not stored in b2 to save memory
             });
         }
 
         /**
          * Function to save the current state to localStorage
+         * Only include b2 items with frequency >=2
          */
         function saveState() {
+            // Filter b2 to include only items with freq >=2
+            const filteredB2 = {};
+            for (const id in b2) {
+                if (b2[id] >= 2) {
+                    filteredB2[id] = b2[id];
+                }
+            }
+
             const state = {
                 b1: b1,
-                b2: b2,
+                b2: filteredB2,
                 uniqueBucket1Count: uniqueBucket1Count,
                 b1Prob: b1Prob,
                 b2Prob: b2Prob,
@@ -169,6 +182,7 @@
             const state = JSON.parse(localStorage.getItem(localStorageKey));
             if (state) {
                 b1 = state.b1 || {};
+                // Reconstruct b2: items in state.b2 have their freq, others have freq=1
                 b2 = state.b2 || {};
                 uniqueBucket1Count = state.uniqueBucket1Count || 0;
                 b1Prob = state.b1Prob || 0.66;
@@ -215,7 +229,7 @@
         function exportState() {
             const state = {
                 b1: b1,
-                b2: b2,
+                b2: b2, // Only items with freq >=2 are stored
                 uniqueBucket1Count: uniqueBucket1Count,
                 b1Prob: b1Prob,
                 b2Prob: b2Prob,
@@ -292,9 +306,19 @@
 
         /**
          * Function to calculate the total frequency of a bucket
+         * For b2, includes frequency from b2 or defaultFrequency (1)
          */
         function getTotalFreq(bucket) {
-            return Object.values(bucket).reduce((sum, freq) => sum + freq, 0);
+            if (bucket === b2) {
+                let total = 0;
+                initialFiles.forEach(file => {
+                    const id = file[0];
+                    total += (bucket[id] || 1);
+                });
+                return total;
+            } else {
+                return Object.values(bucket).reduce((sum, freq) => sum + freq, 0);
+            }
         }
 
         /**
@@ -319,8 +343,12 @@
             let selectedBucket = rand < b1Prob ? 'b1' : 'b2';
             let bucket = selectedBucket === 'b1' ? b1 : b2;
 
-            if (getTotalFreq(bucket) === 0) {
-                bucket = selectedBucket === 'b1' ? b2 : b1;
+            if (selectedBucket === 'b2' && getTotalFreq(b2) === 0) {
+                selectedBucket = 'b1';
+                bucket = b1;
+            } else if (selectedBucket === 'b1' && getTotalFreq(b1) === 0) {
+                selectedBucket = 'b2';
+                bucket = b2;
             }
 
             if (getTotalFreq(bucket) === 0) {
@@ -330,9 +358,18 @@
 
             const cumulativeFreqs = [];
             let cumulative = 0;
-            for (const id in bucket) {
-                cumulative += bucket[id];
-                cumulativeFreqs.push([parseInt(id), cumulative]);
+            if (selectedBucket === 'b2') {
+                initialFiles.forEach(file => {
+                    const id = file[0];
+                    const freq = b2[id] || 1; // Frequency is b2[id] if exists, else 1
+                    cumulative += freq;
+                    cumulativeFreqs.push([parseInt(id), cumulative]);
+                });
+            } else {
+                for (const id in bucket) {
+                    cumulative += bucket[id];
+                    cumulativeFreqs.push([parseInt(id), cumulative]);
+                }
             }
 
             const totalFreq = cumulative;
@@ -343,6 +380,11 @@
                     selectedId = id;
                     break;
                 }
+            }
+
+            if (!selectedId) {
+                alert('Failed to select a valid URL.');
+                return;
             }
 
             const isDuplicate = selectedId in b1;
@@ -357,10 +399,13 @@
                 addToHistory(selectedId);
             }
 
-            if (selectedId in b2) {
-                b2[selectedId] = Math.max(1, b2[selectedId] - 1);
-                if (b2[selectedId] === 0) {
-                    delete b2[selectedId];
+            // Update b2 frequencies if drawn from b2
+            if (selectedBucket === 'b2') {
+                if (b2[selectedId]) {
+                    b2[selectedId] = Math.max(1, b2[selectedId] - 1);
+                    if (b2[selectedId] === 1) {
+                        delete b2[selectedId]; // Remove from b2 as frequency is back to default (1)
+                    }
                 }
             }
 
@@ -412,30 +457,31 @@
          * Function to undo the last draw action
          */
         function undoLastDraw() {
-            if (lastDrawnId === null) {
+            if (drawHistory.length === 0) {
                 alert('No draw action to undo.');
                 return;
             }
 
-            if (!(lastDrawnId in b1)) {
+            const lastEntry = drawHistory.shift();
+            const id = lastEntry.id;
+
+            if (!(id in b1)) {
                 alert('Invalid state. Cannot undo.');
                 return;
             }
 
-            b1[lastDrawnId] -= 1;
-            if (b1[lastDrawnId] === 0) {
-                delete b1[lastDrawnId];
+            b1[id] -= 1;
+            if (b1[id] === 0) {
+                delete b1[id];
                 uniqueBucket1Count -= 1;
             }
 
-            if (lastDrawnId in b2) {
-                b2[lastDrawnId] += 1;
+            // Restore frequency in b2
+            if (b2[id]) {
+                b2[id] += 1;
             } else {
-                b2[lastDrawnId] = 1;
+                b2[id] = 2; // Since frequency was reduced from 2 to 1 and now restored
             }
-
-            // Remove from history
-            drawHistory.shift();
 
             lastDrawnId = null;
             saveState();
@@ -462,7 +508,6 @@
             // Update frequencies display
             const b1Total = getTotalFreq(b1);
             const b2Total = getTotalFreq(b2);
-
             document.getElementById('bucket1Freq').innerText = b1Total;
             document.getElementById('bucket2Freq').innerText = b2Total;
         }
@@ -504,10 +549,17 @@
                     initialFiles.forEach(file => {
                         if (file[2] === null || file[2] === defaultFrequency) {
                             const id = file[0];
-                            const oldFreq = b2[id] || 0;
-                            const freqDifference = defaultFrequency - oldFreq;
-                            b2[id] = defaultFrequency;
-                            initB2Total += freqDifference;
+                            const oldFreq = b2[id] || 1;
+                            const newFreq = defaultFrequency;
+                            if (newFreq > 1) {
+                                b2[id] = newFreq;
+                                initB2Total += (newFreq - (oldFreq >=2 ? oldFreq : 1));
+                            } else {
+                                if (b2[id]) {
+                                    initB2Total -= (b2[id] - 1);
+                                    delete b2[id];
+                                }
+                            }
                         }
                     });
                     dfInput.disabled = true;
@@ -602,15 +654,17 @@
             }
 
             // Populate Bucket2
-            for (const id in b2) {
-                const fileDetails = initialFiles.find(file => file[0] == id);
+            initialFiles.forEach(file => {
+                const id = file[0];
+                const freq = b2[id] || 1;
+                const fileDetails = initialFiles.find(f => f[0] == id);
                 if (fileDetails) {
                     const li = document.createElement('li');
                     li.className = 'list-group-item';
-                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${b2[id]})`;
+                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${freq})`;
                     bucket2List.appendChild(li);
                 }
-            }
+            });
         }
 
         /**
@@ -809,16 +863,16 @@
                         </ul>
                         <h6>How to Use</h6>
                         <ol>
-                            <li>**Set URL Prefix/Suffix**: Enter any prefix or suffix you want to add to the URLs and click "Save URL Prefix/Suffix".</li>
-                            <li>**Set Default Frequency**: Click the "Edit" button next to "Default Frequency", enter a positive integer, and click "Save".</li>
-                            <li>**Adjust Probabilities**: Use the slider to set the probability of selecting from Bucket1 and Bucket2.</li>
-                            <li>**Draw URL**: Click "Draw and Open URL" to randomly select and open a URL based on the current settings.</li>
-                            <li>**Undo Draw**: If you accidentally draw a URL, click "Undo Last Draw" to revert the last action.</li>
-                            <li>**View Buckets**: Check the lists under Bucket1 and Bucket2 to see current items and their frequencies.</li>
-                            <li>**View Draw History**: Scroll through the "Draw History" section to see the last 5 drawn URLs.</li>
-                            <li>**Import/Export State**: Use the respective buttons to save your current state or load a previously saved state.</li>
-                            <li>**Toggle Dark Mode**: Click the "Dark Mode" button at the top-right to switch themes.</li>
-                            <li>**Reset State**: Click "Reset State" to clear all settings and start fresh.</li>
+                            <li><strong>Set URL Prefix/Suffix</strong>: Enter any prefix or suffix you want to add to the URLs and click "Save URL Prefix/Suffix".</li>
+                            <li><strong>Set Default Frequency</strong>: Click the "Edit" button next to "Default Frequency", enter a positive integer, and click "Save".</li>
+                            <li><strong>Adjust Probabilities</strong>: Use the slider to set the probability of selecting from Bucket1 and Bucket2.</li>
+                            <li><strong>Draw URL</strong>: Click "Draw and Open URL" to randomly select and open a URL based on the current settings.</li>
+                            <li><strong>Undo Draw</strong>: If you accidentally draw a URL, click "Undo Last Draw" to revert the last action.</li>
+                            <li><strong>View Buckets</strong>: Check the lists under Bucket1 and Bucket2 to see current items and their frequencies.</li>
+                            <li><strong>View Draw History</strong>: Scroll through the "Draw History" section to see the last 5 drawn URLs.</li>
+                            <li><strong>Import/Export State</strong>: Use the respective buttons to save your current state or load a previously saved state.</li>
+                            <li><strong>Toggle Dark Mode</strong>: Click the "Dark Mode" button at the top-right to switch themes.</li>
+                            <li><strong>Reset State</strong>: Click "Reset State" to clear all settings and start fresh.</li>
                         </ol>
                         <h6>Notes</h6>
                         <ul>
