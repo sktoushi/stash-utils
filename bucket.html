@@ -9,7 +9,70 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         /* Existing CSS styles remain unchanged */
-        /* ... (Your existing CSS here) ... */
+        body {
+            background-color: #f8f9fa;
+        }
+        body.dark-mode {
+            background-color: #343a40;
+            color: #f8f9fa;
+        }
+        .container {
+            max-width: 900px;
+            margin-top: 30px;
+        }
+        .btn-draw {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .slider-container, .input-container {
+            margin-bottom: 20px;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+        }
+        .btn-export {
+            margin-top: 10px;
+        }
+        .gauge-container {
+            margin-bottom: 20px;
+        }
+        .bucket-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .dark-mode .card {
+            background-color: #495057;
+            color: #f8f9fa;
+        }
+        .dark-mode .form-control, .dark-mode .form-select {
+            background-color: #6c757d;
+            color: #f8f9fa;
+            border: 1px solid #ced4da;
+        }
+        .dark-mode .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .dark-mode .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        /* Custom scrollbar for dark mode */
+        body.dark-mode ::-webkit-scrollbar {
+            width: 8px;
+        }
+        body.dark-mode ::-webkit-scrollbar-track {
+            background: #343a40;
+        }
+        body.dark-mode ::-webkit-scrollbar-thumb {
+            background: #6c757d;
+            border-radius: 4px;
+        }
     </style>
     <script>
         let currentTargetState = {}; // State for the current target
@@ -132,31 +195,18 @@
         }
 
         /**
-         * Function to reset the state for the current target by loading from bucket-state.json
+         * Function to reset the state for the current target
          */
-        async function resetState() {
+        function resetState() {
             if (!confirm('Are you sure you want to reset the state? This action cannot be undone.')) return;
-            try {
-                const response = await fetch('bucket-state.json');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch bucket-state.json');
-                }
-                const resetStateData = await response.json();
-                if (!(currentTarget in resetStateData)) {
-                    throw new Error(`State for target "${currentTarget}" not found in bucket-state.json`);
-                }
-                // Replace the current target's state with the one from bucket-state.json
-                unifiedState[currentTarget] = resetStateData[currentTarget];
-                saveState();
-                currentTargetState = { ...unifiedState[currentTarget] };
-                updateDisplay();
-                initializeSlider();
-                populateBucketLists();
-                populateHistoryList();
-                showToast('State has been reset from bucket-state.json.');
-            } catch (error) {
-                alert(`Failed to reset state: ${error.message}`);
-            }
+            delete unifiedState[currentTarget];
+            saveState();
+            initializeTargetState();
+            updateDisplay();
+            initializeSlider();
+            populateBucketLists();
+            populateHistoryList();
+            showToast('State has been reset.');
         }
 
         /**
