@@ -2,8 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Letters and Sum</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container-custom {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        .content {
+            margin-top: 20px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+    </style>
     <script>
         // Function to get the URL parameter by name
         function getURLParameter(name) {
@@ -28,16 +55,21 @@
 
         // Main function to be called when the page loads
         function displayAlerts() {
-            const maxLetters = parseInt(getURLParameter('maxLetters'));
+            const maxLettersParam = getURLParameter('maxLetters');
+            const maxLetters = parseInt(maxLettersParam);
             if (!isNaN(maxLetters) && maxLetters >= 2) {
                 // Random number between 2 and maxLetters
                 const numLetters = Math.floor(Math.random() * (maxLetters - 2 + 1)) + 2;
                 const randomLetters = getRandomLetters(numLetters);
-                alert(randomLetters.join(' + '));
+                // Display the letters in the webpage instead of alerts
+                document.getElementById('letters').textContent = randomLetters.join(' + ');
                 const letterSum = calculateLetterSum(randomLetters);
-                alert('Sum: ' + letterSum);
+                document.getElementById('sum').textContent = letterSum;
             } else {
-                alert("Invalid or missing 'maxLetters' parameter. Please provide a valid number (minimum 2).");
+                // Display error message on the webpage instead of alerts
+                document.getElementById('letters').textContent = "Invalid or missing 'maxLetters' parameter. Please provide a valid number (minimum 2).";
+                document.getElementById('sum').textContent = "";
+                document.getElementById('sum-label').style.display = 'none';
             }
         }
 
@@ -45,8 +77,20 @@
     </script>
 </head>
 <body>
-    <h1>Random Letters and Sum</h1>
-    <p>Provide a URL parameter "maxLetters" to see random letters and their sum.</p>
-    <p>Example: <code>?maxLetters=5</code></p>
+    <div class="container-custom">
+        <h1 class="mb-4">Random Letters and Sum</h1>
+        <div class="content">
+            <p><strong>Random Letters:</strong></p>
+            <p id="letters" class="fs-4 text-primary">--</p>
+            <p id="sum-label"><strong>Sum:</strong> <span id="sum" class="fs-4 text-success">--</span></p>
+        </div>
+        <div class="footer">
+            <p>Provide a URL parameter <code>maxLetters</code> to generate random letters and calculate their sum.</p>
+            <p>Example: <code>?maxLetters=5</code></p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
