@@ -218,7 +218,7 @@
             // Get current date and time for filename
             const now = new Date();
             const timestamp = now.toISOString().replace(/[:.]/g, '-');
-            const filename = `randomUrlPickerState_${timestamp}.json`;
+            const filename = `bucket-state.json`;
 
             const blob = new Blob([stateStr], { type: 'application/json' });
             const link = document.createElement('a');
