@@ -75,12 +75,21 @@
         }
     </style>
     <script>
-        let currentTargetState = {}; // State for the current target
-        let initialFiles = []; // To be populated based on target
+        // List of all bucket-xxx.json files to preload
+        const bucketFiles = [
+            'bucket-drools',
+            'bucket-subliminal-psych'
+            // Add more bucket filenames here without the .json extension
+        ];
+
+        // Global Variables
+        let allInitialFiles = {}; // Stores initialFiles for all targets
         let unifiedState = {}; // Unified state object for all targets
         const unifiedStorageKey = 'randomUrlPickerState'; // Unified localStorage key
-        let drawHistory = []; // History of drawn URLs
-        const historyLimit = 5; // Maximum number of history items
+        let bucketStateDifferences = {}; // Differences from bucket-state.json
+        let drawHistoryLimit = 5; // Maximum number of history items per target
+        let currentTarget = ''; // Current target based on URL parameter
+        let currentTargetState = {}; // State for the current target
         let lastDrawnId = null; // To track last drawn item for undo
 
         /**
@@ -103,113 +112,137 @@
         }
 
         /**
-         * Function to fetch JSON data based on target parameter
+         * Function to fetch JSON data
+         * @param {string} filename - Name of the JSON file to fetch
+         * @returns {Promise<Object>} - Parsed JSON data
          */
-        async function fetchInitialFiles(target) {
+        async function fetchJSON(filename) {
             try {
-                const response = await fetch(`${target}.json`);
+                const response = await fetch(filename);
                 if (!response.ok) {
-                    throw new Error(`Unable to fetch ${target}.json`);
+                    throw new Error(`Unable to fetch ${filename}`);
                 }
-                const data = await response.json();
-                return data.initialFiles;
+                return await response.json();
             } catch (error) {
                 alert(`Error: ${error.message}`);
-                return [];
+                return null;
             }
         }
 
         /**
-         * Function to calculate the total frequency of a bucket
+         * Function to load all bucket-xxx.json files
          */
-        function getTotalFreq(bucket) {
-            return Object.values(bucket).reduce((sum, freq) => sum + freq, 0);
+        async function loadAllBuckets() {
+            const loadPromises = bucketFiles.map(bucket => fetchJSON(`${bucket}.json`));
+            const results = await Promise.all(loadPromises);
+            bucketFiles.forEach((bucket, index) => {
+                if (results[index] && results[index].initialFiles) {
+                    allInitialFiles[bucket] = results[index].initialFiles;
+                } else {
+                    allInitialFiles[bucket] = [];
+                }
+            });
+        }
+
+        /**
+         * Function to load bucket-state.json (differences)
+         */
+        async function loadBucketStateDifferences() {
+            const stateData = await fetchJSON('bucket-state.json');
+            if (stateData) {
+                bucketStateDifferences = stateData;
+            } else {
+                bucketStateDifferences = {};
+            }
+        }
+
+        /**
+         * Function to merge initialFiles with state differences
+         */
+        function mergeState() {
+            // Load unified state from localStorage if available
+            const storedState = JSON.parse(localStorage.getItem(unifiedStorageKey));
+            if (storedState) {
+                unifiedState = storedState;
+            } else {
+                unifiedState = {};
+            }
+
+            // Iterate through all bucket files to initialize or update their states
+            for (const bucket of bucketFiles) {
+                // Initialize state if not present
+                if (!unifiedState[bucket]) {
+                    unifiedState[bucket] = {
+                        b1: {},
+                        b2: {},
+                        uniqueBucket1Count: 0,
+                        b1Prob: 0.66,
+                        b2Prob: 0.34,
+                        defaultFrequency: 1,
+                        urlPrefix: '',
+                        urlSuffix: '',
+                        drawHistory: []
+                    };
+                }
+
+                // Apply differences from bucket-state.json if available
+                if (bucketStateDifferences[bucket]) {
+                    const differences = bucketStateDifferences[bucket];
+                    unifiedState[bucket] = {
+                        ...unifiedState[bucket],
+                        ...differences,
+                        drawHistory: [
+                            ...(differences.drawHistory || []),
+                            ...(unifiedState[bucket].drawHistory || [])
+                        ].slice(0, drawHistoryLimit)
+                    };
+                }
+
+                // Ensure that b1 and b2 have default structures
+                unifiedState[bucket].b1 = unifiedState[bucket].b1 || {};
+                unifiedState[bucket].b2 = unifiedState[bucket].b2 || {};
+                unifiedState[bucket].drawHistory = unifiedState[bucket].drawHistory || [];
+            }
+
+            // Save the unified state back to localStorage
+            localStorage.setItem(unifiedStorageKey, JSON.stringify(unifiedState));
+        }
+
+        /**
+         * Function to initialize the state for the current target
+         */
+        function initializeCurrentTargetState() {
+            if (!(currentTarget in unifiedState)) {
+                // If the current target is not in unifiedState, initialize it
+                unifiedState[currentTarget] = {
+                    b1: {},
+                    b2: {},
+                    uniqueBucket1Count: 0,
+                    b1Prob: 0.66,
+                    b2Prob: 0.34,
+                    defaultFrequency: 1,
+                    urlPrefix: '',
+                    urlSuffix: '',
+                    drawHistory: []
+                };
+                // Populate b2 with initialFiles
+                allInitialFiles[currentTarget].forEach(file => {
+                    const id = file[0];
+                    const freq = file[2] !== null ? file[2] : unifiedState[currentTarget].defaultFrequency;
+                    unifiedState[currentTarget].b2[id] = freq;
+                });
+                // Save the updated state
+                saveState();
+            }
+            currentTargetState = { ...unifiedState[currentTarget] };
         }
 
         /**
          * Function to save the current state to unified localStorage
          */
         function saveState() {
-            // Update the unified state with the current target's state
-            unifiedState[currentTarget] = {
-                b1: currentTargetState.b1,
-                b2: currentTargetState.b2,
-                uniqueBucket1Count: currentTargetState.uniqueBucket1Count,
-                b1Prob: currentTargetState.b1Prob,
-                b2Prob: currentTargetState.b2Prob,
-                defaultFrequency: currentTargetState.defaultFrequency,
-                urlPrefix: currentTargetState.urlPrefix,
-                urlSuffix: currentTargetState.urlSuffix,
-                drawHistory: currentTargetState.drawHistory
-            };
-            // Save the entire unified state back to localStorage
+            unifiedState[currentTarget] = { ...currentTargetState };
             localStorage.setItem(unifiedStorageKey, JSON.stringify(unifiedState));
-        }
-
-        /**
-         * Function to load the state from unified localStorage or bucket-state.json
-         */
-        async function loadState() {
-            const storedState = JSON.parse(localStorage.getItem(unifiedStorageKey));
-            if (storedState) {
-                unifiedState = storedState;
-                if (currentTarget in unifiedState) {
-                    currentTargetState = { ...unifiedState[currentTarget] };
-                } else {
-                    initializeTargetState();
-                }
-            } else {
-                // Fetch bucket-state.json
-                try {
-                    const response = await fetch('bucket-state.json');
-                    if (!response.ok) {
-                        throw new Error('Unable to fetch bucket-state.json');
-                    }
-                    const data = await response.json();
-                    unifiedState = data;
-                    // Save to localStorage
-                    localStorage.setItem(unifiedStorageKey, JSON.stringify(unifiedState));
-                    if (currentTarget in unifiedState) {
-                        currentTargetState = { ...unifiedState[currentTarget] };
-                    } else {
-                        initializeTargetState();
-                    }
-                } catch (error) {
-                    alert('Error loading initial state: ' + error.message);
-                    initializeUnifiedState(); // Fallback
-                }
-            }
-        }
-
-        /**
-         * Function to initialize the unified state if not present
-         */
-        function initializeUnifiedState() {
-            unifiedState = {};
-            initializeTargetState();
-            saveState();
-        }
-
-        /**
-         * Function to initialize the state for the current target
-         */
-        function initializeTargetState() {
-            currentTargetState = {
-                b1: {},
-                b2: {},
-                uniqueBucket1Count: 0,
-                b1Prob: 0.66,
-                b2Prob: 0.34,
-                defaultFrequency: 1,
-                urlPrefix: '',
-                urlSuffix: '',
-                drawHistory: []
-            };
-            initialFiles.forEach(file => {
-                const id = file[0];
-                const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
-                currentTargetState.b2[id] = freq;
-            });
         }
 
         /**
@@ -219,7 +252,7 @@
             if (!confirm('Are you sure you want to reset the state? This action cannot be undone.')) return;
             delete unifiedState[currentTarget];
             saveState();
-            initializeTargetState();
+            initializeCurrentTargetState();
             updateDisplay();
             initializeSlider();
             populateBucketLists();
@@ -262,17 +295,20 @@
                         try {
                             const importedState = JSON.parse(event.target.result);
                             // Merge imported state with existing unified state
-                            for (const [target, state] of Object.entries(importedState)) {
-                                if (unifiedState[target]) {
-                                    // Merge states for existing targets
-                                    unifiedState[target] = {
-                                        ...unifiedState[target],
+                            for (const [bucket, state] of Object.entries(importedState)) {
+                                if (unifiedState[bucket]) {
+                                    // Merge states for existing buckets
+                                    unifiedState[bucket] = {
+                                        ...unifiedState[bucket],
                                         ...state,
-                                        drawHistory: [...(unifiedState[target].drawHistory || []), ...(state.drawHistory || [])].slice(-historyLimit)
+                                        drawHistory: [
+                                            ...(unifiedState[bucket].drawHistory || []),
+                                            ...(state.drawHistory || [])
+                                        ].slice(0, drawHistoryLimit)
                                     };
                                 } else {
-                                    // Add new targets
-                                    unifiedState[target] = state;
+                                    // Add new buckets
+                                    unifiedState[bucket] = state;
                                 }
                             }
                             // Update the current target's state if it was imported
@@ -318,6 +354,7 @@
             let bucket = selectedBucket === 'b1' ? currentTargetState.b1 : currentTargetState.b2;
 
             if (getTotalFreq(bucket) === 0) {
+                // Switch to the other bucket if selected bucket is empty
                 bucket = selectedBucket === 'b1' ? currentTargetState.b2 : currentTargetState.b1;
             }
 
@@ -365,7 +402,7 @@
             lastDrawnId = selectedId;
             saveState();
 
-            const fileDetails = initialFiles.find(file => file[0] === selectedId);
+            const fileDetails = allInitialFiles[currentTarget].find(file => file[0] === selectedId);
             if (!fileDetails) {
                 alert('Selected file not found.');
                 return;
@@ -392,7 +429,7 @@
          * Function to add a drawn URL to history
          */
         function addToHistory(id) {
-            const fileDetails = initialFiles.find(file => file[0] == id);
+            const fileDetails = allInitialFiles[currentTarget].find(file => file[0] == id);
             if (fileDetails) {
                 const entry = {
                     id: id,
@@ -400,7 +437,7 @@
                     timestamp: new Date().toLocaleString()
                 };
                 currentTargetState.drawHistory.unshift(entry);
-                if (currentTargetState.drawHistory.length > historyLimit) {
+                if (currentTargetState.drawHistory.length > drawHistoryLimit) {
                     currentTargetState.drawHistory.pop();
                 }
             }
@@ -466,12 +503,21 @@
         }
 
         /**
+         * Function to calculate the total frequency of a bucket
+         * @param {Object} bucket - The bucket object (b1 or b2)
+         * @returns {number} - Total frequency
+         */
+        function getTotalFreq(bucket) {
+            return Object.values(bucket).reduce((sum, freq) => sum + freq, 0);
+        }
+
+        /**
          * Function to get the initial total frequency of Bucket2
          */
         function getInitialB2Total() {
             // Calculate the initial total frequency based on initialFiles and defaultFrequency
             let total = 0;
-            initialFiles.forEach(file => {
+            allInitialFiles[currentTarget].forEach(file => {
                 const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
                 total += freq;
             });
@@ -512,12 +558,10 @@
                 if (!isNaN(df) && df > 0) {
                     currentTargetState.defaultFrequency = df;
                     // Apply default frequency to elements with null frequency
-                    initialFiles.forEach(file => {
-                        if (file[2] === null || file[2] === currentTargetState.defaultFrequency) {
+                    allInitialFiles[currentTarget].forEach(file => {
+                        if (file[2] === null) {
                             const id = file[0];
-                            const oldFreq = currentTargetState.b2[id] || 0;
-                            const freqDifference = currentTargetState.defaultFrequency - oldFreq;
-                            currentTargetState.b2[id] = currentTargetState.defaultFrequency;
+                            currentTargetState.b2[id] = df;
                         }
                     });
                     dfInput.disabled = true;
@@ -602,7 +646,7 @@
 
             // Populate Bucket1
             for (const id in currentTargetState.b1) {
-                const fileDetails = initialFiles.find(file => file[0] == id);
+                const fileDetails = allInitialFiles[currentTarget].find(file => file[0] == id);
                 if (fileDetails) {
                     const li = document.createElement('li');
                     li.className = 'list-group-item';
@@ -613,7 +657,7 @@
 
             // Populate Bucket2
             for (const id in currentTargetState.b2) {
-                const fileDetails = initialFiles.find(file => file[0] == id);
+                const fileDetails = allInitialFiles[currentTarget].find(file => file[0] == id);
                 if (fileDetails) {
                     const li = document.createElement('li');
                     li.className = 'list-group-item';
@@ -643,23 +687,33 @@
          */
         async function main() {
             loadDarkMode();
-            const target = getUrlParameter('target');
-            if (!target) {
+            const targetParam = getUrlParameter('target');
+            if (!targetParam) {
                 alert('Error: "target" parameter is missing in the URL.');
                 return;
             }
 
-            currentTarget = target; // Set the current target
+            currentTarget = targetParam; // Set the current target
 
-            // Fetch the initialFiles from the corresponding JSON file
-            initialFiles = await fetchInitialFiles(target);
-            if (initialFiles.length === 0) {
-                alert('No files to initialize. Please check the target parameter and corresponding JSON file.');
+            // Check if the current target is among the declared bucket files
+            if (!bucketFiles.includes(currentTarget)) {
+                alert(`Error: Unknown target "${currentTarget}". Please ensure it is declared in the bucketFiles array.`);
                 return;
             }
 
-            // Load the unified state and set up the current target's state
-            await loadState();
+            // Load all bucket-xxx.json files
+            await loadAllBuckets();
+
+            // Load bucket-state.json (differences)
+            await loadBucketStateDifferences();
+
+            // Merge initial files with state differences
+            mergeState();
+
+            // Initialize current target state
+            initializeCurrentTargetState();
+
+            // Update display elements
             updateDisplay();
             initializeSlider();
             populateBucketLists();
@@ -672,9 +726,7 @@
             document.getElementById('defaultFrequency').disabled = true;
         }
 
-        // Declare currentTarget globally
-        let currentTarget = '';
-
+        // Load the main function when the window loads
         window.onload = main;
     </script>
 </head>
