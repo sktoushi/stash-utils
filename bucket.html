@@ -33,9 +33,6 @@
         .btn-export {
             margin-top: 10px;
         }
-        .input-group-text {
-            width: 100px;
-        }
         .gauge-container {
             margin-bottom: 20px;
         }
@@ -89,7 +86,7 @@
         let initialFiles = []; // To be populated based on target
         let localStorageKey = ''; // To be determined based on target
         let drawHistory = []; // History of drawn URLs
-        const historyLimit = 50; // Maximum number of history items
+        const historyLimit = 5; // Maximum number of history items
         let lastDrawnId = null; // To track last drawn item for undo
 
         /**
@@ -160,8 +157,6 @@
                 defaultFrequency: defaultFrequency,
                 urlPrefix: urlPrefix,
                 urlSuffix: urlSuffix,
-                initialFiles: initialFiles,
-                target: getUrlParameter('target'),
                 drawHistory: drawHistory
             };
             localStorage.setItem(localStorageKey, JSON.stringify(state));
@@ -181,9 +176,8 @@
                 defaultFrequency = state.defaultFrequency || 1;
                 urlPrefix = state.urlPrefix || '';
                 urlSuffix = state.urlSuffix || '';
-                initialFiles = state.initialFiles || initialFiles;
-                initB2Total = getTotalFreq(b2);
                 drawHistory = state.drawHistory || [];
+                initB2Total = getTotalFreq(b2);
             } else {
                 initBuckets();
             }
@@ -210,7 +204,9 @@
             initBuckets();
             updateDisplay();
             initializeSlider();
-            alert('State has been reset.');
+            populateBucketLists();
+            populateHistoryList();
+            showToast('State has been reset.');
         }
 
         /**
@@ -226,9 +222,8 @@
                 defaultFrequency: defaultFrequency,
                 urlPrefix: urlPrefix,
                 urlSuffix: urlSuffix,
-                initialFiles: initialFiles,
-                target: getUrlParameter('target'),
-                drawHistory: drawHistory
+                drawHistory: drawHistory,
+                target: getUrlParameter('target')
             };
 
             const stateStr = JSON.stringify(state, null, 4);
@@ -273,9 +268,8 @@
                             defaultFrequency = state.defaultFrequency || 1;
                             urlPrefix = state.urlPrefix || '';
                             urlSuffix = state.urlSuffix || '';
-                            initialFiles = state.initialFiles || initialFiles;
-                            initB2Total = getTotalFreq(b2);
                             drawHistory = state.drawHistory || [];
+                            initB2Total = getTotalFreq(b2);
                             document.getElementById('defaultFrequency').value = defaultFrequency;
                             document.getElementById('urlPrefix').value = urlPrefix;
                             document.getElementById('urlSuffix').value = urlSuffix;
@@ -520,7 +514,7 @@
                     saveState();
                     updateDisplay();
                     populateBucketLists();
-                    alert('Default frequency saved and applied.');
+                    showToast('Default frequency saved and applied.');
                 } else {
                     alert('Please enter a valid positive integer for default frequency.');
                 }
@@ -632,61 +626,6 @@
                 li.innerHTML = `<strong>${entry.timestamp}:</strong> <a href="${entry.url}" target="_blank">${entry.url}</a>`;
                 historyList.appendChild(li);
             });
-        }
-
-        /**
-         * Function to add a drawn URL to history
-         */
-        function addToHistory(id) {
-            const fileDetails = initialFiles.find(file => file[0] === id);
-            if (fileDetails) {
-                const entry = {
-                    id: id,
-                    url: fileDetails[1],
-                    timestamp: new Date().toLocaleString()
-                };
-                drawHistory.unshift(entry);
-                if (drawHistory.length > historyLimit) {
-                    drawHistory.pop();
-                }
-            }
-        }
-
-        /**
-         * Function to undo the last draw action
-         */
-        function undoLastDraw() {
-            if (lastDrawnId === null) {
-                alert('No draw action to undo.');
-                return;
-            }
-
-            if (!(lastDrawnId in b1)) {
-                alert('Invalid state. Cannot undo.');
-                return;
-            }
-
-            b1[lastDrawnId] -= 1;
-            if (b1[lastDrawnId] === 0) {
-                delete b1[lastDrawnId];
-                uniqueBucket1Count -= 1;
-            }
-
-            if (lastDrawnId in b2) {
-                b2[lastDrawnId] += 1;
-            } else {
-                b2[lastDrawnId] = 1;
-            }
-
-            // Remove from history
-            drawHistory.shift();
-
-            lastDrawnId = null;
-            saveState();
-            updateDisplay();
-            populateBucketLists();
-            populateHistoryList();
-            showToast('Last draw action has been undone.');
         }
 
         /**
@@ -819,19 +758,9 @@
             </div>
         </div>
 
-        <!-- Search and Filter -->
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <input type="text" class="form-control" id="searchBucket1" placeholder="Search Bucket 1" oninput="filterBucketList('bucket1List', 'searchBucket1')" aria-label="Search Bucket 1">
-            </div>
-            <div class="col-md-6">
-                <input type="text" class="form-control" id="searchBucket2" placeholder="Search Bucket 2" oninput="filterBucketList('bucket2List', 'searchBucket2')" aria-label="Search Bucket 2">
-            </div>
-        </div>
-
         <!-- Draw History -->
         <div class="mt-4">
-            <h5>Draw History:</h5>
+            <h5>Draw History (Last 5):</h5>
             <ul class="list-group history-list" id="historyList" aria-label="Draw History">
                 <!-- History items will be populated here -->
             </ul>
@@ -873,7 +802,7 @@
                             <li><strong>URL Prefix/Suffix:</strong> Add prefixes or suffixes to all URLs before they are opened.</li>
                             <li><strong>Default Frequency:</strong> Set the default frequency for new items.</li>
                             <li><strong>Adjust Probabilities:</strong> Control the likelihood of selecting from Bucket1 or Bucket2.</li>
-                            <li><strong>Draw History:</strong> View a log of recently drawn URLs.</li>
+                            <li><strong>Draw History:</strong> View a log of the last 5 drawn URLs.</li>
                             <li><strong>Undo Last Draw:</strong> Revert the last draw action.</li>
                             <li><strong>Import/Export State:</strong> Save and load your current state using JSON files.</li>
                             <li><strong>Dark Mode:</strong> Toggle between light and dark themes for better visibility.</li>
@@ -886,8 +815,7 @@
                             <li>**Draw URL**: Click "Draw and Open URL" to randomly select and open a URL based on the current settings.</li>
                             <li>**Undo Draw**: If you accidentally draw a URL, click "Undo Last Draw" to revert the last action.</li>
                             <li>**View Buckets**: Check the lists under Bucket1 and Bucket2 to see current items and their frequencies.</li>
-                            <li>**Search Buckets**: Use the search bars above each bucket list to find specific URLs.</li>
-                            <li>**View Draw History**: Scroll through the "Draw History" section to see previously drawn URLs.</li>
+                            <li>**View Draw History**: Scroll through the "Draw History" section to see the last 5 drawn URLs.</li>
                             <li>**Import/Export State**: Use the respective buttons to save your current state or load a previously saved state.</li>
                             <li>**Toggle Dark Mode**: Click the "Dark Mode" button at the top-right to switch themes.</li>
                             <li>**Reset State**: Click "Reset State" to clear all settings and start fresh.</li>
