@@ -1,5 +1,5 @@
 {
-  "sliderValue": 6,
+  "sliderValue": 50,
   "records": [
     {
       "id": 1727260405218,
@@ -7,9 +7,9 @@
       "name": "japanese-alloc",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/9",
       "type": "Generator",
-      "frequency": 82,
+      "frequency": 11,
       "tags": "",
-      "lastPicked": 1727516633204
+      "lastPicked": 1727541632175
     },
     {
       "id": 1727260766179,
@@ -17,7 +17,7 @@
       "name": "spreadsheet",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/10",
       "type": "Generator",
-      "frequency": 77,
+      "frequency": 5,
       "tags": "",
       "lastPicked": null
     },
@@ -27,7 +27,7 @@
       "name": "baseball strat",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/12",
       "type": "Generator",
-      "frequency": 11,
+      "frequency": 20,
       "tags": "",
       "lastPicked": null
     },
@@ -37,9 +37,9 @@
       "name": "hangul",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/13",
       "type": "Generator",
-      "frequency": 5,
+      "frequency": 20,
       "tags": "",
-      "lastPicked": 1727516695799
+      "lastPicked": 1727541561545
     },
     {
       "id": 1727261310302,
@@ -47,9 +47,9 @@
       "name": "mental-math",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/14",
       "type": "Generator",
-      "frequency": 97,
+      "frequency": 9,
       "tags": "",
-      "lastPicked": 1727516722440
+      "lastPicked": null
     },
     {
       "id": 1727261334891,
@@ -57,7 +57,7 @@
       "name": "stash2-scaled",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/15",
       "type": "Review",
-      "frequency": 72,
+      "frequency": 5,
       "tags": "",
       "lastPicked": null
     },
@@ -67,19 +67,19 @@
       "name": "inhouse1-scaled",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/16",
       "type": "Review",
-      "frequency": 60,
+      "frequency": 8,
       "tags": "",
-      "lastPicked": null
+      "lastPicked": 1727541467125
     },
     {
       "id": 1727261417956,
-      "selected": false,
+      "selected": true,
       "name": "verbatim-project",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/23",
       "type": "Review",
-      "frequency": 81,
+      "frequency": 6,
       "tags": "",
-      "lastPicked": null
+      "lastPicked": 1727541529067
     },
     {
       "id": 1727261449262,
@@ -87,17 +87,17 @@
       "name": "bucket+guidedStudy",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/47",
       "type": "Review",
-      "frequency": 30,
+      "frequency": 5,
       "tags": "",
-      "lastPicked": 1727516286373
+      "lastPicked": null
     },
     {
       "id": 1727261480850,
-      "selected": false,
+      "selected": true,
       "name": "gpt bestsellers",
       "link": "https://github.com/cjcaf1995/redirect0915/issues/32",
       "type": "Generator",
-      "frequency": 96,
+      "frequency": 14,
       "tags": "",
       "lastPicked": null
     },
@@ -107,17 +107,17 @@
       "name": "Drools",
       "link": "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-drools",
       "type": "Generator",
-      "frequency": 9,
+      "frequency": 4,
       "tags": "",
-      "lastPicked": null
+      "lastPicked": 1727541492248
     },
     {
       "id": 1727491394568,
-      "selected": false,
+      "selected": true,
       "name": "Ankiweb",
       "link": "https://ankiweb.net/decks",
       "type": "Review",
-      "frequency": 36,
+      "frequency": 16,
       "tags": "",
       "lastPicked": null
     }
@@ -143,9 +143,9 @@
     },
     {
       "id": 1727260405218,
-      "totalCount": 7,
+      "totalCount": 9,
       "reviewCount": 0,
-      "generatorCount": 7
+      "generatorCount": 9
     },
     {
       "id": 1727261244027,
@@ -161,14 +161,14 @@
     },
     {
       "id": 1727267870604,
-      "totalCount": 21,
+      "totalCount": 22,
       "reviewCount": 0,
-      "generatorCount": 21
+      "generatorCount": 22
     },
     {
       "id": 1727261417956,
-      "totalCount": 15,
-      "reviewCount": 15,
+      "totalCount": 16,
+      "reviewCount": 16,
       "generatorCount": 0
     },
     {
@@ -179,8 +179,8 @@
     },
     {
       "id": 1727261349294,
-      "totalCount": 10,
-      "reviewCount": 10,
+      "totalCount": 11,
+      "reviewCount": 11,
       "generatorCount": 0
     },
     {
@@ -203,14 +203,14 @@
     },
     {
       "id": 1727261269418,
-      "totalCount": 4,
+      "totalCount": 5,
       "reviewCount": 0,
-      "generatorCount": 4
+      "generatorCount": 5
     }
   ],
-  "totalRolls": 144,
-  "totalReviewRolls": 70,
-  "totalGeneratorRolls": 64,
+  "totalRolls": 150,
+  "totalReviewRolls": 72,
+  "totalGeneratorRolls": 68,
   "userLevel": 2,
   "storageDestination": "https://github.com/sktoushi/stash-utils/upload/main"
 }
