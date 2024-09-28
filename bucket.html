@@ -244,39 +244,132 @@
         }
 
         /**
-         * Main function to handle loading buckets and initializing app
+         * Function to reset the state for the current target
          */
-        async function main() {
-            loadDarkMode();
-            const targetParam = getUrlParameter('target');
-            const readOnlyMode = !targetParam; // Check if the target is absent
-
-            if (readOnlyMode) {
-                // In read-only mode, load all buckets and proceed without state changes
-                await loadBucketDeclaration();
-            } else {
-                // If target is present, load only the specified buckets
-                const targetBuckets = targetParam.split(',');
-                bucketFiles = targetBuckets;
-            }
-
-            // Load bucket files and state differences, then merge them
-            await loadAllBuckets();
-            await loadBucketStateDifferences();
-            mergeState();
-
-            // Initialize current target or all targets if in readOnlyMode
-            if (readOnlyMode) {
-                currentTargetState = { b1: {}, uniqueBucket1Count: 0, drawHistory: [] };
-            } else {
-                initializeCurrentTargetState();
-            }
-
-            // Update the display and initialize sliders and bucket lists
+        function resetState() {
+            if (!confirm('Are you sure you want to reset the state? This action cannot be undone.')) return;
+            delete unifiedState[currentTarget];
+            saveState();
+            initializeCurrentTargetState();
             updateDisplay();
             initializeSlider();
             populateBucketLists();
             populateHistoryList();
+            showToast('State has been reset.');
+        }
+
+        /**
+         * Function to export the entire unified state to a JSON file (excluding b2)
+         */
+        function exportState() {
+            const exportState = {};
+
+            // Iterate through all buckets and exclude b2
+            for (const bucket of bucketFiles) {
+                if (unifiedState[bucket]) {
+                    exportState[bucket] = {
+                        b1: unifiedState[bucket].b1,
+                        uniqueBucket1Count: unifiedState[bucket].uniqueBucket1Count,
+                        b1Prob: unifiedState[bucket].b1Prob,
+                        b2Prob: unifiedState[bucket].b2Prob,
+                        defaultFrequency: unifiedState[bucket].defaultFrequency,
+                        urlPrefix: unifiedState[bucket].urlPrefix,
+                        urlSuffix: unifiedState[bucket].urlSuffix,
+                        drawHistory: unifiedState[bucket].drawHistory
+                    };
+                }
+            }
+
+            const stateStr = JSON.stringify(exportState, null, 4);
+
+            // Get current date and time for filename
+            const now = new Date();
+            const timestamp = now.toISOString().replace(/[:.]/g, '-');
+            const filename = `bucket-state-${timestamp}.json`;
+
+            const blob = new Blob([stateStr], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+
+            showToast('State exported successfully.');
+        }
+
+        /**
+         * Function to import the entire unified state from a JSON file (excluding b2)
+         */
+        function importState() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json,application/json';
+            fileInput.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = event => {
+                        try {
+                            const importedState = JSON.parse(event.target.result);
+                            // Merge imported state with existing unified state
+                            for (const [bucket, state] of Object.entries(importedState)) {
+                                if (unifiedState[bucket]) {
+                                    // Merge states for existing buckets
+                                    unifiedState[bucket] = {
+                                        ...unifiedState[bucket],
+                                        ...state,
+                                        b1: {
+                                            ...unifiedState[bucket].b1,
+                                            ...state.b1
+                                        },
+                                        drawHistory: [
+                                            ...(unifiedState[bucket].drawHistory || []),
+                                            ...(state.drawHistory || [])
+                                        ].slice(0, drawHistoryLimit)
+                                    };
+                                } else {
+                                    // Add new buckets
+                                    unifiedState[bucket] = {
+                                        b1: state.b1 || {},
+                                        uniqueBucket1Count: state.uniqueBucket1Count || 0,
+                                        b1Prob: state.b1Prob || 0.66,
+                                        b2Prob: state.b2Prob || 0.34,
+                                        defaultFrequency: state.defaultFrequency || 1,
+                                        urlPrefix: state.urlPrefix || '',
+                                        urlSuffix: state.urlSuffix || '',
+                                        drawHistory: state.drawHistory || []
+                                    };
+                                }
+                            }
+                            // Update the current target's state if it was imported
+                            if (currentTarget in importedState) {
+                                currentTargetState = { ...unifiedState[currentTarget] };
+                            }
+                            saveState();
+                            updateDisplay();
+                            initializeSlider();
+                            populateBucketLists();
+                            populateHistoryList();
+                            showToast('State has been imported successfully.');
+                        } catch (e) {
+                            alert('Invalid state data.');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            fileInput.click();
+        }
+
+        /**
+         * Function to update the probabilities based on the slider
+         */
+        function updateProbabilities() {
+            const sliderValue = parseInt(document.getElementById('probSlider').value);
+            currentTargetState.b1Prob = sliderValue / 100;
+            currentTargetState.b2Prob = 1 - currentTargetState.b1Prob;
+            document.getElementById('probBucket1').innerText = (currentTargetState.b1Prob * 100).toFixed(0) + '%';
+            document.getElementById('probBucket2').innerText = (currentTargetState.b2Prob * 100).toFixed(0) + '%';
+            saveState();
         }
 
         /**
@@ -284,87 +377,298 @@
          */
         function pickRandom() {
             updateProbabilities(); // Ensure probabilities are up to date
-            const readOnlyMode = !getUrlParameter('target'); // Check if we're in read-only mode
 
-            if (readOnlyMode) {
-                // Random selection from all buckets in read-only mode without altering state
-                const randBucketIndex = Math.floor(getSecureRandomNumber() * bucketFiles.length);
-                const bucket = bucketFiles[randBucketIndex];
+            const rand = getSecureRandomNumber();
+            let selectedBucket = rand < currentTargetState.b1Prob ? 'b1' : 'b2';
 
-                const availableItems = allInitialFiles[bucket].map(file => ({
-                    id: file[0],
-                    url: file[1],
-                    remaining: file[2] || currentTargetState.defaultFrequency
-                })).filter(item => item.remaining > 0);
+            // Determine the available bucket based on probabilities and available frequencies
+            let availableBuckets = [];
+            if (selectedBucket === 'b1' && getAvailableFreq('b1') > 0) {
+                availableBuckets.push('b1');
+            }
+            if (selectedBucket === 'b2' && getAvailableFreq('b2') > 0) {
+                availableBuckets.push('b2');
+            }
 
-                if (availableItems.length === 0) {
-                    alert('No URLs available in selected bucket.');
-                    return;
+            // If selected bucket has no available frequencies, switch to the other bucket
+            if (availableBuckets.length === 0) {
+                selectedBucket = selectedBucket === 'b1' ? 'b2' : 'b1';
+                if (getAvailableFreq(selectedBucket) > 0) {
+                    availableBuckets.push(selectedBucket);
                 }
+            }
 
-                // Pick a random URL from available items
-                const randomPick = Math.floor(getSecureRandomNumber() * availableItems.length);
-                const selectedItem = availableItems[randomPick];
+            // If no buckets have available frequencies, alert the user
+            if (availableBuckets.length === 0) {
+                alert('All URLs have been drawn!');
+                return;
+            }
 
-                // Open the selected URL without modifying state or history
-                window.open(selectedItem.url, '_blank');
-                showToast(`Opened URL: ${selectedItem.url}`);
-            } else {
-                // Existing behavior for normal mode
-                const rand = getSecureRandomNumber();
-                let selectedBucket = rand < currentTargetState.b1Prob ? 'b1' : 'b2';
-
-                let availableBuckets = [];
-                if (selectedBucket === 'b1' && getAvailableFreq('b1') > 0) {
-                    availableBuckets.push('b1');
-                }
-                if (selectedBucket === 'b2' && getAvailableFreq('b2') > 0) {
-                    availableBuckets.push('b2');
-                }
-
-                if (availableBuckets.length === 0) {
-                    alert('All URLs have been drawn!');
-                    return;
-                }
-
+            // If both buckets are available, decide based on probabilities
+            if (availableBuckets.length === 2) {
                 selectedBucket = rand < currentTargetState.b1Prob ? 'b1' : 'b2';
+            }
 
-                const availableFreq = getAvailableFreq(selectedBucket);
-                if (availableFreq === 0) {
-                    alert(`Bucket ${selectedBucket.toUpperCase()} is empty!`);
-                    return;
+            const bucket = selectedBucket;
+            const availableFreq = getAvailableFreq(bucket);
+            if (availableFreq === 0) {
+                alert(`Bucket ${bucket.toUpperCase()} is empty!`);
+                return;
+            }
+
+            // Build a list of available items with their remaining frequencies
+            const availableItems = allInitialFiles[currentTarget].map(file => {
+                const id = file[0];
+                const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
+                const drawn = currentTargetState.b1[id] || 0;
+                const remaining = Math.max(0, freq - drawn);
+                return { id, url: file[1], remaining };
+            }).filter(item => item.remaining > 0);
+
+            if (availableItems.length === 0) {
+                alert(`Bucket ${bucket.toUpperCase()} has no available URLs.`);
+                return;
+            }
+
+            // Calculate total remaining frequency
+            const totalRemaining = availableItems.reduce((sum, item) => sum + item.remaining, 0);
+
+            // Pick a random number within the total remaining frequency
+            const randomPick = Math.floor(getSecureRandomNumber() * totalRemaining);
+            let cumulative = 0;
+            let selectedId = null;
+            for (const item of availableItems) {
+                cumulative += item.remaining;
+                if (randomPick < cumulative) {
+                    selectedId = item.id;
+                    break;
                 }
+            }
 
-                const availableItems = allInitialFiles[currentTarget].map(file => {
+            if (selectedId === null) {
+                alert('No URL selected. Please try again.');
+                return;
+            }
+
+            const isDuplicate = selectedId in currentTargetState.b1;
+            if (isDuplicate) {
+                // Duplicate entry drawn; increment the count
+                currentTargetState.b1[selectedId] += 1;
+            } else {
+                // Unique entry drawn; set count to 1 and increment unique count
+                currentTargetState.b1[selectedId] = 1;
+                currentTargetState.uniqueBucket1Count += 1;
+                // Update History
+                addToHistory(selectedId);
+            }
+
+            lastDrawnId = selectedId;
+            saveState();
+
+            const fileDetails = allInitialFiles[currentTarget].find(file => file[0] === selectedId);
+            if (!fileDetails) {
+                alert('Selected file not found.');
+                return;
+            }
+            const urlBody = fileDetails[1];
+
+            // Updated URL construction
+            let url = urlBody;
+            if (currentTargetState.urlPrefix) {
+                url = currentTargetState.urlPrefix + url;
+            }
+            if (currentTargetState.urlSuffix) {
+                url = url + currentTargetState.urlSuffix;
+            }
+
+            updateDisplay();
+            populateBucketLists();
+            populateHistoryList();
+            window.open(url, '_blank');
+            showToast(`Opened URL: ${url}`);
+        }
+
+        /**
+         * Function to get available frequency for a bucket
+         * @param {string} bucket - 'b1' or 'b2'
+         * @returns {number} - Total available frequency
+         */
+        function getAvailableFreq(bucket) {
+            if (bucket === 'b1') {
+                // Calculate remaining frequencies for b1
+                return allInitialFiles[currentTarget].reduce((sum, file) => {
                     const id = file[0];
                     const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
                     const drawn = currentTargetState.b1[id] || 0;
-                    const remaining = Math.max(0, freq - drawn);
-                    return { id, url: file[1], remaining };
-                }).filter(item => item.remaining > 0);
-
-                if (availableItems.length === 0) {
-                    alert(`Bucket ${selectedBucket.toUpperCase()} has no available URLs.`);
-                    return;
-                }
-
-                const randomPick = Math.floor(getSecureRandomNumber() * availableItems.length);
-                const selectedItem = availableItems[randomPick];
-
-                window.open(selectedItem.url, '_blank');
-                showToast(`Opened URL: ${selectedItem.url}`);
-
-                if (selectedBucket === 'b1') {
-                    if (!currentTargetState.b1[selectedItem.id]) {
-                        currentTargetState.b1[selectedItem.id] = 1;
-                        currentTargetState.uniqueBucket1Count += 1;
-                    } else {
-                        currentTargetState.b1[selectedItem.id] += 1;
-                    }
-                }
-
-                saveState();
+                    return sum + Math.max(0, freq - drawn);
+                }, 0);
+            } else if (bucket === 'b2') {
+                // Calculate remaining frequencies for b2 (same as b1 in this context)
+                return allInitialFiles[currentTarget].reduce((sum, file) => {
+                    const id = file[0];
+                    const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
+                    const drawn = currentTargetState.b1[id] || 0;
+                    return sum + Math.max(0, freq - drawn);
+                }, 0);
             }
+            return 0;
+        }
+
+        /**
+         * Function to add a drawn URL to history
+         */
+        function addToHistory(id) {
+            const fileDetails = allInitialFiles[currentTarget].find(file => file[0] == id);
+            if (fileDetails) {
+                const entry = {
+                    id: id,
+                    url: fileDetails[1],
+                    timestamp: new Date().toLocaleString()
+                };
+                currentTargetState.drawHistory.unshift(entry);
+                if (currentTargetState.drawHistory.length > drawHistoryLimit) {
+                    currentTargetState.drawHistory.pop();
+                }
+            }
+        }
+
+        /**
+         * Function to undo the last draw action
+         */
+        function undoLastDraw() {
+            if (lastDrawnId === null) {
+                alert('No draw action to undo.');
+                return;
+            }
+
+            if (!(lastDrawnId in currentTargetState.b1)) {
+                alert('Invalid state. Cannot undo.');
+                return;
+            }
+
+            currentTargetState.b1[lastDrawnId] -= 1;
+            if (currentTargetState.b1[lastDrawnId] === 0) {
+                delete currentTargetState.b1[lastDrawnId];
+                currentTargetState.uniqueBucket1Count -= 1;
+            }
+
+            // Remove from history
+            currentTargetState.drawHistory.shift();
+
+            lastDrawnId = null;
+            saveState();
+            updateDisplay();
+            populateBucketLists();
+            populateHistoryList();
+            showToast('Last draw action has been undone.');
+        }
+
+        /**
+         * Function to update the display elements
+         */
+        function updateDisplay() {
+            // Update Review1 Gauge
+            const review1Value = ((currentTargetState.uniqueBucket1Count / getInitialB2Total()) * 100).toFixed(2);
+            document.getElementById('review1Gauge').value = review1Value;
+            document.getElementById('review1Text').innerText = review1Value + '%';
+
+            // Update Review2 Gauge
+            const review2Value = (((getInitialB2Total() - currentTargetState.uniqueBucket1Count) / getInitialB2Total()) * 100).toFixed(2);
+            document.getElementById('review2Gauge').value = review2Value;
+            document.getElementById('review2Text').innerText = review2Value + '%';
+
+            // Update frequencies display
+            const b1Total = getTotalFreq(currentTargetState.b1);
+            const b2Total = getInitialB2Total();
+
+            document.getElementById('bucket1Freq').innerText = b1Total;
+            document.getElementById('bucket2Freq').innerText = b2Total;
+        }
+
+        /**
+         * Function to calculate the total frequency of a bucket
+         * @param {Object} bucketB1 - The b1 bucket object
+         * @returns {number} - Total frequency
+         */
+        function getTotalFreq(bucketB1) {
+            return Object.values(bucketB1).reduce((sum, freq) => sum + freq, 0);
+        }
+
+        /**
+         * Function to get the initial total frequency of Bucket2
+         */
+        function getInitialB2Total() {
+            // Calculate the initial total frequency based on initialFiles and defaultFrequency
+            let total = 0;
+            allInitialFiles[currentTarget].forEach(file => {
+                const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
+                total += freq;
+            });
+            return total;
+        }
+
+        /**
+         * Function to initialize the probability slider
+         */
+        function initializeSlider() {
+            const initialSliderValue = (currentTargetState.b1Prob * 100).toFixed(0);
+            document.getElementById('probSlider').value = initialSliderValue;
+            document.getElementById('probBucket1').innerText = initialSliderValue + '%';
+            document.getElementById('probBucket2').innerText = (100 - initialSliderValue) + '%';
+        }
+
+        /**
+         * Function to toggle the default frequency input field
+         */
+        function toggleDefaultFrequency() {
+            const dfInput = document.getElementById('defaultFrequency');
+            if (dfInput.disabled) {
+                dfInput.disabled = false;
+            } else {
+                dfInput.disabled = true;
+                dfInput.value = currentTargetState.defaultFrequency;
+            }
+        }
+
+        /**
+         * Function to save the default frequency
+         */
+        function saveDefaultFrequency() {
+            const dfInput = document.getElementById('defaultFrequency');
+            const dfValue = dfInput.value.trim();
+            if (dfValue !== '') {
+                const df = parseInt(dfValue);
+                if (!isNaN(df) && df > 0) {
+                    currentTargetState.defaultFrequency = df;
+                    // Apply default frequency to elements with null frequency
+                    allInitialFiles[currentTarget].forEach(file => {
+                        if (file[2] === null) {
+                            const id = file[0];
+                            // Since b2 is not tracked in state, no need to modify it
+                            // Future draws will use the updated defaultFrequency
+                        }
+                    });
+                    dfInput.disabled = true;
+                    saveState();
+                    updateDisplay();
+                    populateBucketLists();
+                    showToast('Default frequency saved and applied.');
+                } else {
+                    alert('Please enter a valid positive integer for default frequency.');
+                }
+            } else {
+                alert('Default frequency cannot be empty.');
+            }
+        }
+
+        /**
+         * Function to save the URL prefix and suffix
+         */
+        function saveUrlPrefixSuffix() {
+            currentTargetState.urlPrefix = document.getElementById('urlPrefix').value.trim();
+            currentTargetState.urlSuffix = document.getElementById('urlSuffix').value.trim();
+            saveState();
+            showToast('URL prefix and suffix saved.');
         }
 
         /**
@@ -415,6 +719,103 @@
             });
         }
 
+        /**
+         * Function to populate Bucket1 and Bucket2 lists
+         */
+        function populateBucketLists() {
+            const bucket1List = document.getElementById('bucket1List');
+            const bucket2List = document.getElementById('bucket2List');
+            bucket1List.innerHTML = '';
+            bucket2List.innerHTML = '';
+
+            // Populate Bucket1
+            for (const id in currentTargetState.b1) {
+                const fileDetails = allInitialFiles[currentTarget].find(file => file[0] == id);
+                if (fileDetails) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Drawn: ${currentTargetState.b1[id]})`;
+                    bucket1List.appendChild(li);
+                }
+            }
+
+            // Populate Bucket2 (from initialFiles)
+            allInitialFiles[currentTarget].forEach(file => {
+                const id = file[0];
+                const url = file[1];
+                const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
+                const drawn = currentTargetState.b1[id] || 0;
+                const remaining = Math.max(0, freq - drawn);
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = `<a href="${url}" target="_blank">${url}</a> (Remaining: ${remaining})`;
+                bucket2List.appendChild(li);
+            });
+        }
+
+        /**
+         * Function to populate Draw History list
+         */
+        function populateHistoryList() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            currentTargetState.drawHistory.forEach(entry => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = `<strong>${entry.timestamp}:</strong> <a href="${entry.url}" target="_blank">${entry.url}</a>`;
+                historyList.appendChild(li);
+            });
+        }
+
+        /**
+         * Function to initialize the application
+         */
+        async function main() {
+            loadDarkMode();
+            const targetParam = getUrlParameter('target');
+            if (!targetParam) {
+                alert('Error: "target" parameter is missing in the URL.');
+                return;
+            }
+
+            currentTarget = targetParam; // Set the current target
+
+            // Load bucket-declaration.json to get the list of buckets
+            await loadBucketDeclaration();
+
+            // Check if the current target is among the declared bucket files
+            if (!bucketFiles.includes(currentTarget)) {
+                alert(`Error: Unknown target "${currentTarget}". Please ensure it is declared in bucket-declaration.json.`);
+                return;
+            }
+
+            // Load all bucket-xxx.json files
+            await loadAllBuckets();
+
+            // Load bucket-state.json (differences)
+            await loadBucketStateDifferences();
+
+            // Merge initial files with state differences
+            mergeState();
+
+            // Initialize current target state
+            initializeCurrentTargetState();
+
+            // Update display elements
+            updateDisplay();
+            initializeSlider();
+            populateBucketLists();
+            populateHistoryList();
+
+            // Set initial values for inputs
+            document.getElementById('defaultFrequency').value = currentTargetState.defaultFrequency;
+            document.getElementById('urlPrefix').value = currentTargetState.urlPrefix;
+            document.getElementById('urlSuffix').value = currentTargetState.urlSuffix;
+            document.getElementById('defaultFrequency').disabled = true;
+        }
+
+        // Load the main function when the window loads
         window.onload = main;
     </script>
 </head>
@@ -426,6 +827,13 @@
         <div class="text-end mb-3">
             <button class="btn btn-secondary" onclick="toggleDarkMode()" title="Toggle Dark Mode">
                 <i class="fas fa-moon"></i> Dark Mode
+            </button>
+        </div>
+
+        <!-- Help Modal Trigger -->
+        <div class="text-end mb-3">
+            <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#helpModal" title="Help">
+                <i class="fas fa-question-circle"></i> Help
             </button>
         </div>
 
@@ -527,6 +935,54 @@
         <div aria-live="polite" aria-atomic="true" class="position-relative">
             <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
                 <!-- Toasts will be appended here -->
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="helpModalLabel">Help & Instructions</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Overview</h6>
+                        <p>This application allows you to randomly select URLs from a predefined list with customizable settings.</p>
+                        <h6>Features</h6>
+                        <ul>
+                            <li><strong>URL Prefix/Suffix:</strong> Add prefixes or suffixes to all URLs before they are opened.</li>
+                            <li><strong>Default Frequency:</strong> Set the default frequency for new items.</li>
+                            <li><strong>Adjust Probabilities:</strong> Control the likelihood of selecting from Bucket1 or Bucket2.</li>
+                            <li><strong>Draw History:</strong> View a log of the last 5 drawn URLs.</li>
+                            <li><strong>Undo Last Draw:</strong> Revert the last draw action.</li>
+                            <li><strong>Import/Export State:</strong> Save and load your current state using JSON files.</li>
+                            <li><strong>Dark Mode:</strong> Toggle between light and dark themes for better visibility.</li>
+                        </ul>
+                        <h6>How to Use</h6>
+                        <ol>
+                            <li><strong>Set URL Prefix/Suffix</strong>: Enter any prefix or suffix you want to add to the URLs and click "Save URL Prefix/Suffix".</li>
+                            <li><strong>Set Default Frequency</strong>: Click the "Edit" button next to "Default Frequency", enter a positive integer, and click "Save".</li>
+                            <li><strong>Adjust Probabilities</strong>: Use the slider to set the probability of selecting from Bucket1 and Bucket2.</li>
+                            <li><strong>Draw URL</strong>: Click "Draw and Open URL" to randomly select and open a URL based on the current settings.</li>
+                            <li><strong>Undo Draw</strong>: If you accidentally draw a URL, click "Undo Last Draw" to revert the last action.</li>
+                            <li><strong>View Buckets</strong>: Check the lists under Bucket1 and Bucket2 to see current items and their frequencies.</li>
+                            <li><strong>View Draw History</strong>: Scroll through the "Draw History" section to see the last 5 drawn URLs.</li>
+                            <li><strong>Import/Export State</strong>: Use the respective buttons to save your current state or load a previously saved state.</li>
+                            <li><strong>Toggle Dark Mode</strong>: Click the "Dark Mode" button at the top-right to switch themes.</li>
+                            <li><strong>Reset State</strong>: Click "Reset State" to clear all settings and start fresh.</li>
+                        </ol>
+                        <h6>Notes</h6>
+                        <ul>
+                            <li>Ensure that the <code>target</code> parameter in the URL matches the JSON file you intend to use.</li>
+                            <li>Imported states will merge with existing states. Ensure that the <code>target</code> parameter corresponds to the intended data.</li>
+                            <li>Toast notifications will appear at the bottom-right corner for various actions.</li>
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
             </div>
         </div>
 
