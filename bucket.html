@@ -5,16 +5,19 @@
     <title>Random URL Picker with Customizable Settings</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
             background-color: #f8f9fa;
         }
-        .container {
-            max-width: 800px; /* Increased width to accommodate two gauges */
-            margin-top: 30px;
+        body.dark-mode {
+            background-color: #343a40;
+            color: #f8f9fa;
         }
-        .progress-container {
-            margin-bottom: 20px;
+        .container {
+            max-width: 900px;
+            margin-top: 30px;
         }
         .btn-draw {
             width: 100%;
@@ -33,24 +36,51 @@
         .input-group-text {
             width: 100px;
         }
-        .gauge-section {
-            margin-top: 30px;
-            margin-bottom: 30px;
+        .gauge-container {
+            margin-bottom: 20px;
         }
-        .gauge-label {
-            margin-bottom: 10px;
+        .bucket-list {
+            max-height: 200px;
+            overflow-y: auto;
         }
-	#review1Gauge {
-	    accent-color: #28a745; /* Green */
-	}
-	#review2Gauge {
-	    accent-color: #00FFFF; /* Blue */
-	}
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .dark-mode .card {
+            background-color: #495057;
+            color: #f8f9fa;
+        }
+        .dark-mode .form-control, .dark-mode .form-select {
+            background-color: #6c757d;
+            color: #f8f9fa;
+            border: 1px solid #ced4da;
+        }
+        .dark-mode .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .dark-mode .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        /* Custom scrollbar for dark mode */
+        body.dark-mode ::-webkit-scrollbar {
+            width: 8px;
+        }
+        body.dark-mode ::-webkit-scrollbar-track {
+            background: #343a40;
+        }
+        body.dark-mode ::-webkit-scrollbar-thumb {
+            background: #6c757d;
+            border-radius: 4px;
+        }
     </style>
     <script>
         let b1 = {}; // Bucket 1 (reviews)
         let b2 = {}; // Bucket 2 (new elements)
         let initB2Total = 0; // Initial total frequency of Bucket 2
+        let uniqueBucket1Count = 0; // Number of unique items moved to Bucket1
         let b1Prob = 0.66; // Default probability for Bucket 1
         let b2Prob = 0.34; // Default probability for Bucket 2
         let defaultFrequency = 1; // Default frequency
@@ -58,7 +88,9 @@
         let urlSuffix = ''; // URL Suffix
         let initialFiles = []; // To be populated based on target
         let localStorageKey = ''; // To be determined based on target
-        let uniqueBucket1Count = 0; // Tracks unique items moved to Bucket1
+        let drawHistory = []; // History of drawn URLs
+        const historyLimit = 50; // Maximum number of history items
+        let lastDrawnId = null; // To track last drawn item for undo
 
         /**
          * Function to get a secure random number between 0 (inclusive) and 1 (exclusive)
@@ -102,7 +134,10 @@
         function initBuckets() {
             b1 = {};
             b2 = {};
+            uniqueBucket1Count = 0;
             initB2Total = 0;
+            drawHistory = [];
+            lastDrawnId = null;
 
             initialFiles.forEach(file => {
                 const id = file[0];
@@ -110,8 +145,6 @@
                 b2[id] = freq;
                 initB2Total += freq;
             });
-
-            uniqueBucket1Count = 0; // Reset unique count during initialization
         }
 
         /**
@@ -121,13 +154,15 @@
             const state = {
                 b1: b1,
                 b2: b2,
+                uniqueBucket1Count: uniqueBucket1Count,
                 b1Prob: b1Prob,
                 b2Prob: b2Prob,
                 defaultFrequency: defaultFrequency,
                 urlPrefix: urlPrefix,
                 urlSuffix: urlSuffix,
                 initialFiles: initialFiles,
-                uniqueBucket1Count: uniqueBucket1Count // Save unique count
+                target: getUrlParameter('target'),
+                drawHistory: drawHistory
             };
             localStorage.setItem(localStorageKey, JSON.stringify(state));
         }
@@ -140,14 +175,15 @@
             if (state) {
                 b1 = state.b1 || {};
                 b2 = state.b2 || {};
+                uniqueBucket1Count = state.uniqueBucket1Count || 0;
                 b1Prob = state.b1Prob || 0.66;
                 b2Prob = state.b2Prob || 0.34;
                 defaultFrequency = state.defaultFrequency || 1;
                 urlPrefix = state.urlPrefix || '';
                 urlSuffix = state.urlSuffix || '';
                 initialFiles = state.initialFiles || initialFiles;
-                uniqueBucket1Count = state.uniqueBucket1Count || 0; // Load unique count
                 initB2Total = getTotalFreq(b2);
+                drawHistory = state.drawHistory || [];
             } else {
                 initBuckets();
             }
@@ -157,11 +193,14 @@
          * Function to reset the state
          */
         function resetState() {
+            if (!confirm('Are you sure you want to reset the state? This action cannot be undone.')) return;
             localStorage.removeItem(localStorageKey);
             defaultFrequency = 1;
             urlPrefix = '';
             urlSuffix = '';
-            uniqueBucket1Count = 0; // Reset unique count
+            uniqueBucket1Count = 0;
+            drawHistory = [];
+            lastDrawnId = null;
             document.getElementById('defaultFrequency').value = defaultFrequency;
             document.getElementById('urlPrefix').value = urlPrefix;
             document.getElementById('urlSuffix').value = urlSuffix;
@@ -181,26 +220,31 @@
             const state = {
                 b1: b1,
                 b2: b2,
+                uniqueBucket1Count: uniqueBucket1Count,
                 b1Prob: b1Prob,
                 b2Prob: b2Prob,
                 defaultFrequency: defaultFrequency,
                 urlPrefix: urlPrefix,
                 urlSuffix: urlSuffix,
                 initialFiles: initialFiles,
-                uniqueBucket1Count: uniqueBucket1Count // Include unique count
+                target: getUrlParameter('target'),
+                drawHistory: drawHistory
             };
-            const stateStr = btoa(JSON.stringify(state));
+
+            const stateStr = JSON.stringify(state, null, 4);
 
             // Get current date and time for filename
             const now = new Date();
             const timestamp = now.toISOString().replace(/[:.]/g, '-');
-            const filename = `state_${timestamp}.txt`;
+            const filename = `state_${timestamp}.json`;
 
-            const blob = new Blob([stateStr], { type: 'text/plain' });
+            const blob = new Blob([stateStr], { type: 'application/json' });
             const link = document.createElement('a');
             link.href = window.URL.createObjectURL(blob);
             link.download = filename;
             link.click();
+
+            showToast('State exported successfully.');
         }
 
         /**
@@ -209,25 +253,29 @@
         function importState() {
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
-            fileInput.accept = '.txt';
+            fileInput.accept = '.json,application/json';
             fileInput.onchange = e => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
                     reader.onload = event => {
                         try {
-                            const stateStr = event.target.result;
-                            const state = JSON.parse(atob(stateStr));
+                            const state = JSON.parse(event.target.result);
+                            if (state.target !== getUrlParameter('target')) {
+                                alert(`Imported state target (${state.target}) does not match current target (${getUrlParameter('target')}).`);
+                                return;
+                            }
                             b1 = state.b1 || {};
                             b2 = state.b2 || {};
+                            uniqueBucket1Count = state.uniqueBucket1Count || 0;
                             b1Prob = state.b1Prob || 0.66;
                             b2Prob = state.b2Prob || 0.34;
                             defaultFrequency = state.defaultFrequency || 1;
                             urlPrefix = state.urlPrefix || '';
                             urlSuffix = state.urlSuffix || '';
                             initialFiles = state.initialFiles || initialFiles;
-                            uniqueBucket1Count = state.uniqueBucket1Count || 0; // Load unique count
                             initB2Total = getTotalFreq(b2);
+                            drawHistory = state.drawHistory || [];
                             document.getElementById('defaultFrequency').value = defaultFrequency;
                             document.getElementById('urlPrefix').value = urlPrefix;
                             document.getElementById('urlSuffix').value = urlSuffix;
@@ -235,7 +283,9 @@
                             saveState();
                             updateDisplay();
                             initializeSlider();
-                            alert('State has been imported successfully.');
+                            populateBucketLists();
+                            populateHistoryList();
+                            showToast('State has been imported successfully.');
                         } catch (e) {
                             alert('Invalid state data.');
                         }
@@ -301,19 +351,26 @@
                 }
             }
 
-            if (selectedId in b1) {
-                // Duplicate draw; do not change uniqueBucket1Count
+            const isDuplicate = selectedId in b1;
+            if (isDuplicate) {
+                // Duplicate entry drawn; do not change gauges
                 b1[selectedId] += 1;
             } else {
-                // Unique draw; increment uniqueBucket1Count
+                // Unique entry drawn; update gauges
                 b1[selectedId] = 1;
                 uniqueBucket1Count += 1;
+                // Update History
+                addToHistory(selectedId);
             }
 
             if (selectedId in b2) {
                 b2[selectedId] = Math.max(1, b2[selectedId] - 1);
+                if (b2[selectedId] === 0) {
+                    delete b2[selectedId];
+                }
             }
 
+            lastDrawnId = selectedId;
             saveState();
 
             const fileDetails = initialFiles.find(file => file[0] === selectedId);
@@ -333,36 +390,87 @@
             }
 
             updateDisplay();
+            populateBucketLists();
+            populateHistoryList();
             window.open(url, '_blank');
+            showToast(`Opened URL: ${url}`);
+        }
+
+        /**
+         * Function to add a drawn URL to history
+         */
+        function addToHistory(id) {
+            const fileDetails = initialFiles.find(file => file[0] === id);
+            if (fileDetails) {
+                const entry = {
+                    id: id,
+                    url: fileDetails[1],
+                    timestamp: new Date().toLocaleString()
+                };
+                drawHistory.unshift(entry);
+                if (drawHistory.length > historyLimit) {
+                    drawHistory.pop();
+                }
+            }
+        }
+
+        /**
+         * Function to undo the last draw action
+         */
+        function undoLastDraw() {
+            if (lastDrawnId === null) {
+                alert('No draw action to undo.');
+                return;
+            }
+
+            if (!(lastDrawnId in b1)) {
+                alert('Invalid state. Cannot undo.');
+                return;
+            }
+
+            b1[lastDrawnId] -= 1;
+            if (b1[lastDrawnId] === 0) {
+                delete b1[lastDrawnId];
+                uniqueBucket1Count -= 1;
+            }
+
+            if (lastDrawnId in b2) {
+                b2[lastDrawnId] += 1;
+            } else {
+                b2[lastDrawnId] = 1;
+            }
+
+            // Remove from history
+            drawHistory.shift();
+
+            lastDrawnId = null;
+            saveState();
+            updateDisplay();
+            populateBucketLists();
+            populateHistoryList();
+            showToast('Last draw action has been undone.');
         }
 
         /**
          * Function to update the display elements
          */
         function updateDisplay() {
+            // Update Review1 Gauge
+            const review1Value = ((uniqueBucket1Count / initB2Total) * 100).toFixed(2);
+            document.getElementById('review1Gauge').value = review1Value;
+            document.getElementById('review1Text').innerText = review1Value + '%';
+
+            // Update Review2 Gauge
+            const review2Value = ((initB2Total - uniqueBucket1Count) / initB2Total * 100).toFixed(2);
+            document.getElementById('review2Gauge').value = review2Value;
+            document.getElementById('review2Text').innerText = review2Value + '%';
+
+            // Update frequencies display
             const b1Total = getTotalFreq(b1);
             const b2Total = getTotalFreq(b2);
 
-            // Existing Gauge (Bucket1 vs Total)
-            let progress = (b1Total / (b1Total + b2Total)) * 100;
-            if (progress > 100) progress = 100;
-
-            document.getElementById('gauge').value = progress;
-            document.getElementById('gaugeText').innerText = progress.toFixed(2) + '%';
             document.getElementById('bucket1Freq').innerText = b1Total;
             document.getElementById('bucket2Freq').innerText = b2Total;
-
-            // Review1 Gauge: uniqueBucket1Count / initB2Total
-            let review1Progress = (uniqueBucket1Count / initB2Total) * 100;
-            if (review1Progress > 100) review1Progress = 100;
-            document.getElementById('review1Gauge').value = review1Progress;
-            document.getElementById('review1Text').innerText = review1Progress.toFixed(2) + '%';
-
-            // Review2 Gauge: (initB2Total - uniqueBucket1Count) / initB2Total
-            let review2Progress = ((initB2Total - uniqueBucket1Count) / initB2Total) * 100;
-            if (review2Progress > 100) review2Progress = 100;
-            document.getElementById('review2Gauge').value = review2Progress;
-            document.getElementById('review2Text').innerText = review2Progress.toFixed(2) + '%';
         }
 
         /**
@@ -411,6 +519,7 @@
                     dfInput.disabled = true;
                     saveState();
                     updateDisplay();
+                    populateBucketLists();
                     alert('Default frequency saved and applied.');
                 } else {
                     alert('Please enter a valid positive integer for default frequency.');
@@ -427,13 +536,164 @@
             urlPrefix = document.getElementById('urlPrefix').value.trim();
             urlSuffix = document.getElementById('urlSuffix').value.trim();
             saveState();
-            alert('URL prefix and suffix saved.');
+            showToast('URL prefix and suffix saved.');
         }
 
         /**
-         * Main function to initialize the application
+         * Function to toggle dark mode
+         */
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+        }
+
+        /**
+         * Function to load dark mode preference
+         */
+        function loadDarkMode() {
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        /**
+         * Function to show toast notifications
+         */
+        function showToast(message) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastEl = document.createElement('div');
+            toastEl.className = 'toast align-items-center text-bg-primary border-0';
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+
+            toastContainer.appendChild(toastEl);
+            const bsToast = new bootstrap.Toast(toastEl);
+            bsToast.show();
+
+            toastEl.addEventListener('hidden.bs.toast', () => {
+                toastContainer.removeChild(toastEl);
+            });
+        }
+
+        /**
+         * Function to populate Bucket1 and Bucket2 lists
+         */
+        function populateBucketLists() {
+            const bucket1List = document.getElementById('bucket1List');
+            const bucket2List = document.getElementById('bucket2List');
+            bucket1List.innerHTML = '';
+            bucket2List.innerHTML = '';
+
+            // Populate Bucket1
+            for (const id in b1) {
+                const fileDetails = initialFiles.find(file => file[0] == id);
+                if (fileDetails) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${b1[id]})`;
+                    bucket1List.appendChild(li);
+                }
+            }
+
+            // Populate Bucket2
+            for (const id in b2) {
+                const fileDetails = initialFiles.find(file => file[0] == id);
+                if (fileDetails) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${b2[id]})`;
+                    bucket2List.appendChild(li);
+                }
+            }
+        }
+
+        /**
+         * Function to populate Draw History list
+         */
+        function populateHistoryList() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            drawHistory.forEach(entry => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = `<strong>${entry.timestamp}:</strong> <a href="${entry.url}" target="_blank">${entry.url}</a>`;
+                historyList.appendChild(li);
+            });
+        }
+
+        /**
+         * Function to add a drawn URL to history
+         */
+        function addToHistory(id) {
+            const fileDetails = initialFiles.find(file => file[0] === id);
+            if (fileDetails) {
+                const entry = {
+                    id: id,
+                    url: fileDetails[1],
+                    timestamp: new Date().toLocaleString()
+                };
+                drawHistory.unshift(entry);
+                if (drawHistory.length > historyLimit) {
+                    drawHistory.pop();
+                }
+            }
+        }
+
+        /**
+         * Function to undo the last draw action
+         */
+        function undoLastDraw() {
+            if (lastDrawnId === null) {
+                alert('No draw action to undo.');
+                return;
+            }
+
+            if (!(lastDrawnId in b1)) {
+                alert('Invalid state. Cannot undo.');
+                return;
+            }
+
+            b1[lastDrawnId] -= 1;
+            if (b1[lastDrawnId] === 0) {
+                delete b1[lastDrawnId];
+                uniqueBucket1Count -= 1;
+            }
+
+            if (lastDrawnId in b2) {
+                b2[lastDrawnId] += 1;
+            } else {
+                b2[lastDrawnId] = 1;
+            }
+
+            // Remove from history
+            drawHistory.shift();
+
+            lastDrawnId = null;
+            saveState();
+            updateDisplay();
+            populateBucketLists();
+            populateHistoryList();
+            showToast('Last draw action has been undone.');
+        }
+
+        /**
+         * Function to initialize the application
          */
         async function main() {
+            loadDarkMode();
             const target = getUrlParameter('target');
             if (!target) {
                 alert('Error: "target" parameter is missing in the URL.');
@@ -441,7 +701,7 @@
             }
 
             // Set the localStorage key based on target
-            localStorageKey = `randomUrlPickerState${target}`;
+            localStorageKey = `randomUrlPickerState_${target}`;
 
             // Fetch the initialFiles from the corresponding JSON file
             initialFiles = await fetchInitialFiles(target);
@@ -455,6 +715,8 @@
             loadState();
             updateDisplay();
             initializeSlider();
+            populateBucketLists();
+            populateHistoryList();
 
             // Set initial values for inputs
             document.getElementById('defaultFrequency').value = defaultFrequency;
@@ -470,82 +732,182 @@
     <div class="container">
         <h1 class="text-center">Random URL Picker</h1>
 
+        <!-- Theme Toggle -->
+        <div class="text-end mb-3">
+            <button class="btn btn-secondary" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                <i class="fas fa-moon"></i> Dark Mode
+            </button>
+        </div>
+
+        <!-- Help Modal Trigger -->
+        <div class="text-end mb-3">
+            <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#helpModal" title="Help">
+                <i class="fas fa-question-circle"></i> Help
+            </button>
+        </div>
+
         <div class="input-container">
             <label class="form-label">URL Prefix:</label>
-            <input type="text" class="form-control" id="urlPrefix" placeholder="Enter URL Prefix">
+            <input type="text" class="form-control" id="urlPrefix" placeholder="Enter URL Prefix" title="Add a prefix to all URLs">
             <label class="form-label">URL Suffix:</label>
-            <input type="text" class="form-control" id="urlSuffix" placeholder="Enter URL Suffix">
-            <button class="btn btn-secondary mt-2" onclick="saveUrlPrefixSuffix()">Save URL Prefix/Suffix</button>
+            <input type="text" class="form-control" id="urlSuffix" placeholder="Enter URL Suffix" title="Add a suffix to all URLs">
+            <button class="btn btn-secondary mt-2" onclick="saveUrlPrefixSuffix()" title="Save URL Prefix and Suffix">
+                Save URL Prefix/Suffix
+            </button>
         </div>
 
         <div class="input-container">
             <label class="form-label">Default Frequency:</label>
             <div class="input-group">
-                <input type="number" class="form-control" id="defaultFrequency" value="1" min="1" disabled>
-                <button class="btn btn-secondary" onclick="toggleDefaultFrequency()">Edit</button>
-                <button class="btn btn-primary" onclick="saveDefaultFrequency()">Save</button>
+                <input type="number" class="form-control" id="defaultFrequency" value="1" min="1" disabled title="Set default frequency for new items">
+                <button class="btn btn-secondary" onclick="toggleDefaultFrequency()" title="Edit Default Frequency">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-primary" onclick="saveDefaultFrequency()" title="Save Default Frequency">
+                    <i class="fas fa-save"></i> Save
+                </button>
             </div>
         </div>
 
         <div class="slider-container">
             <label for="probSlider" class="form-label">Adjust Probabilities:</label>
-            <input type="range" class="form-range" id="probSlider" min="0" max="100" value="66" oninput="updateProbabilities()">
+            <input type="range" class="form-range" id="probSlider" min="0" max="100" value="66" oninput="updateProbabilities()" title="Adjust the probability of selecting from Bucket 1">
             <div class="slider-label">
                 <span>Bucket 1: <span id="probBucket1">66%</span></span>
                 <span>Bucket 2: <span id="probBucket2">34%</span></span>
             </div>
         </div>
 
-        <button class="btn btn-primary btn-draw" onclick="pickRandom()">Draw and Open URL</button>
+        <button class="btn btn-primary btn-draw" onclick="pickRandom()" title="Draw a random URL">
+            <i class="fas fa-random"></i> Draw and Open URL
+        </button>
 
-        <div class="progress-container">
-            <label for="gauge" class="form-label">Progress (Bucket 1 vs. Total):</label>
-            <progress id="gauge" class="form-range w-100" value="0" max="100"></progress>
+        <button class="btn btn-warning btn-draw" onclick="undoLastDraw()" title="Undo the last draw">
+            <i class="fas fa-undo"></i> Undo Last Draw
+        </button>
+
+        <!-- Review Gauges -->
+        <div class="gauge-container">
+            <label for="review1Gauge" class="form-label">Review1 (Unique Bucket1 Items / Initial Bucket2 Total):</label>
+            <progress id="review1Gauge" class="form-range w-100" value="0" max="100" aria-label="Review1 Gauge"></progress>
             <div class="text-center">
-                <span id="gaugeText">0%</span>
+                <span id="review1Text">0%</span>
             </div>
         </div>
 
-        <!-- New Gauge Sections -->
-        <div class="gauge-section">
-            <!-- Review1 Gauge -->
-            <div class="progress-container">
-                <label for="review1Gauge" class="form-label gauge-label">Review1 Gauge (Unique Bucket1 Items / Total Bucket2):</label>
-                <progress id="review1Gauge" class="form-range w-100" value="0" max="100"></progress>
-                <div class="text-center">
-                    <span id="review1Text">0%</span>
-                </div>
-            </div>
-
-            <!-- Review2 Gauge -->
-            <div class="progress-container">
-                <label for="review2Gauge" class="form-label gauge-label">Review2 Gauge (Initial Bucket2 Total - Unique Bucket1 Items):</label>
-                <progress id="review2Gauge" class="form-range w-100" value="100" max="100"></progress>
-                <div class="text-center">
-                    <span id="review2Text">100%</span>
-                </div>
+        <div class="gauge-container">
+            <label for="review2Gauge" class="form-label">Review2 (Initial Bucket2 Total - Unique Bucket1 Items):</label>
+            <progress id="review2Gauge" class="form-range w-100" value="100" max="100" aria-label="Review2 Gauge"></progress>
+            <div class="text-center">
+                <span id="review2Text">100%</span>
             </div>
         </div>
-        <!-- End of New Gauge Sections -->
 
+        <!-- Bucket Lists -->
         <div class="row">
-            <div class="col text-center">
-                <h5>Bucket 1 Total Frequency</h5>
-                <span id="bucket1Freq">0</span>
+            <div class="col-md-6">
+                <h5>Bucket 1 Total Frequency: <span id="bucket1Freq">0</span></h5>
+                <ul class="list-group bucket-list" id="bucket1List" aria-label="Bucket 1 Items">
+                    <!-- Bucket1 items will be populated here -->
+                </ul>
             </div>
-            <div class="col text-center">
-                <h5>Bucket 2 Total Frequency</h5>
-                <span id="bucket2Freq">0</span>
+            <div class="col-md-6">
+                <h5>Bucket 2 Total Frequency: <span id="bucket2Freq">0</span></h5>
+                <ul class="list-group bucket-list" id="bucket2List" aria-label="Bucket 2 Items">
+                    <!-- Bucket2 items will be populated here -->
+                </ul>
             </div>
         </div>
 
-        <div class="text-center">
-            <button class="btn btn-secondary btn-export" onclick="exportState()">Export State</button>
-            <button class="btn btn-secondary btn-export" onclick="importState()">Import State</button>
-            <button class="btn btn-danger btn-export" onclick="resetState()">Reset State</button>
+        <!-- Search and Filter -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="searchBucket1" placeholder="Search Bucket 1" oninput="filterBucketList('bucket1List', 'searchBucket1')" aria-label="Search Bucket 1">
+            </div>
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="searchBucket2" placeholder="Search Bucket 2" oninput="filterBucketList('bucket2List', 'searchBucket2')" aria-label="Search Bucket 2">
+            </div>
         </div>
+
+        <!-- Draw History -->
+        <div class="mt-4">
+            <h5>Draw History:</h5>
+            <ul class="list-group history-list" id="historyList" aria-label="Draw History">
+                <!-- History items will be populated here -->
+            </ul>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="text-center mt-4">
+            <button class="btn btn-secondary btn-export" onclick="exportState()" title="Export current state as JSON">
+                <i class="fas fa-file-export"></i> Export State
+            </button>
+            <button class="btn btn-secondary btn-export" onclick="importState()" title="Import state from a JSON file">
+                <i class="fas fa-file-import"></i> Import State
+            </button>
+            <button class="btn btn-danger btn-export" onclick="resetState()" title="Reset all settings and states">
+                <i class="fas fa-trash-alt"></i> Reset State
+            </button>
+        </div>
+
+        <!-- Toast Container -->
+        <div aria-live="polite" aria-atomic="true" class="position-relative">
+            <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                <!-- Toasts will be appended here -->
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="helpModalLabel">Help & Instructions</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Overview</h6>
+                        <p>This application allows you to randomly select URLs from a predefined list with customizable settings.</p>
+                        <h6>Features</h6>
+                        <ul>
+                            <li><strong>URL Prefix/Suffix:</strong> Add prefixes or suffixes to all URLs before they are opened.</li>
+                            <li><strong>Default Frequency:</strong> Set the default frequency for new items.</li>
+                            <li><strong>Adjust Probabilities:</strong> Control the likelihood of selecting from Bucket1 or Bucket2.</li>
+                            <li><strong>Draw History:</strong> View a log of recently drawn URLs.</li>
+                            <li><strong>Undo Last Draw:</strong> Revert the last draw action.</li>
+                            <li><strong>Import/Export State:</strong> Save and load your current state using JSON files.</li>
+                            <li><strong>Dark Mode:</strong> Toggle between light and dark themes for better visibility.</li>
+                        </ul>
+                        <h6>How to Use</h6>
+                        <ol>
+                            <li>**Set URL Prefix/Suffix**: Enter any prefix or suffix you want to add to the URLs and click "Save URL Prefix/Suffix".</li>
+                            <li>**Set Default Frequency**: Click the "Edit" button next to "Default Frequency", enter a positive integer, and click "Save".</li>
+                            <li>**Adjust Probabilities**: Use the slider to set the probability of selecting from Bucket1 and Bucket2.</li>
+                            <li>**Draw URL**: Click "Draw and Open URL" to randomly select and open a URL based on the current settings.</li>
+                            <li>**Undo Draw**: If you accidentally draw a URL, click "Undo Last Draw" to revert the last action.</li>
+                            <li>**View Buckets**: Check the lists under Bucket1 and Bucket2 to see current items and their frequencies.</li>
+                            <li>**Search Buckets**: Use the search bars above each bucket list to find specific URLs.</li>
+                            <li>**View Draw History**: Scroll through the "Draw History" section to see previously drawn URLs.</li>
+                            <li>**Import/Export State**: Use the respective buttons to save your current state or load a previously saved state.</li>
+                            <li>**Toggle Dark Mode**: Click the "Dark Mode" button at the top-right to switch themes.</li>
+                            <li>**Reset State**: Click "Reset State" to clear all settings and start fresh.</li>
+                        </ol>
+                        <h6>Notes</h6>
+                        <ul>
+                            <li>Ensure that the <code>target</code> parameter in the URL matches the JSON file you intend to use.</li>
+                            <li>Imported states must correspond to the current <code>target</code> parameter to ensure consistency.</li>
+                            <li>Toast notifications will appear at the bottom-right corner for various actions.</li>
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bootstrap JS and dependencies -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-wpsYrgENSMwvWDnK+0hqyc+8zhu+uZdzsOCS8KQmS1b2y2lZjY0Chvh6e+GD44G" crossorigin="anonymous"></script>
     </div>
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-wpsYrgENSMwvWDnK+0hqyc+8zhu+uZdzsOCS8KQmS1b2y2lZjY0Chvh6e+GD44G" crossorigin="anonymous"></script>
 </body>
 </html>
