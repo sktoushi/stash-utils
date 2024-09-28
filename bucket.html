@@ -77,8 +77,8 @@
     <script>
         // Global Variables
         let bucketFiles = []; // To be loaded from bucket-declaration.json
-        let allInitialFiles = {}; // Stores initialFiles for all buckets
-        let unifiedState = {}; // Unified state object for all targets
+        let allInitialFiles = {}; // Stores initialFiles for all targets
+        let unifiedState = {}; // Unified state object for all targets (excluding b2)
         const unifiedStorageKey = 'randomUrlPickerState'; // Unified localStorage key
         let bucketStateDifferences = {}; // Differences from bucket-state.json
         let drawHistoryLimit = 5; // Maximum number of history items per target
@@ -181,9 +181,7 @@
                 if (!unifiedState[bucket]) {
                     unifiedState[bucket] = {
                         b1: {},
-                        b2: {},
                         uniqueBucket1Count: 0,
-                        uniqueBucket2Count: 0,
                         b1Prob: 0.66,
                         b2Prob: 0.34,
                         defaultFrequency: 1,
@@ -206,10 +204,9 @@
                     };
                 }
 
-                // Ensure that b1, b2, and drawHistory have default structures
+                // Ensure that b1 and drawHistory have default structures
                 unifiedState[bucket].b1 = unifiedState[bucket].b1 || {};
-                unifiedState[bucket].b2 = unifiedState[bucket].b2 || {};
-                unifiedState[bucket].drawHistory = unifiedState[bucket].drawHistory || [];
+                unifiedState[bucket].drawHistory = unifiedState[bucket].drawHistory || {};
             }
 
             // Save the unified state back to localStorage
@@ -224,9 +221,7 @@
                 // If the current target is not in unifiedState, initialize it
                 unifiedState[currentTarget] = {
                     b1: {},
-                    b2: {},
                     uniqueBucket1Count: 0,
-                    uniqueBucket2Count: 0,
                     b1Prob: 0.66,
                     b2Prob: 0.34,
                     defaultFrequency: 1,
@@ -234,7 +229,7 @@
                     urlSuffix: '',
                     drawHistory: []
                 };
-                // Save the initialized state
+                // b2 is inferred from initialFiles and remains untouched
                 saveState();
             }
             currentTargetState = { ...unifiedState[currentTarget] };
@@ -274,9 +269,7 @@
                 if (unifiedState[bucket]) {
                     exportState[bucket] = {
                         b1: unifiedState[bucket].b1,
-                        b2: unifiedState[bucket].b2,
                         uniqueBucket1Count: unifiedState[bucket].uniqueBucket1Count,
-                        uniqueBucket2Count: unifiedState[bucket].uniqueBucket2Count,
                         b1Prob: unifiedState[bucket].b1Prob,
                         b2Prob: unifiedState[bucket].b2Prob,
                         defaultFrequency: unifiedState[bucket].defaultFrequency,
@@ -328,10 +321,6 @@
                                             ...unifiedState[bucket].b1,
                                             ...state.b1
                                         },
-                                        b2: {
-                                            ...unifiedState[bucket].b2,
-                                            ...state.b2
-                                        },
                                         drawHistory: [
                                             ...(unifiedState[bucket].drawHistory || []),
                                             ...(state.drawHistory || [])
@@ -341,9 +330,7 @@
                                     // Add new buckets
                                     unifiedState[bucket] = {
                                         b1: state.b1 || {},
-                                        b2: state.b2 || {},
                                         uniqueBucket1Count: state.uniqueBucket1Count || 0,
-                                        uniqueBucket2Count: state.uniqueBucket2Count || 0,
                                         b1Prob: state.b1Prob || 0.66,
                                         b2Prob: state.b2Prob || 0.34,
                                         defaultFrequency: state.defaultFrequency || 1,
@@ -394,52 +381,33 @@
             const rand = getSecureRandomNumber();
             let selectedBucket = rand < currentTargetState.b1Prob ? 'b1' : 'b2';
 
-            // Determine the available bucket based on probabilities and available frequencies
-            let availableBuckets = [];
-            if (selectedBucket === 'b1' && getAvailableFreq('b1') > 0) {
-                availableBuckets.push('b1');
-            }
-            if (selectedBucket === 'b2' && getAvailableFreq('b2') > 0) {
-                availableBuckets.push('b2');
-            }
+            // Check available frequencies for both buckets before making a decision
+            const b1FreqAvailable = getAvailableFreq('b1') > 0;
+            const b2FreqAvailable = getAvailableFreq('b2') > 0;
 
-            // If selected bucket has no available frequencies, switch to the other bucket
-            if (availableBuckets.length === 0) {
-                selectedBucket = selectedBucket === 'b1' ? 'b2' : 'b1';
-                if (getAvailableFreq(selectedBucket) > 0) {
-                    availableBuckets.push(selectedBucket);
-                }
+            // Ensure that if one bucket is empty, it doesn't get selected
+            if (!b1FreqAvailable) {
+                selectedBucket = 'b2'; // Force Bucket 2 if Bucket 1 is empty
+            } else if (!b2FreqAvailable) {
+                selectedBucket = 'b1'; // Force Bucket 1 if Bucket 2 is empty
             }
 
             // If no buckets have available frequencies, alert the user
-            if (availableBuckets.length === 0) {
+            if (!b1FreqAvailable && !b2FreqAvailable) {
                 alert('All URLs have been drawn!');
                 return;
             }
 
-            // If both buckets are available, decide based on probabilities
-            if (availableBuckets.length === 2) {
-                selectedBucket = rand < currentTargetState.b1Prob ? 'b1' : 'b2';
-            }
-
-            const bucket = selectedBucket;
-            const availableFreq = getAvailableFreq(bucket);
-            if (availableFreq === 0) {
-                alert(`Bucket ${bucket.toUpperCase()} is empty!`);
-                return;
-            }
-
-            // Build a list of available items with their remaining frequencies
-            const availableItems = allInitialFiles[bucket].map(file => {
+            const availableItems = allInitialFiles[currentTarget].map(file => {
                 const id = file[0];
                 const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
-                const drawn = currentTargetState[bucket][id] || 0;
+                const drawn = currentTargetState.b1[id] || 0;
                 const remaining = Math.max(0, freq - drawn);
                 return { id, url: file[1], remaining };
             }).filter(item => item.remaining > 0);
 
             if (availableItems.length === 0) {
-                alert(`Bucket ${bucket.toUpperCase()} has no available URLs.`);
+                alert(`Bucket ${selectedBucket.toUpperCase()} has no available URLs.`);
                 return;
             }
 
@@ -463,26 +431,22 @@
                 return;
             }
 
-            const isDuplicate = selectedId in currentTargetState[bucket];
+            const isDuplicate = selectedId in currentTargetState.b1;
             if (isDuplicate) {
                 // Duplicate entry drawn; increment the count
-                currentTargetState[bucket][selectedId] += 1;
+                currentTargetState.b1[selectedId] += 1;
             } else {
                 // Unique entry drawn; set count to 1 and increment unique count
-                currentTargetState[bucket][selectedId] = 1;
-                if (bucket === 'b1') {
-                    currentTargetState.uniqueBucket1Count += 1;
-                } else {
-                    currentTargetState.uniqueBucket2Count += 1;
-                }
+                currentTargetState.b1[selectedId] = 1;
+                currentTargetState.uniqueBucket1Count += 1;
                 // Update History
-                addToHistory(selectedId, bucket);
+                addToHistory(selectedId);
             }
 
-            lastDrawnId = { id: selectedId, bucket: bucket };
+            lastDrawnId = selectedId;
             saveState();
 
-            const fileDetails = allInitialFiles[bucket].find(file => file[0] === selectedId);
+            const fileDetails = allInitialFiles[currentTarget].find(file => file[0] === selectedId);
             if (!fileDetails) {
                 alert('Selected file not found.');
                 return;
@@ -511,12 +475,20 @@
          * @returns {number} - Total available frequency
          */
         function getAvailableFreq(bucket) {
-            if (bucket === 'b1' || bucket === 'b2') {
-                // Calculate remaining frequencies for the specified bucket
-                return allInitialFiles[bucket].reduce((sum, file) => {
+            if (bucket === 'b1') {
+                // Calculate remaining frequencies for b1
+                return allInitialFiles[currentTarget].reduce((sum, file) => {
                     const id = file[0];
                     const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
-                    const drawn = currentTargetState[bucket][id] || 0;
+                    const drawn = currentTargetState.b1[id] || 0;
+                    return sum + Math.max(0, freq - drawn);
+                }, 0);
+            } else if (bucket === 'b2') {
+                // Calculate remaining frequencies for b2 (same as b1 in this context)
+                return allInitialFiles[currentTarget].reduce((sum, file) => {
+                    const id = file[0];
+                    const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
+                    const drawn = currentTargetState.b1[id] || 0;
                     return sum + Math.max(0, freq - drawn);
                 }, 0);
             }
@@ -526,12 +498,11 @@
         /**
          * Function to add a drawn URL to history
          */
-        function addToHistory(id, bucket) {
-            const fileDetails = allInitialFiles[bucket].find(file => file[0] == id);
+        function addToHistory(id) {
+            const fileDetails = allInitialFiles[currentTarget].find(file => file[0] == id);
             if (fileDetails) {
                 const entry = {
                     id: id,
-                    bucket: bucket.toUpperCase(),
                     url: fileDetails[1],
                     timestamp: new Date().toLocaleString()
                 };
@@ -551,21 +522,15 @@
                 return;
             }
 
-            const { id, bucket } = lastDrawnId;
-
-            if (!(id in currentTargetState[bucket])) {
+            if (!(lastDrawnId in currentTargetState.b1)) {
                 alert('Invalid state. Cannot undo.');
                 return;
             }
 
-            currentTargetState[bucket][id] -= 1;
-            if (currentTargetState[bucket][id] === 0) {
-                delete currentTargetState[bucket][id];
-                if (bucket === 'b1') {
-                    currentTargetState.uniqueBucket1Count -= 1;
-                } else {
-                    currentTargetState.uniqueBucket2Count -= 1;
-                }
+            currentTargetState.b1[lastDrawnId] -= 1;
+            if (currentTargetState.b1[lastDrawnId] === 0) {
+                delete currentTargetState.b1[lastDrawnId];
+                currentTargetState.uniqueBucket1Count -= 1;
             }
 
             // Remove from history
@@ -584,18 +549,18 @@
          */
         function updateDisplay() {
             // Update Review1 Gauge
-            const review1Value = ((currentTargetState.uniqueBucket1Count / getInitialB1Total()) * 100).toFixed(2);
+            const review1Value = ((currentTargetState.uniqueBucket1Count / getInitialB2Total()) * 100).toFixed(2);
             document.getElementById('review1Gauge').value = review1Value;
             document.getElementById('review1Text').innerText = review1Value + '%';
 
             // Update Review2 Gauge
-            const review2Value = ((currentTargetState.uniqueBucket2Count / getInitialB2Total()) * 100).toFixed(2);
+            const review2Value = (((getInitialB2Total() - currentTargetState.uniqueBucket1Count) / getInitialB2Total()) * 100).toFixed(2);
             document.getElementById('review2Gauge').value = review2Value;
             document.getElementById('review2Text').innerText = review2Value + '%';
 
             // Update frequencies display
-            const b1Total = getAvailableFreq('b1');
-            const b2Total = getAvailableFreq('b2');
+            const b1Total = getTotalFreq(currentTargetState.b1);
+            const b2Total = getInitialB2Total();
 
             document.getElementById('bucket1Freq').innerText = b1Total;
             document.getElementById('bucket2Freq').innerText = b2Total;
@@ -603,33 +568,20 @@
 
         /**
          * Function to calculate the total frequency of a bucket
-         * @param {string} bucket - 'b1' or 'b2'
+         * @param {Object} bucketB1 - The b1 bucket object
          * @returns {number} - Total frequency
          */
-        function getTotalFreq(bucket) {
-            return Object.values(currentTargetState[bucket]).reduce((sum, freq) => sum + freq, 0);
-        }
-
-        /**
-         * Function to get the initial total frequency of Bucket1
-         */
-        function getInitialB1Total() {
-            // Calculate the initial total frequency based on initialFiles and defaultFrequency for b1
-            let total = 0;
-            allInitialFiles['b1'].forEach(file => {
-                const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
-                total += freq;
-            });
-            return total;
+        function getTotalFreq(bucketB1) {
+            return Object.values(bucketB1).reduce((sum, freq) => sum + freq, 0);
         }
 
         /**
          * Function to get the initial total frequency of Bucket2
          */
         function getInitialB2Total() {
-            // Calculate the initial total frequency based on initialFiles and defaultFrequency for b2
+            // Calculate the initial total frequency based on initialFiles and defaultFrequency
             let total = 0;
-            allInitialFiles['b2'].forEach(file => {
+            allInitialFiles[currentTarget].forEach(file => {
                 const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
                 total += freq;
             });
@@ -670,16 +622,11 @@
                 if (!isNaN(df) && df > 0) {
                     currentTargetState.defaultFrequency = df;
                     // Apply default frequency to elements with null frequency
-                    allInitialFiles['b1'].forEach(file => {
+                    allInitialFiles[currentTarget].forEach(file => {
                         if (file[2] === null) {
                             const id = file[0];
-                            // Since b2 is separate, no need to modify it here
-                        }
-                    });
-                    allInitialFiles['b2'].forEach(file => {
-                        if (file[2] === null) {
-                            const id = file[0];
-                            // Similarly, handle b2 if necessary
+                            // Since b2 is not tracked in state, no need to modify it
+                            // Future draws will use the updated defaultFrequency
                         }
                     });
                     dfInput.disabled = true;
@@ -764,7 +711,7 @@
 
             // Populate Bucket1
             for (const id in currentTargetState.b1) {
-                const fileDetails = allInitialFiles['b1'].find(file => file[0] == id);
+                const fileDetails = allInitialFiles[currentTarget].find(file => file[0] == id);
                 if (fileDetails) {
                     const li = document.createElement('li');
                     li.className = 'list-group-item';
@@ -773,31 +720,18 @@
                 }
             }
 
-            // Populate Bucket2
-            for (const id in currentTargetState.b2) {
-                const fileDetails = allInitialFiles['b2'].find(file => file[0] == id);
-                if (fileDetails) {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item';
-                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Drawn: ${currentTargetState.b2[id]})`;
-                    bucket2List.appendChild(li);
-                }
-            }
-
-            // Alternatively, if Bucket2 should show remaining frequencies:
-            /*
-            allInitialFiles['b2'].forEach(file => {
+            // Populate Bucket2 (from initialFiles)
+            allInitialFiles[currentTarget].forEach(file => {
                 const id = file[0];
                 const url = file[1];
                 const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
-                const drawn = currentTargetState.b2[id] || 0;
+                const drawn = currentTargetState.b1[id] || 0;
                 const remaining = Math.max(0, freq - drawn);
                 const li = document.createElement('li');
                 li.className = 'list-group-item';
                 li.innerHTML = `<a href="${url}" target="_blank">${url}</a> (Remaining: ${remaining})`;
                 bucket2List.appendChild(li);
             });
-            */
         }
 
         /**
@@ -810,7 +744,7 @@
             currentTargetState.drawHistory.forEach(entry => {
                 const li = document.createElement('li');
                 li.className = 'list-group-item';
-                li.innerHTML = `<strong>${entry.timestamp} (${entry.bucket}):</strong> <a href="${entry.url}" target="_blank">${entry.url}</a>`;
+                li.innerHTML = `<strong>${entry.timestamp}:</strong> <a href="${entry.url}" target="_blank">${entry.url}</a>`;
                 historyList.appendChild(li);
             });
         }
@@ -889,7 +823,7 @@
             <input type="text" class="form-control" id="urlPrefix" placeholder="Enter URL Prefix" title="Add a prefix to all URLs">
             <label class="form-label">URL Suffix:</label>
             <input type="text" class="form-control" id="urlSuffix" placeholder="Enter URL Suffix" title="Add a suffix to all URLs">
-            <button class="btn btn-secondary mt-2" onclick="saveUrlPrefixSuffix()" title="Save URL Prefix and Suffix">
+            <button class="btn btn-secondary mt-2" onclick="saveUrlPrefixSuffix()" title="Save URL Prefix/Suffix">
                 Save URL Prefix/Suffix
             </button>
         </div>
@@ -926,7 +860,7 @@
 
         <!-- Review Gauges -->
         <div class="gauge-container">
-            <label for="review1Gauge" class="form-label">Review1 (Unique Bucket1 Items / Initial Bucket1 Total):</label>
+            <label for="review1Gauge" class="form-label">Review1 (Unique Bucket1 Items / Initial Bucket2 Total):</label>
             <progress id="review1Gauge" class="form-range w-100" value="0" max="100" aria-label="Review1 Gauge"></progress>
             <div class="text-center">
                 <span id="review1Text">0%</span>
@@ -934,23 +868,23 @@
         </div>
 
         <div class="gauge-container">
-            <label for="review2Gauge" class="form-label">Review2 (Unique Bucket2 Items / Initial Bucket2 Total):</label>
-            <progress id="review2Gauge" class="form-range w-100" value="0" max="100" aria-label="Review2 Gauge"></progress>
+            <label for="review2Gauge" class="form-label">Review2 (Initial Bucket2 Total - Unique Bucket1 Items):</label>
+            <progress id="review2Gauge" class="form-range w-100" value="100" max="100" aria-label="Review2 Gauge"></progress>
             <div class="text-center">
-                <span id="review2Text">0%</span>
+                <span id="review2Text">100%</span>
             </div>
         </div>
 
         <!-- Bucket Lists -->
         <div class="row">
             <div class="col-md-6">
-                <h5>Bucket 1 Drawn Frequency: <span id="bucket1Freq">0</span></h5>
+                <h5>Bucket 1 Total Frequency: <span id="bucket1Freq">0</span></h5>
                 <ul class="list-group bucket-list" id="bucket1List" aria-label="Bucket 1 Items">
                     <!-- Bucket1 items will be populated here -->
                 </ul>
             </div>
             <div class="col-md-6">
-                <h5>Bucket 2 Drawn Frequency: <span id="bucket2Freq">0</span></h5>
+                <h5>Bucket 2 Total Frequency: <span id="bucket2Freq">0</span></h5>
                 <ul class="list-group bucket-list" id="bucket2List" aria-label="Bucket 2 Items">
                     <!-- Bucket2 items will be populated here -->
                 </ul>
