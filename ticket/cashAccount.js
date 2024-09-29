@@ -56,7 +56,7 @@ $('#cashForm').on('submit', function(e) {
     let amount = parseInt($('#cashAmount').val());
     if (amount > 0) {
         let record = {
-            date: new Date().toLocaleString('en-PH'),
+            date: new Date(),
             amount: amount,
             allocated: false,
             tickets: []
