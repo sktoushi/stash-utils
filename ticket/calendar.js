@@ -11,20 +11,48 @@ function getWeekStartDate(date) {
     return startDate;
 }
 
+// Array of card emojis representing the deck of cards
+const cardEmojis = [
+    '🂱', '🂲', '🂳', '🂴', // Hearts
+    '🂵', '🂶', '🂷', '🂸',
+    '🂹', '🂺', '🂻', '🂼',
+    '🂽', '🂾', '🂿', '🃀',
+    
+    '🃁', '🃂', '🃃', '🃄', // Diamonds
+    '🃅', '🃆', '🃇', '🃈',
+    '🃉', '🃊', '🃋', '🃌',
+    '🃍', '🃎', '🃏', '🃐',
+    
+    '🃑', '🃒', '🃓', '🃔', // Clubs
+    '🃕', '🃖', '🃗', '🃘',
+    '🃙', '🃚', '🃛', '🃜',
+    '🃝', '🃞', '🃟', '🃠',
+    
+    '🃡', '🃢', '🃣', '🃤', // Spades
+    '🃥', '🃦', '🃧', '🃨',
+    '🃩', '🃪', '🃫', '🃬',
+    '🃭', '🃮', '🃯', '🃰'
+];
+
+// Function to get the week number of the date
+function getWeekNumber(date) {
+    const startDate = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
+    return Math.ceil((days + startDate.getDay() + 1) / 7);
+}
+
+// Function to generate week name with card emojis and division result
 function generateWeekName(date) {
     let weekNumber = getWeekNumber(date);
     let yearDigits = date.getFullYear().toString().slice(-2);
-    let weekNames = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf'];
-    let weekName = weekNames[weekNumber % weekNames.length];
-    return `${yearDigits}W${weekNumber}-${weekName}`;
-}
+    
+    // Use the card emojis as week names
+    let weekName = cardEmojis[weekNumber % cardEmojis.length];
 
-function getWeekNumber(date) {
-    let d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    let dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    let yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    // Calculate the division result and format it to three decimals
+    let divisionResult = (weekNumber / 52).toFixed(3);
+
+    return `${yearDigits}W${weekNumber}-${weekName}${divisionResult}`;
 }
 
 function renderCalendar() {
