@@ -106,3 +106,30 @@
     color: rgba(255, 255, 255, 0.7);
 }
 
+/* Ensure the table takes full width */
+.week-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+/* Set equal width and height for each day cell */
+.day-cell {
+    width: 14.28%; /* 100% divided by 7 days */
+    height: 150px; /* Adjust the height as needed */
+    vertical-align: top;
+    position: relative;
+}
+
+/* Center the content within the cell */
+.cell-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+/* Make serial numbers small */
+.day-cell small {
+    font-size: 0.8em;
+}
