@@ -30,6 +30,7 @@
         <!-- Calendar will be populated here -->
     </div>
     <button class="btn btn-secondary mt-3" id="prevWeekBtn">Previous Week</button>
+	<button class="btn btn-secondary mt-3" id="currentDateBtn">Loading...</button>
     <button class="btn btn-secondary mt-3" id="nextWeekBtn">Next Week</button>
 
     <!-- Goals Section -->
@@ -174,6 +175,31 @@
 <script src="goals.js"></script>
 <script src="calendar.js"></script>
 <script src="main.js"></script>
+
+<script>
+    // Function to format date as YYYY/MM/DD
+    function getCurrentFormattedDate() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+        const dd = String(today.getDate()).padStart(2, '0');
+        return `${yyyy}/${mm}/${dd}`;
+    }
+
+    // Set the button label and add click event
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentDateBtn = document.getElementById('currentDateBtn');
+        if (currentDateBtn) {
+            // Set the button label to the current date
+            currentDateBtn.textContent = getCurrentFormattedDate();
+            
+            // Add click event listener to redirect
+            currentDateBtn.addEventListener('click', function() {
+                window.location.href = "https://sktoushi.github.io/stash-utils/ticket/log.html";
+            });
+        }
+    });
+</script>
 
 </body>
 </html>
