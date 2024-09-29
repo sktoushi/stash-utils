@@ -1,12 +1,38 @@
 // Main JavaScript File
 
 $(document).ready(function() {
-    // All modules are loaded and ready
-    // Sync to current week on load
-    currentWeekStartDate = getWeekStartDate(new Date());
-    renderCalendar();
-    renderCashTable();
-    renderGoalTable();
+    // Function to initialize the app after data is loaded
+    function initializeApp() {
+        currentWeekStartDate = getWeekStartDate(new Date());
+        renderCalendar();
+        renderCashTable();
+        renderGoalTable();
+    }
+
+    // Check if keys exist in localStorage
+    if (!localStorage.getItem('config') || !localStorage.getItem('cashRecords') || !localStorage.getItem('goals')) {
+        // Keys do not exist, load from ticket-state.json
+        $.getJSON('ticket-state.json', function(data) {
+            // Save data into localStorage
+            if (data.config) {
+                localStorage.setItem('config', JSON.stringify(data.config));
+            }
+            if (data.cashRecords) {
+                localStorage.setItem('cashRecords', JSON.stringify(data.cashRecords));
+            }
+            if (data.goals) {
+                localStorage.setItem('goals', JSON.stringify(data.goals));
+            }
+            // Now that data is loaded, initialize the app
+            initializeApp();
+        }).fail(function(jqxhr, textStatus, error) {
+            console.error("Error loading state from ticket-state.json: ", textStatus, error);
+            alert('Could not load initial state from ticket-state.json.');
+        });
+    } else {
+        // Local storage has data, proceed with initialization
+        initializeApp();
+    }
 
     // Import/Export State Event Handlers
     $('#exportStateBtn').on('click', function() {
