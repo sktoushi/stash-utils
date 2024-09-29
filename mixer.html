@@ -15,8 +15,14 @@
         body {
             padding: 20px;
         }
-        #inputTextArea, #outputTextArea {
-            height: 300px;
+        #inputTextArea {
+            height: 200px;
+        }
+        .sentence-record {
+            margin-bottom: 15px;
+        }
+        .original-sentence {
+            display: none;
         }
     </style>
 </head>
@@ -32,7 +38,7 @@
     </div>
 
     <!-- Textarea for input -->
-    <div class="form-group">
+    <div class="form-group" id="inputArea">
         <label for="inputTextArea">Input Text:</label>
         <textarea class="form-control" id="inputTextArea" rows="10"></textarea>
     </div>
@@ -42,13 +48,12 @@
         <button class="btn btn-primary" id="jumbleButton">Jumble</button>
         <button class="btn btn-secondary" id="importButton">Import Data</button>
         <button class="btn btn-secondary" id="exportButton">Export Data</button>
+        <button class="btn btn-danger" id="resetButton">Reset</button>
     </div>
 
-    <!-- Textarea for output -->
-    <div class="form-group">
-        <label for="outputTextArea">Output Text:</label>
-        <textarea class="form-control" id="outputTextArea" rows="10" readonly></textarea>
-    </div>
+    <!-- Output area -->
+    <div id="outputArea"></div>
+
 </div>
 
 <!-- JavaScript -->
@@ -66,8 +71,16 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById('jumbleButton').addEventListener('click', function() {
         var inputText = document.getElementById('inputTextArea').value;
         var difficulty = parseInt(difficultySlider.value);
-        var outputText = jumbleText(inputText, difficulty);
-        document.getElementById('outputTextArea').value = outputText;
+
+        // Hide the input area
+        document.getElementById('inputArea').style.display = 'none';
+
+        // Clear previous output
+        var outputArea = document.getElementById('outputArea');
+        outputArea.innerHTML = '';
+
+        // Process and display the sentences
+        displayJumbledSentences(inputText, difficulty);
     });
 
     // Import data button click event
@@ -80,6 +93,13 @@ document.addEventListener("DOMContentLoaded", function() {
         exportData();
     });
 
+    // Reset button click event
+    document.getElementById('resetButton').addEventListener('click', function() {
+        document.getElementById('inputTextArea').value = '';
+        document.getElementById('inputArea').style.display = 'block';
+        document.getElementById('outputArea').innerHTML = '';
+    });
+
     // Handle 'target' URL parameter
     var urlParams = new URLSearchParams(window.location.search);
     var target = urlParams.get('target');
@@ -88,23 +108,52 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// Function to jumble text
-function jumbleText(text, difficulty) {
-    // Split text into paragraphs
-    var paragraphs = text.split(/\n+/);
-    var outputParagraphs = paragraphs.map(function(paragraph) {
-        // Split paragraph into sentences
-        var sentences = paragraph.match(/[^\.!\?]+[\.!\?]+["']?|.+$/g);
-        if (sentences === null) return paragraph;
+// Function to display jumbled sentences
+function displayJumbledSentences(text, difficulty) {
+    var outputArea = document.getElementById('outputArea');
+    // Split text into sentences
+    var sentences = text.match(/[^\.!\?]+[\.!\?]+["']?|.+$/g);
+    if (sentences === null) return;
 
-        var outputSentences = sentences.map(function(sentence) {
-            return jumbleSentence(sentence, difficulty);
+    sentences.forEach(function(sentence, index) {
+        var originalSentence = sentence.trim();
+        var jumbledSentence = jumbleSentence(originalSentence, difficulty);
+
+        // Create sentence record div
+        var sentenceDiv = document.createElement('div');
+        sentenceDiv.className = 'sentence-record';
+
+        // Jumbled sentence paragraph
+        var jumbledP = document.createElement('p');
+        jumbledP.textContent = jumbledSentence;
+        sentenceDiv.appendChild(jumbledP);
+
+        // Original sentence paragraph (hidden)
+        var originalP = document.createElement('p');
+        originalP.textContent = originalSentence;
+        originalP.className = 'original-sentence';
+        sentenceDiv.appendChild(originalP);
+
+        // Reveal button
+        var revealButton = document.createElement('button');
+        revealButton.className = 'btn btn-info btn-sm';
+        revealButton.textContent = 'Reveal';
+        revealButton.addEventListener('click', function() {
+            originalP.style.display = 'block';
         });
+        sentenceDiv.appendChild(revealButton);
 
-        return outputSentences.join(' ');
+        // Hide button
+        var hideButton = document.createElement('button');
+        hideButton.className = 'btn btn-warning btn-sm ml-2';
+        hideButton.textContent = 'Hide';
+        hideButton.addEventListener('click', function() {
+            sentenceDiv.style.display = 'none';
+        });
+        sentenceDiv.appendChild(hideButton);
+
+        outputArea.appendChild(sentenceDiv);
     });
-
-    return outputParagraphs.join('\n\n');
 }
 
 // Function to jumble a sentence based on difficulty
@@ -180,7 +229,14 @@ function importData() {
 
 // Function to export data
 function exportData() {
-    var data = document.getElementById('outputTextArea').value;
+    var outputTexts = [];
+    var sentenceRecords = document.querySelectorAll('.sentence-record');
+    sentenceRecords.forEach(function(record) {
+        var jumbledSentence = record.querySelector('p').textContent;
+        outputTexts.push(jumbledSentence);
+    });
+    var data = outputTexts.join('\n');
+
     var blob = new Blob([data], { type: 'text/plain' });
     var url = window.URL.createObjectURL(blob);
     var a = document.createElement('a');
