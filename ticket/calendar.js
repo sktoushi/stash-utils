@@ -32,7 +32,7 @@ function renderCalendar() {
     let calendarHtml = '<table class="table table-bordered"><tr>';
 	for (let i = 0; i < 7; i++) {
 		let date = new Date(weekStart);
-		date.setDate(weekStart.getDate() + i);
+		// date.setDate(weekStart.getDate() + i);
 		let dateString = date.toISOString().split('T')[0];
 		let tickets = getValidTickets().filter(ticket => ticket.date === dateString);
 		
