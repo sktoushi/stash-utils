@@ -56,7 +56,7 @@ $('#cashForm').on('submit', function(e) {
     let amount = parseInt($('#cashAmount').val());
     if (amount > 0) {
         let record = {
-            date: new Date(),
+            date: new Date().toLocaleString('en-PH'),
             amount: amount,
             allocated: false,
             tickets: []
@@ -176,65 +176,32 @@ function openAllocationModal(record, index) {
                 }
             }
         } else if (option === 'period') {
-            // Parse the start and end dates from input fields
             let startDate = new Date($('#startDate').val());
             let endDate = new Date($('#endDate').val());
-            
-            console.log('Start Date:', startDate);
-            console.log('End Date:', endDate);
-            
-            // Check if end date is before start date
             if (endDate < startDate) {
-                console.warn('End date is before start date.');
                 alert('End date must be after start date.');
                 return;
             }
-            
-            // Initialize totalDays counter
             let totalDays = 0;
             let tempDate = new Date(startDate);
-            
-            // Calculate total weekdays between startDate and endDate
             while (tempDate <= endDate) {
-                const dayOfWeek = tempDate.getDay();
-                if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday or Saturday
+                if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) {
                     totalDays++;
                 }
                 tempDate.setDate(tempDate.getDate() + 1);
             }
-            
-            console.log('Total Weekdays:', totalDays);
-            
-            // Check if there are no weekdays in the selected period
             if (totalDays === 0) {
-                console.warn('No weekdays found in the selected period.');
                 alert('No weekdays in the selected period.');
                 return;
             }
-            
-            // Define the amount per day (ensure ticketUnit is defined)
             let amountPerDay = ticketUnit;
-            console.log('Amount Per Day:', amountPerDay);
-            
-            // Reset tempDate to startDate for ticket creation
             tempDate = new Date(startDate);
-            
-            // Initialize tickets array if not already defined
-            if (typeof tickets === 'undefined') {
-                var tickets = [];
-            }
-            
             while (tempDate <= endDate) {
-                const dayOfWeek = tempDate.getDay();
-                if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday or Saturday
-                    const ticket = createTicket(tempDate, amountPerDay);
-                    tickets.push(ticket);
-                    console.log('Ticket Created:', ticket);
+                if (tempDate.getDay() !== 0 && tempDate.getDay() !== 6) {
+                    tickets.push(createTicket(tempDate, amountPerDay));
                 }
                 tempDate.setDate(tempDate.getDate() + 1);
             }
-            
-            console.log('All Tickets:', tickets);
         }
         // Assign tickets to record
         record.tickets = tickets;
