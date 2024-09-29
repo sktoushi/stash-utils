@@ -4,8 +4,8 @@
   },
   "cashRecords": [
     {
-      "date": "9/29/2024, 4:11:05 PM",
-      "amount": 2000,
+      "date": "9/29/2024, 5:33:59 PM",
+      "amount": 1500,
       "allocated": true,
       "tickets": [
         {
@@ -14,8 +14,7 @@
           "consumed": 0,
           "valid": true,
           "stashed": false,
-          "serial": "TICKET-5KF1X68PK",
-          "backgroundColor": "#5F9383"
+          "serial": "SN24-JCWFADOL5"
         },
         {
           "date": "2024-10-01",
@@ -23,8 +22,7 @@
           "consumed": 0,
           "valid": true,
           "stashed": false,
-          "serial": "TICKET-U1CUJXMB4",
-          "backgroundColor": "#351575"
+          "serial": "SN24-3FTNXRWD7"
         },
         {
           "date": "2024-10-02",
@@ -32,24 +30,14 @@
           "consumed": 0,
           "valid": true,
           "stashed": false,
-          "serial": "TICKET-S3UPP2PQQ",
-          "backgroundColor": "#FA31F2"
-        },
-        {
-          "date": "2024-10-03",
-          "amount": 500,
-          "consumed": 0,
-          "valid": true,
-          "stashed": false,
-          "serial": "TICKET-Q4IM44DGZ",
-          "backgroundColor": "#086019"
+          "serial": "SN24-Q5IJCOZLT"
         }
       ]
     }
   ],
   "goals": [
     {
-      "name": "Land Cruiser 300",
+      "name": "Land Cruiser",
       "goalAmount": 6000000,
       "currentAmount": 0,
       "purchased": false,

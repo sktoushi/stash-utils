@@ -229,7 +229,7 @@ function createTicket(date, amount) {
 }
 
 function generateSerial() {
-    return 'TICKET-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    return 'SN' + (new Date().getFullYear() % 100) + "-" + Math.random().toString(36).substr(2, 9).toUpperCase();
 }
 
 function unallocateCash(index) {

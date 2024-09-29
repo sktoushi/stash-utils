@@ -58,11 +58,21 @@ function renderCalendar() {
             dayClass = 'bg-success text-white';
         }
 
-        // Generate calendar HTML
-        calendarHtml += `<td class="${dayClass}">
-            ${date.toDateString()}<br>
-            ${tickets.length > 0 ? 'Ticket Allocated' : 'No Ticket'}
-        </td>`;
+        // Generate the content for the cell
+        let cellContent = `${date.toDateString()}<br>`;
+
+        if (tickets.length > 0) {
+            cellContent += '<ul class="list-unstyled mb-0">';
+            tickets.forEach(ticket => {
+                cellContent += `<li>${ticket.serial}</li>`;
+            });
+            cellContent += '</ul>';
+        } else {
+            cellContent += 'No Ticket';
+        }
+
+        // Append the cell to the calendar HTML
+        calendarHtml += `<td class="${dayClass}">${cellContent}</td>`;
     }
 
     calendarHtml += '</tr></table>';
