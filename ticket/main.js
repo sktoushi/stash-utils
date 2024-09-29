@@ -1,5 +1,3 @@
-// Main JavaScript File
-
 $(document).ready(function() {
     // Function to initialize the app after data is loaded
     function initializeApp() {
@@ -9,9 +7,8 @@ $(document).ready(function() {
         renderGoalTable();
     }
 
-    // Check if keys exist in localStorage
-    if (!localStorage.getItem('config') || !localStorage.getItem('cashRecords') || !localStorage.getItem('goals')) {
-        // Keys do not exist, load from ticket-state.json
+    // Function to load state from ticket-state.json
+    function loadStateFromJSON() {
         $.getJSON('ticket-state.json', function(data) {
             // Save data into localStorage
             if (data.config) {
@@ -29,6 +26,12 @@ $(document).ready(function() {
             console.error("Error loading state from ticket-state.json: ", textStatus, error);
             alert('Could not load initial state from ticket-state.json.');
         });
+    }
+
+    // Check if keys exist in localStorage
+    if (!localStorage.getItem('config') || !localStorage.getItem('cashRecords') || !localStorage.getItem('goals')) {
+        // Keys do not exist, load from ticket-state.json
+        loadStateFromJSON();
     } else {
         // Local storage has data, proceed with initialization
         initializeApp();
@@ -140,6 +143,11 @@ function importState(file) {
 
 // Reset State Function
 function resetState() {
-    localStorage.clear();
-    location.reload();
+    // Remove specific keys from localStorage
+    localStorage.removeItem('config');
+    localStorage.removeItem('cashRecords');
+    localStorage.removeItem('goals');
+
+    // Load data from 'ticket-state.json'
+    loadStateFromJSON();
 }
