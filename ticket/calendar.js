@@ -52,12 +52,12 @@ function generateWeekName(date) {
     // Calculate the division result and format it to three decimals
     let divisionResult = (weekNumber / 52).toFixed(3);
 
-    return `${yearDigits}W${weekNumber}-${weekName}${divisionResult}`;
+    return `${yearDigits}W${weekNumber}-${weekName}-${divisionResult}`;
 }
 
 function renderCalendar() {
     let weekStart = new Date(currentWeekStartDate);
-    let calendarHtml = '<table class="table table-bordered"><tr>';
+    let calendarHtml = '<table class="table table-bordered week-table"><tr>';
     for (let i = 0; i < 7; i++) {
         let date = new Date(weekStart);
         date.setDate(weekStart.getDate() + i);
@@ -74,30 +74,32 @@ function renderCalendar() {
         let dayOfWeek = date.getDay();
 
         // Initialize a class for background and text colors based on the day of the week
-        let dayClass = '';
+        let dayClass = 'day-cell';
         if (dayOfWeek === 0) {
             // Sunday (red background)
-            dayClass = 'bg-danger text-white';
+            dayClass += ' bg-danger text-white';
         } else if (dayOfWeek === 6) {
             // Saturday (gray background)
-            dayClass = 'bg-secondary text-white';
+            dayClass += ' bg-secondary text-white';
         } else if (tickets.length > 0) {
             // Default for days with tickets (green background)
-            dayClass = 'bg-success text-white';
+            dayClass += ' bg-success text-white';
         }
 
         // Generate the content for the cell
-        let cellContent = `${new Date().getMonth() + 1}/${new Date().getDate()}<br>`;
+        let cellContent = `<div class="cell-content">${date.getMonth() + 1}/${date.getDate()}<br>`;
 
         if (tickets.length > 0) {
             cellContent += '<ul class="list-unstyled mb-0">';
             tickets.forEach(ticket => {
-                cellContent += `<li>${ticket.serial}</li>`;
+                cellContent += `<li><small>${ticket.serial}</small></li>`;
             });
             cellContent += '</ul>';
         } else {
-            cellContent += 'No Ticket';
+            cellContent += '<small>No Ticket</small>';
         }
+
+        cellContent += '</div>';
 
         // Append the cell to the calendar HTML
         calendarHtml += `<td class="${dayClass}">${cellContent}</td>`;
