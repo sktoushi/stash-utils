@@ -59,7 +59,7 @@ function renderCalendar() {
         }
 
         // Generate the content for the cell
-        let cellContent = `${date.toDateString()}<br>`;
+        let cellContent = `${new Date().getMonth() + 1}/${new Date().getDate()}<br>`;
 
         if (tickets.length > 0) {
             cellContent += '<ul class="list-unstyled mb-0">';
