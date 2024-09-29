@@ -32,31 +32,40 @@ function renderCalendar() {
     let calendarHtml = '<table class="table table-bordered"><tr>';
 	for (let i = 0; i < 7; i++) {
 		let date = new Date(weekStart);
-		// date.setDate(weekStart.getDate() + i);
+		date.setDate(weekStart.getDate() + i);
 		let dateString = date.toISOString().split('T')[0];
+		console.log(`Date String: ${dateString}`);
+		
 		let tickets = getValidTickets().filter(ticket => ticket.date === dateString);
+		console.log(`Tickets on ${dateString}:`, tickets);
 		
 		// Determine the day of the week
 		let dayOfWeek = date.getDay();
+		console.log(`Day of Week for ${dateString}: ${dayOfWeek}`);
 		
 		// Initialize a class for background and text colors based on the day of the week
 		let dayClass = '';
 		if (dayOfWeek === 0) {
-			// Sunday (red background)
-			dayClass = 'bg-danger text-white';
+		    // Sunday (red background)
+		    dayClass = 'bg-danger text-white';
 		} else if (dayOfWeek === 6) {
-			// Saturday (gray background)
-			dayClass = 'bg-secondary text-white';
+		    // Saturday (gray background)
+		    dayClass = 'bg-secondary text-white';
 		} else if (tickets.length > 0) {
-			// Default for days with tickets (green background)
-			dayClass = 'bg-success text-white';
+		    // Default for days with tickets (green background)
+		    dayClass = 'bg-success text-white';
+		} else {
+		    dayClass = 'bg-light text-dark'; // Optional default for other days
 		}
+		
+		console.log(`Day Class for ${dateString}: ${dayClass}`);
 		
 		// Generate calendar HTML
 		calendarHtml += `<td class="${dayClass}">
-			${date.toDateString()}<br>
-			${tickets.length > 0 ? 'Ticket Allocated' : 'No Ticket'}
+		    ${date.toDateString()}<br>
+		    ${tickets.length > 0 ? 'Ticket Allocated' : 'No Ticket'}
 		</td>`;
+
 	}
 
     calendarHtml += '</tr></table>';
