@@ -96,7 +96,7 @@
         <div class="card-body">
             <div class="form-group">
                 <label for="storageLocationInput">Storage Location:</label>
-                <input type="text" class="form-control" id="storageLocationInput" value="https://sktoushi.github.io/stash-utils/mixer/files/" readonly>
+                <input type="text" class="form-control" id="storageLocationInput" value="https://github.com/sktoushi/stash-utils/upload/main/mixer/files/" readonly>
             </div>
             <div class="form-group">
                 <label for="stashLocationInput">Stash Location:</label>
@@ -136,286 +136,565 @@
 
 <!-- JavaScript -->
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    var swiper;
-    var stashMixerUrl = '';
+    // Declare stashFilename in the global scope
     var stashFilename = '';
 
-    // Configuration Edit/Save functionality
-    var storageLocationInput = document.getElementById('storageLocationInput');
-    var stashLocationInput = document.getElementById('stashLocationInput');
-    var editConfigButton = document.getElementById('editConfigButton');
-    var saveConfigButton = document.getElementById('saveConfigButton');
+    document.addEventListener("DOMContentLoaded", function() {
+        var swiper;
+        var stashMixerUrl = '';
 
-    editConfigButton.addEventListener('click', function() {
-        storageLocationInput.removeAttribute('readonly');
-        stashLocationInput.removeAttribute('readonly');
-        editConfigButton.style.display = 'none';
-        saveConfigButton.style.display = 'inline-block';
-    });
+        // Configuration Edit/Save functionality
+        var storageLocationInput = document.getElementById('storageLocationInput');
+        var stashLocationInput = document.getElementById('stashLocationInput');
+        var editConfigButton = document.getElementById('editConfigButton');
+        var saveConfigButton = document.getElementById('saveConfigButton');
 
-    saveConfigButton.addEventListener('click', function() {
-        storageLocationInput.setAttribute('readonly', 'readonly');
-        stashLocationInput.setAttribute('readonly', 'readonly');
-        editConfigButton.style.display = 'inline-block';
-        saveConfigButton.style.display = 'none';
-    });
-
-    // Jumble button click event
-    document.getElementById('jumbleButton').addEventListener('click', function() {
-        var inputText = document.getElementById('inputTextArea').value;
-
-        // Hide the input area
-        document.getElementById('inputArea').style.display = 'none';
-
-        // Clear previous output
-        var swiperWrapper = document.querySelector('.swiper-wrapper');
-        swiperWrapper.innerHTML = '';
-
-        // Show the swiper container
-        document.getElementById('outputArea').style.display = 'block';
-
-        // Process and display the sentences
-        displayJumbledSentences(inputText);
-
-        // Initialize Swiper
-        if (swiper) swiper.destroy(true, true); // Destroy previous instance if exists
-        swiper = new Swiper('.swiper-container', {
-            loop: false,
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-        });
-    });
-
-    // Import data button click event
-    document.getElementById('importButton').addEventListener('click', function() {
-        importData();
-    });
-
-    // Export data button click event
-    document.getElementById('exportButton').addEventListener('click', function() {
-        exportData();
-    });
-
-    // Reset button click event
-    document.getElementById('resetButton').addEventListener('click', function() {
-        document.getElementById('inputTextArea').value = '';
-        document.getElementById('inputArea').style.display = 'block';
-        document.getElementById('outputArea').style.display = 'none';
-        // Hide the Stash button
-        document.getElementById('stashButton').style.display = 'none';
-    });
-
-    // Stash button click event
-    document.getElementById('stashButton').addEventListener('click', function() {
-        var stashUrl = stashLocationInput.value;
-        var issueTitle = encodeURIComponent(stashFilename);
-        var issueBody = encodeURIComponent('[' + stashFilename + '](' + stashMixerUrl + ')');
-        var fullUrl = stashUrl + '?title=' + issueTitle + '&body=' + issueBody;
-        window.location.href = fullUrl;
-    });
-
-    // Handle 'data' URL parameter
-    var urlParams = new URLSearchParams(window.location.search);
-    var dataParam = urlParams.get('data');
-    if (dataParam) {
-        loadData(dataParam);
-    }
-});
-
-// Function to display jumbled sentences with per-sentence difficulty sliders
-function displayJumbledSentences(text) {
-    var swiperWrapper = document.querySelector('.swiper-wrapper');
-    // Split text into sentences
-    var sentences = text.match(/[^\.!\?]+[\.!\?]+["']?|.+$/g);
-    if (sentences === null) return;
-
-    sentences.forEach(function(sentence, index) {
-        var originalSentence = sentence.trim();
-
-        // Generate random difficulty between 0 and 100
-        var difficulty = Math.floor(Math.random() * 101);
-
-        // Jumble the sentence with the difficulty
-        var jumbledSentence = jumbleSentence(originalSentence, difficulty);
-
-        // Generate a random hex color
-        var hexColor = getRandomHexColor();
-
-        // Create swiper slide
-        var swiperSlide = document.createElement('div');
-        swiperSlide.className = 'swiper-slide';
-
-        // Create card
-        var cardDiv = document.createElement('div');
-        cardDiv.className = 'card suica-card';
-        cardDiv.style.backgroundColor = hexColor;
-
-        // Hex code display
-        var hexCodeSpan = document.createElement('span');
-        hexCodeSpan.className = 'hex-code';
-        hexCodeSpan.textContent = hexColor;
-        cardDiv.appendChild(hexCodeSpan);
-
-        // Card body
-        var cardBody = document.createElement('div');
-        cardBody.className = 'card-body';
-
-        // Jumbled sentence paragraph
-        var jumbledP = document.createElement('p');
-        jumbledP.className = 'jumbled-sentence card-text';
-        jumbledP.textContent = jumbledSentence;
-        cardBody.appendChild(jumbledP);
-
-        // Original sentence paragraph (hidden)
-        var originalP = document.createElement('p');
-        originalP.textContent = originalSentence;
-        originalP.className = 'original-sentence card-text';
-        originalP.style.display = 'none';
-        cardBody.appendChild(originalP);
-
-        // Difficulty Slider
-        var sliderDiv = document.createElement('div');
-        sliderDiv.className = 'form-group slider-container';
-
-        var sliderLabel = document.createElement('label');
-        sliderLabel.textContent = 'Difficulty: ';
-
-        var sliderValueSpan = document.createElement('span');
-        sliderValueSpan.className = 'sentence-difficulty-value';
-        sliderValueSpan.textContent = difficulty;
-
-        sliderLabel.appendChild(sliderValueSpan);
-
-        var sliderInput = document.createElement('input');
-        sliderInput.type = 'range';
-        sliderInput.className = 'form-control-range sentence-difficulty-slider';
-        sliderInput.min = 0;
-        sliderInput.max = 100;
-        sliderInput.value = difficulty;
-
-        sliderDiv.appendChild(sliderLabel);
-        sliderDiv.appendChild(sliderInput);
-        cardBody.appendChild(sliderDiv);
-
-        // Jumble Button
-        var jumbleButton = document.createElement('button');
-        jumbleButton.className = 'btn btn-primary btn-sm';
-        jumbleButton.textContent = 'Jumble';
-        cardBody.appendChild(jumbleButton);
-
-        // Reveal button
-        var revealButton = document.createElement('button');
-        revealButton.className = 'btn btn-info btn-sm ml-2';
-        revealButton.textContent = 'Reveal';
-        cardBody.appendChild(revealButton);
-
-        // Hide button
-        var hideButton = document.createElement('button');
-        hideButton.className = 'btn btn-warning btn-sm ml-2';
-        hideButton.textContent = 'Hide';
-        cardBody.appendChild(hideButton);
-
-        // Event Listeners
-        sliderInput.addEventListener('input', function() {
-            var newDifficulty = parseInt(sliderInput.value);
-            sliderValueSpan.textContent = newDifficulty;
+        editConfigButton.addEventListener('click', function() {
+            storageLocationInput.removeAttribute('readonly');
+            stashLocationInput.removeAttribute('readonly');
+            editConfigButton.style.display = 'none';
+            saveConfigButton.style.display = 'inline-block';
         });
 
-        jumbleButton.addEventListener('click', function() {
-            var currentDifficulty = parseInt(sliderInput.value);
-            var newJumbledSentence = jumbleSentence(originalSentence, currentDifficulty);
-            jumbledP.textContent = newJumbledSentence;
+        saveConfigButton.addEventListener('click', function() {
+            storageLocationInput.setAttribute('readonly', 'readonly');
+            stashLocationInput.setAttribute('readonly', 'readonly');
+            editConfigButton.style.display = 'inline-block';
+            saveConfigButton.style.display = 'none';
         });
 
-        revealButton.addEventListener('click', function() {
-            originalP.style.display = 'block';
+        // Jumble button click event
+        document.getElementById('jumbleButton').addEventListener('click', function() {
+            var inputText = document.getElementById('inputTextArea').value;
+
+            // Hide the input area
+            document.getElementById('inputArea').style.display = 'none';
+
+            // Clear previous output
+            var swiperWrapper = document.querySelector('.swiper-wrapper');
+            swiperWrapper.innerHTML = '';
+
+            // Show the swiper container
+            document.getElementById('outputArea').style.display = 'block';
+
+            // Process and display the sentences
+            displayJumbledSentences(inputText);
+
+            // Initialize Swiper
+            if (swiper) swiper.destroy(true, true); // Destroy previous instance if exists
+            swiper = new Swiper('.swiper-container', {
+                loop: false,
+                pagination: {
+                    el: '.swiper-pagination',
+                    clickable: true,
+                },
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+            });
         });
 
-        hideButton.addEventListener('click', function() {
-            swiper.slideNext();
+        // Import data button click event
+        document.getElementById('importButton').addEventListener('click', function() {
+            importData();
         });
 
-        cardDiv.appendChild(cardBody);
-        swiperSlide.appendChild(cardDiv);
-        swiperWrapper.appendChild(swiperSlide);
-    });
-}
+        // Export data button click event
+        document.getElementById('exportButton').addEventListener('click', function() {
+            exportData();
+        });
 
-// Function to jumble a sentence based on difficulty
-function jumbleSentence(sentence, difficulty) {
-    // Remove leading/trailing whitespace
-    sentence = sentence.trim();
+        // Reset button click event
+        document.getElementById('resetButton').addEventListener('click', function() {
+            document.getElementById('inputTextArea').value = '';
+            document.getElementById('inputArea').style.display = 'block';
+            document.getElementById('outputArea').style.display = 'none';
+            // Hide the Stash button
+            document.getElementById('stashButton').style.display = 'none';
+        });
 
-    // Split sentence into words, keeping punctuation
-    var words = sentence.match(/\b[\w']+\b|[^\w\s]/g);
-    if (words === null) return sentence;
+        // Stash button click event
+        document.getElementById('stashButton').addEventListener('click', function() {
+            var stashUrl = stashLocationInput.value;
+            var mixerPageUrl = 'https://sktoushi.github.io/stash-utils/mixer/mixer.html?data=' + encodeURIComponent(stashFilename);
+            var issueTitle = encodeURIComponent(mixerPageUrl);
+            var issueBody = encodeURIComponent(mixerPageUrl);
+            var fullUrl = stashUrl + '?title=' + issueTitle + '&body=' + issueBody;
+            window.location.href = fullUrl;
+        });
 
-    // Get indices of actual words (excluding punctuation)
-    var wordIndices = [];
-    for (var i = 0; i < words.length; i++) {
-        if (/^\b[\w']+\b$/.test(words[i])) {
-            wordIndices.push(i);
+        // Handle 'data' URL parameter
+        var urlParams = new URLSearchParams(window.location.search);
+        var dataParam = urlParams.get('data');
+        if (dataParam) {
+            stashFilename = dataParam; // Set the global stashFilename
+            loadData(dataParam);
+            // Show the Stash button
+            document.getElementById('stashButton').style.display = 'inline-block';
         }
+    });
+
+    // Function to display jumbled sentences with per-sentence difficulty sliders
+    function displayJumbledSentences(text) {
+        var swiperWrapper = document.querySelector('.swiper-wrapper');
+        // Split text into sentences
+        var sentences = text.match(/[^\.!\?]+[\.!\?]+["']?|.+$/g);
+        if (sentences === null) return;
+
+        sentences.forEach(function(sentence, index) {
+            var originalSentence = sentence.trim();
+
+            // Generate random difficulty between 0 and 100
+            var difficulty = Math.floor(Math.random() * 101);
+
+            // Jumble the sentence with the difficulty
+            var jumbledSentence = jumbleSentence(originalSentence, difficulty);
+
+            // Generate a random hex color
+            var hexColor = getRandomHexColor();
+
+            // Create swiper slide
+            var swiperSlide = document.createElement('div');
+            swiperSlide.className = 'swiper-slide';
+
+            // Create card
+            var cardDiv = document.createElement('div');
+            cardDiv.className = 'card suica-card';
+            cardDiv.style.backgroundColor = hexColor;
+
+            // Hex code display
+            var hexCodeSpan = document.createElement('span');
+            hexCodeSpan.className = 'hex-code';
+            hexCodeSpan.textContent = hexColor;
+            cardDiv.appendChild(hexCodeSpan);
+
+            // Card body
+            var cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
+
+            // Jumbled sentence paragraph
+            var jumbledP = document.createElement('p');
+            jumbledP.className = 'jumbled-sentence card-text';
+            jumbledP.textContent = jumbledSentence;
+            cardBody.appendChild(jumbledP);
+
+            // Original sentence paragraph (hidden)
+            var originalP = document.createElement('p');
+            originalP.textContent = originalSentence;
+            originalP.className = 'original-sentence card-text';
+            originalP.style.display = 'none';
+            cardBody.appendChild(originalP);
+
+            // Difficulty Slider
+            var sliderDiv = document.createElement('div');
+            sliderDiv.className = 'form-group slider-container';
+
+            var sliderLabel = document.createElement('label');
+            sliderLabel.textContent = 'Difficulty: ';
+
+            var sliderValueSpan = document.createElement('span');
+            sliderValueSpan.className = 'sentence-difficulty-value';
+            sliderValueSpan.textContent = difficulty;
+
+            sliderLabel.appendChild(sliderValueSpan);
+
+            var sliderInput = document.createElement('input');
+            sliderInput.type = 'range';
+            sliderInput.className = 'form-control-range sentence-difficulty-slider';
+            sliderInput.min = 0;
+            sliderInput.max = 100;
+            sliderInput.value = difficulty;
+
+            sliderDiv.appendChild(sliderLabel);
+            sliderDiv.appendChild(sliderInput);
+            cardBody.appendChild(sliderDiv);
+
+            // Jumble Button
+            var jumbleButton = document.createElement('button');
+            jumbleButton.className = 'btn btn-primary btn-sm';
+            jumbleButton.textContent = 'Jumble';
+            cardBody.appendChild(jumbleButton);
+
+            // Reveal button
+            var revealButton = document.createElement('button');
+            revealButton.className = 'btn btn-info btn-sm ml-2';
+            revealButton.textContent = 'Reveal';
+            cardBody.appendChild(revealButton);
+
+            // Hide button
+            var hideButton = document.createElement('button');
+            hideButton.className = 'btn btn-warning btn-sm ml-2';
+            hideButton.textContent = 'Hide';
+            cardBody.appendChild(hideButton);
+
+            // Event Listeners
+            sliderInput.addEventListener('input', function() {
+                var newDifficulty = parseInt(sliderInput.value);
+                sliderValueSpan.textContent = newDifficulty;
+            });
+
+            jumbleButton.addEventListener('click', function() {
+                var currentDifficulty = parseInt(sliderInput.value);
+                var newJumbledSentence = jumbleSentence(originalSentence, currentDifficulty);
+                jumbledP.textContent = newJumbledSentence;
+            });
+
+            revealButton.addEventListener('click', function() {
+                originalP.style.display = 'block';
+            });
+
+            hideButton.addEventListener('click', function() {
+                swiper.slideNext();
+            });
+
+            cardDiv.appendChild(cardBody);
+            swiperSlide.appendChild(cardDiv);
+            swiperWrapper.appendChild(swiperSlide);
+        });
     }
 
-    // Shuffle words based on difficulty
-    var shuffledIndices = wordIndices.slice();
-    if (difficulty > 0) {
-        for (var i = shuffledIndices.length - 1; i > 0; i--) {
-            if (Math.random() < (difficulty / 100)) {
-                var j = Math.floor(Math.random() * (i + 1));
-                var temp = shuffledIndices[i];
-                shuffledIndices[i] = shuffledIndices[j];
-                shuffledIndices[j] = temp;
+    // Function to jumble a sentence based on difficulty
+    function jumbleSentence(sentence, difficulty) {
+        // Remove leading/trailing whitespace
+        sentence = sentence.trim();
+
+        // Split sentence into words, keeping punctuation
+        var words = sentence.match(/\b[\w']+\b|[^\w\s]/g);
+        if (words === null) return sentence;
+
+        // Get indices of actual words (excluding punctuation)
+        var wordIndices = [];
+        for (var i = 0; i < words.length; i++) {
+            if (/^\b[\w']+\b$/.test(words[i])) {
+                wordIndices.push(i);
             }
         }
+
+        // Shuffle words based on difficulty
+        var shuffledIndices = wordIndices.slice();
+        if (difficulty > 0) {
+            for (var i = shuffledIndices.length - 1; i > 0; i--) {
+                if (Math.random() < (difficulty / 100)) {
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var temp = shuffledIndices[i];
+                    shuffledIndices[i] = shuffledIndices[j];
+                    shuffledIndices[j] = temp;
+                }
+            }
+        }
+
+        // Create a mapping from original indices to shuffled indices
+        var indexMap = {};
+        for (var i = 0; i < wordIndices.length; i++) {
+            indexMap[wordIndices[i]] = shuffledIndices[i];
+        }
+
+        // Construct the new sentence
+        var newWords = words.slice();
+        for (var originalIndex in indexMap) {
+            var shuffledIndex = indexMap[originalIndex];
+            newWords[originalIndex] = words[shuffledIndex];
+        }
+
+        return newWords.join(' ');
     }
 
-    // Create a mapping from original indices to shuffled indices
-    var indexMap = {};
-    for (var i = 0; i < wordIndices.length; i++) {
-        indexMap[wordIndices[i]] = shuffledIndices[i];
+    // Function to get a random hex color
+    function getRandomHexColor() {
+        var hex = '#' + Math.floor(Math.random() * 16777215).toString(16);
+        return hex.padEnd(7, '0'); // Ensure the hex code is 7 characters
     }
 
-    // Construct the new sentence
-    var newWords = words.slice();
-    for (var originalIndex in indexMap) {
-        var shuffledIndex = indexMap[originalIndex];
-        newWords[originalIndex] = words[shuffledIndex];
+    // Function to import data
+    function importData() {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+
+        input.onchange = e => {
+            var file = e.target.files[0];
+
+            var reader = new FileReader();
+            reader.readAsText(file, 'UTF-8');
+
+            reader.onload = readerEvent => {
+                var content = readerEvent.target.result;
+                try {
+                    var data = JSON.parse(content);
+                    // Clear previous output
+                    var swiperWrapper = document.querySelector('.swiper-wrapper');
+                    swiperWrapper.innerHTML = '';
+                    // Hide the input area
+                    document.getElementById('inputArea').style.display = 'none';
+                    // Show the swiper container
+                    document.getElementById('outputArea').style.display = 'block';
+                    // Display the sentences
+                    displayImportedSentences(data);
+
+                    // Initialize Swiper
+                    if (swiper) swiper.destroy(true, true); // Destroy previous instance if exists
+                    swiper = new Swiper('.swiper-container', {
+                        loop: false,
+                        pagination: {
+                            el: '.swiper-pagination',
+                            clickable: true,
+                        },
+                        navigation: {
+                            nextEl: '.swiper-button-next',
+                            prevEl: '.swiper-button-prev',
+                        },
+                    });
+
+                    // Set stashFilename to the imported file's name
+                    stashFilename = file.name;
+
+                    // Show the Stash button
+                    document.getElementById('stashButton').style.display = 'inline-block';
+                } catch (e) {
+                    console.error('Invalid JSON data:', e);
+                }
+            }
+        }
+
+        input.click();
     }
 
-    return newWords.join(' ');
-}
+    // Function to display imported sentences
+    function displayImportedSentences(data) {
+        var swiperWrapper = document.querySelector('.swiper-wrapper');
+        data.forEach(function(item) {
+            var originalSentence = item.originalSentence;
+            var difficulty = item.difficulty;
 
-// Function to get a random hex color
-function getRandomHexColor() {
-    var hex = '#' + Math.floor(Math.random()*16777215).toString(16);
-    return hex.padEnd(7, '0'); // Ensure the hex code is 7 characters
-}
+            // Jumble the sentence with the difficulty
+            var jumbledSentence = jumbleSentence(originalSentence, difficulty);
 
-// Function to import data
-function importData() {
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
+            // Generate a random hex color
+            var hexColor = getRandomHexColor();
 
-    input.onchange = e => {
-        var file = e.target.files[0];
+            // Create swiper slide
+            var swiperSlide = document.createElement('div');
+            swiperSlide.className = 'swiper-slide';
 
-        var reader = new FileReader();
-        reader.readAsText(file,'UTF-8');
+            // Create card
+            var cardDiv = document.createElement('div');
+            cardDiv.className = 'card suica-card';
+            cardDiv.style.backgroundColor = hexColor;
 
-        reader.onload = readerEvent => {
-            var content = readerEvent.target.result;
-            try {
-                var data = JSON.parse(content);
+            // Hex code display
+            var hexCodeSpan = document.createElement('span');
+            hexCodeSpan.className = 'hex-code';
+            hexCodeSpan.textContent = hexColor;
+            cardDiv.appendChild(hexCodeSpan);
+
+            // Card body
+            var cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
+
+            // Jumbled sentence paragraph
+            var jumbledP = document.createElement('p');
+            jumbledP.className = 'jumbled-sentence card-text';
+            jumbledP.textContent = jumbledSentence;
+            cardBody.appendChild(jumbledP);
+
+            // Original sentence paragraph (hidden)
+            var originalP = document.createElement('p');
+            originalP.textContent = originalSentence;
+            originalP.className = 'original-sentence card-text';
+            originalP.style.display = 'none';
+            cardBody.appendChild(originalP);
+
+            // Difficulty Slider
+            var sliderDiv = document.createElement('div');
+            sliderDiv.className = 'form-group slider-container';
+
+            var sliderLabel = document.createElement('label');
+            sliderLabel.textContent = 'Difficulty: ';
+
+            var sliderValueSpan = document.createElement('span');
+            sliderValueSpan.className = 'sentence-difficulty-value';
+            sliderValueSpan.textContent = difficulty;
+
+            sliderLabel.appendChild(sliderValueSpan);
+
+            var sliderInput = document.createElement('input');
+            sliderInput.type = 'range';
+            sliderInput.className = 'form-control-range sentence-difficulty-slider';
+            sliderInput.min = 0;
+            sliderInput.max = 100;
+            sliderInput.value = difficulty;
+
+            sliderDiv.appendChild(sliderLabel);
+            sliderDiv.appendChild(sliderInput);
+            cardBody.appendChild(sliderDiv);
+
+            // Jumble Button
+            var jumbleButton = document.createElement('button');
+            jumbleButton.className = 'btn btn-primary btn-sm';
+            jumbleButton.textContent = 'Jumble';
+            cardBody.appendChild(jumbleButton);
+
+            // Reveal button
+            var revealButton = document.createElement('button');
+            revealButton.className = 'btn btn-info btn-sm ml-2';
+            revealButton.textContent = 'Reveal';
+            cardBody.appendChild(revealButton);
+
+            // Hide button
+            var hideButton = document.createElement('button');
+            hideButton.className = 'btn btn-warning btn-sm ml-2';
+            hideButton.textContent = 'Hide';
+            cardBody.appendChild(hideButton);
+
+            // Event Listeners
+            sliderInput.addEventListener('input', function() {
+                var newDifficulty = parseInt(sliderInput.value);
+                sliderValueSpan.textContent = newDifficulty;
+            });
+
+            jumbleButton.addEventListener('click', function() {
+                var currentDifficulty = parseInt(sliderInput.value);
+                var newJumbledSentence = jumbleSentence(originalSentence, currentDifficulty);
+                jumbledP.textContent = newJumbledSentence;
+            });
+
+            revealButton.addEventListener('click', function() {
+                originalP.style.display = 'block';
+            });
+
+            hideButton.addEventListener('click', function() {
+                swiper.slideNext();
+            });
+
+            cardDiv.appendChild(cardBody);
+            swiperSlide.appendChild(cardDiv);
+            swiperWrapper.appendChild(swiperSlide);
+        });
+    }
+
+    // Function to export data
+    function exportData() {
+        var sentenceRecords = document.querySelectorAll('.swiper-slide');
+        var data = [];
+
+        sentenceRecords.forEach(function(record) {
+            var originalSentence = record.querySelector('.original-sentence').textContent;
+            var difficulty = parseInt(record.querySelector('.sentence-difficulty-slider').value);
+
+            data.push({
+                originalSentence: originalSentence,
+                difficulty: difficulty
+            });
+        });
+
+        var jsonData = JSON.stringify(data);
+
+        // Generate filename as per the convention
+        var filename = generateFilename(data);
+
+        var blob = new Blob([jsonData], { type: 'application/json' });
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        window.URL.revokeObjectURL(url);
+
+        // Set stashFilename to the generated filename
+        stashFilename = filename;
+
+        // Show the Stash button
+        document.getElementById('stashButton').style.display = 'inline-block';
+
+        // Optionally, inform the user
+        alert('Data exported as ' + filename + '.');
+
+        // Open storage location in a new tab
+        setTimeout(function() {
+            window.open(document.getElementById('storageLocationInput').value, '_blank');
+        }, 3000);
+    }
+
+    // Function to generate filename
+    function generateFilename(data) {
+        var date = new Date();
+        var year = date.getFullYear().toString().slice(-2);
+        var month = ('0' + (date.getMonth() + 1)).slice(-2);
+        var day = ('0' + date.getDate()).slice(-2);
+
+        // Extract words from the text
+        var allText = data.map(function(item) {
+            return item.originalSentence;
+        }).join(' ');
+
+        var meaningfulWords = extractMeaningfulWords(allText);
+
+        // Get three random words
+        var selectedWords = [];
+        for (var i = 0; i < 3 && meaningfulWords.length > 0; i++) {
+            var index = Math.floor(Math.random() * meaningfulWords.length);
+            selectedWords.push(meaningfulWords.splice(index, 1)[0]);
+        }
+
+        var wordsPart = selectedWords.join('-');
+
+        var filename = year + '-' + month + '-' + day + '-' + wordsPart + '-mixer.json';
+        return filename;
+    }
+
+    // Function to extract meaningful words
+    function extractMeaningfulWords(text) {
+        var stopwords = [
+            'i', 'me', 'my', 'myself', 'we', 'our', 'ours',
+            'ourselves', 'you', 'your', 'yours', 'yourself',
+            'yourselves', 'he', 'him', 'his', 'himself', 'she',
+            'her', 'hers', 'herself', 'it', 'its', 'itself',
+            'they', 'them', 'their', 'theirs', 'themselves',
+            'what', 'which', 'who', 'whom', 'this', 'that',
+            'these', 'those', 'am', 'is', 'are', 'was', 'were',
+            'be', 'been', 'being', 'have', 'has', 'had', 'having',
+            'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and',
+            'but', 'if', 'or', 'because', 'as', 'until', 'while',
+            'of', 'at', 'by', 'for', 'with', 'about', 'against',
+            'between', 'into', 'through', 'during', 'before', 'after',
+            'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out',
+            'on', 'off', 'over', 'under', 'again', 'further', 'then',
+            'once', 'here', 'there', 'when', 'where', 'why', 'how',
+            'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other',
+            'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same',
+            'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just',
+            'don', 'should', 'now'
+        ];
+
+        // Split text into words
+        var words = text.toLowerCase().match(/\b[a-zA-Z]{3,}\b/g);
+
+        if (!words) return [];
+
+        // Filter out stopwords and duplicates
+        var meaningfulWords = words.filter(function(word, index) {
+            return stopwords.indexOf(word) === -1 && words.indexOf(word) === index;
+        });
+
+        return meaningfulWords;
+    }
+
+    // Function to load data from JSON file specified in 'data' URL parameter
+    function loadData(filename) {
+        stashFilename = filename; // Set the global stashFilename
+        var storageLocationInput = document.getElementById('storageLocationInput');
+        var baseUrl = storageLocationInput.value;
+        var url = baseUrl + filename;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json(); // parse JSON
+            })
+            .then(data => {
                 // Clear previous output
                 var swiperWrapper = document.querySelector('.swiper-wrapper');
                 swiperWrapper.innerHTML = '';
@@ -425,7 +704,6 @@ function importData() {
                 document.getElementById('outputArea').style.display = 'block';
                 // Display the sentences
                 displayImportedSentences(data);
-
                 // Initialize Swiper
                 if (swiper) swiper.destroy(true, true); // Destroy previous instance if exists
                 swiper = new Swiper('.swiper-container', {
@@ -439,275 +717,11 @@ function importData() {
                         prevEl: '.swiper-button-prev',
                     },
                 });
-            } catch (e) {
-                console.error('Invalid JSON data:', e);
-            }
-        }
+            })
+            .catch(error => {
+                console.error('There has been a problem with your fetch operation:', error);
+            });
     }
-
-    input.click();
-}
-
-// Function to display imported sentences
-function displayImportedSentences(data) {
-    var swiperWrapper = document.querySelector('.swiper-wrapper');
-    data.forEach(function(item) {
-        var originalSentence = item.originalSentence;
-        var difficulty = item.difficulty;
-
-        // Jumble the sentence with the difficulty
-        var jumbledSentence = jumbleSentence(originalSentence, difficulty);
-
-        // Generate a random hex color
-        var hexColor = getRandomHexColor();
-
-        // Create swiper slide
-        var swiperSlide = document.createElement('div');
-        swiperSlide.className = 'swiper-slide';
-
-        // Create card
-        var cardDiv = document.createElement('div');
-        cardDiv.className = 'card suica-card';
-        cardDiv.style.backgroundColor = hexColor;
-
-        // Hex code display
-        var hexCodeSpan = document.createElement('span');
-        hexCodeSpan.className = 'hex-code';
-        hexCodeSpan.textContent = hexColor;
-        cardDiv.appendChild(hexCodeSpan);
-
-        // Card body
-        var cardBody = document.createElement('div');
-        cardBody.className = 'card-body';
-
-        // Jumbled sentence paragraph
-        var jumbledP = document.createElement('p');
-        jumbledP.className = 'jumbled-sentence card-text';
-        jumbledP.textContent = jumbledSentence;
-        cardBody.appendChild(jumbledP);
-
-        // Original sentence paragraph (hidden)
-        var originalP = document.createElement('p');
-        originalP.textContent = originalSentence;
-        originalP.className = 'original-sentence card-text';
-        originalP.style.display = 'none';
-        cardBody.appendChild(originalP);
-
-        // Difficulty Slider
-        var sliderDiv = document.createElement('div');
-        sliderDiv.className = 'form-group slider-container';
-
-        var sliderLabel = document.createElement('label');
-        sliderLabel.textContent = 'Difficulty: ';
-
-        var sliderValueSpan = document.createElement('span');
-        sliderValueSpan.className = 'sentence-difficulty-value';
-        sliderValueSpan.textContent = difficulty;
-
-        sliderLabel.appendChild(sliderValueSpan);
-
-        var sliderInput = document.createElement('input');
-        sliderInput.type = 'range';
-        sliderInput.className = 'form-control-range sentence-difficulty-slider';
-        sliderInput.min = 0;
-        sliderInput.max = 100;
-        sliderInput.value = difficulty;
-
-        sliderDiv.appendChild(sliderLabel);
-        sliderDiv.appendChild(sliderInput);
-        cardBody.appendChild(sliderDiv);
-
-        // Jumble Button
-        var jumbleButton = document.createElement('button');
-        jumbleButton.className = 'btn btn-primary btn-sm';
-        jumbleButton.textContent = 'Jumble';
-        cardBody.appendChild(jumbleButton);
-
-        // Reveal button
-        var revealButton = document.createElement('button');
-        revealButton.className = 'btn btn-info btn-sm ml-2';
-        revealButton.textContent = 'Reveal';
-        cardBody.appendChild(revealButton);
-
-        // Hide button
-        var hideButton = document.createElement('button');
-        hideButton.className = 'btn btn-warning btn-sm ml-2';
-        hideButton.textContent = 'Hide';
-        cardBody.appendChild(hideButton);
-
-        // Event Listeners
-        sliderInput.addEventListener('input', function() {
-            var newDifficulty = parseInt(sliderInput.value);
-            sliderValueSpan.textContent = newDifficulty;
-        });
-
-        jumbleButton.addEventListener('click', function() {
-            var currentDifficulty = parseInt(sliderInput.value);
-            var newJumbledSentence = jumbleSentence(originalSentence, currentDifficulty);
-            jumbledP.textContent = newJumbledSentence;
-        });
-
-        revealButton.addEventListener('click', function() {
-            originalP.style.display = 'block';
-        });
-
-        hideButton.addEventListener('click', function() {
-            swiper.slideNext();
-        });
-
-        cardDiv.appendChild(cardBody);
-        swiperSlide.appendChild(cardDiv);
-        swiperWrapper.appendChild(swiperSlide);
-    });
-}
-
-// Function to export data
-function exportData() {
-    var sentenceRecords = document.querySelectorAll('.swiper-slide');
-    var data = [];
-
-    sentenceRecords.forEach(function(record) {
-        var originalSentence = record.querySelector('.original-sentence').textContent;
-        var difficulty = parseInt(record.querySelector('.sentence-difficulty-slider').value);
-
-        data.push({
-            originalSentence: originalSentence,
-            difficulty: difficulty
-        });
-    });
-
-    var jsonData = JSON.stringify(data);
-
-    // Generate filename as per the convention
-    var filename = generateFilename(data);
-
-    var blob = new Blob([jsonData], { type: 'application/json' });
-    var url = window.URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    window.URL.revokeObjectURL(url);
-
-    // Generate mixerUrl
-    var mixerUrl = window.location.origin + window.location.pathname + '?data=' + filename;
-
-    // Store mixerUrl for use in the Stash button
-    stashMixerUrl = mixerUrl;
-    stashFilename = filename;
-
-    // Show the Stash button
-    document.getElementById('stashButton').style.display = 'inline-block';
-
-    // Optionally, inform the user
-    alert('Data exported as ' + filename + '. You can now stash it.');
-}
-
-// Function to generate filename
-function generateFilename(data) {
-    var date = new Date();
-    var year = date.getFullYear().toString().slice(-2);
-    var month = ('0' + (date.getMonth() + 1)).slice(-2);
-    var day = ('0' + date.getDate()).slice(-2);
-
-    // Extract words from the text
-    var allText = data.map(function(item) {
-        return item.originalSentence;
-    }).join(' ');
-
-    var meaningfulWords = extractMeaningfulWords(allText);
-
-    // Get three random words
-    var selectedWords = [];
-    for (var i = 0; i < 3 && meaningfulWords.length > 0; i++) {
-        var index = Math.floor(Math.random() * meaningfulWords.length);
-        selectedWords.push(meaningfulWords.splice(index, 1)[0]);
-    }
-
-    var wordsPart = selectedWords.join('-');
-
-    var filename = year + '-' + month + '-' + day + '-' + wordsPart + '-mixer.json';
-    return filename;
-}
-
-// Function to extract meaningful words
-function extractMeaningfulWords(text) {
-    var stopwords = [
-        'i', 'me', 'my', 'myself', 'we', 'our', 'ours',
-        'ourselves', 'you', 'your', 'yours', 'yourself',
-        'yourselves', 'he', 'him', 'his', 'himself', 'she',
-        'her', 'hers', 'herself', 'it', 'its', 'itself',
-        'they', 'them', 'their', 'theirs', 'themselves',
-        'what', 'which', 'who', 'whom', 'this', 'that',
-        'these', 'those', 'am', 'is', 'are', 'was', 'were',
-        'be', 'been', 'being', 'have', 'has', 'had', 'having',
-        'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and',
-        'but', 'if', 'or', 'because', 'as', 'until', 'while',
-        'of', 'at', 'by', 'for', 'with', 'about', 'against',
-        'between', 'into', 'through', 'during', 'before', 'after',
-        'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out',
-        'on', 'off', 'over', 'under', 'again', 'further', 'then',
-        'once', 'here', 'there', 'when', 'where', 'why', 'how',
-        'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other',
-        'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same',
-        'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just',
-        'don', 'should', 'now'
-    ];
-
-    // Split text into words
-    var words = text.toLowerCase().match(/\b[a-zA-Z]{3,}\b/g);
-
-    if (!words) return [];
-
-    // Filter out stopwords and duplicates
-    var meaningfulWords = words.filter(function(word, index) {
-        return stopwords.indexOf(word) === -1 && words.indexOf(word) === index;
-    });
-
-    return meaningfulWords;
-}
-
-// Function to load data from JSON file specified in 'data' URL parameter
-function loadData(filename) {
-    var storageLocationInput = document.getElementById('storageLocationInput');
-    var baseUrl = storageLocationInput.value;
-    var url = baseUrl + filename;
-
-    fetch(url)
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json(); // parse JSON
-    })
-    .then(data => {
-        // Clear previous output
-        var swiperWrapper = document.querySelector('.swiper-wrapper');
-        swiperWrapper.innerHTML = '';
-        // Hide the input area
-        document.getElementById('inputArea').style.display = 'none';
-        // Show the swiper container
-        document.getElementById('outputArea').style.display = 'block';
-        // Display the sentences
-        displayImportedSentences(data);
-        // Initialize Swiper
-        if (swiper) swiper.destroy(true, true); // Destroy previous instance if exists
-        swiper = new Swiper('.swiper-container', {
-            loop: false,
-            pagination: {
-                el: '.swiper-pagination',
-                clickable: true,
-            },
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-        });
-    })
-    .catch(error => {
-        console.error('There has been a problem with your fetch operation:', error);
-    });
-}
 </script>
 
 </body>
