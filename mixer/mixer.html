@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Text Jumbler</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <!-- Optional: Include Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <!-- Include Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <!-- Include Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+    <style>
+        body {
+            padding: 20px;
+        }
+        #inputTextArea {
+            height: 200px;
+        }
+        .sentence-record {
+            margin-bottom: 15px;
+        }
+        .original-sentence {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 class="text-center">Text Jumbler</h1>
+
+    <!-- Textarea for input -->
+    <div class="form-group" id="inputArea">
+        <label for="inputTextArea">Input Text:</label>
+        <textarea class="form-control" id="inputTextArea" rows="10"></textarea>
+    </div>
+
+    <!-- Buttons -->
+    <div class="form-group">
+        <button class="btn btn-primary" id="jumbleButton">Jumble</button>
+        <button class="btn btn-secondary" id="importButton">Import Data</button>
+        <button class="btn btn-secondary" id="exportButton">Export Data</button>
+        <button class="btn btn-danger" id="resetButton">Reset</button>
+    </div>
+
+    <!-- Output area -->
+    <div id="outputArea"></div>
+
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Jumble button click event
+    document.getElementById('jumbleButton').addEventListener('click', function() {
+        var inputText = document.getElementById('inputTextArea').value;
+
+        // Hide the input area
+        document.getElementById('inputArea').style.display = 'none';
+
+        // Clear previous output
+        var outputArea = document.getElementById('outputArea');
+        outputArea.innerHTML = '';
+
+        // Process and display the sentences
+        displayJumbledSentences(inputText);
+    });
+
+    // Import data button click event
+    document.getElementById('importButton').addEventListener('click', function() {
+        importData();
+    });
+
+    // Export data button click event
+    document.getElementById('exportButton').addEventListener('click', function() {
+        exportData();
+    });
+
+    // Reset button click event
+    document.getElementById('resetButton').addEventListener('click', function() {
+        document.getElementById('inputTextArea').value = '';
+        document.getElementById('inputArea').style.display = 'block';
+        document.getElementById('outputArea').innerHTML = '';
+    });
+
+    // Handle 'target' URL parameter
+    var urlParams = new URLSearchParams(window.location.search);
+    var target = urlParams.get('target');
+    if (target) {
+        loadTargetData(target);
+    }
+});
+
+// Function to display jumbled sentences with per-sentence difficulty sliders
+function displayJumbledSentences(text) {
+    var outputArea = document.getElementById('outputArea');
+    // Split text into sentences
+    var sentences = text.match(/[^\.!\?]+[\.!\?]+["']?|.+$/g);
+    if (sentences === null) return;
+
+    sentences.forEach(function(sentence, index) {
+        var originalSentence = sentence.trim();
+
+        // Generate random difficulty between 0 and 100
+        var difficulty = Math.floor(Math.random() * 101);
+
+        // Jumble the sentence with the difficulty
+        var jumbledSentence = jumbleSentence(originalSentence, difficulty);
+
+        // Create sentence record div
+        var sentenceDiv = document.createElement('div');
+        sentenceDiv.className = 'sentence-record';
+
+        // Difficulty Slider
+        var sliderDiv = document.createElement('div');
+        sliderDiv.className = 'form-group';
+
+        var sliderLabel = document.createElement('label');
+        sliderLabel.textContent = 'Difficulty: ';
+
+        var sliderValueSpan = document.createElement('span');
+        sliderValueSpan.className = 'sentence-difficulty-value';
+        sliderValueSpan.textContent = difficulty;
+
+        sliderLabel.appendChild(sliderValueSpan);
+
+        var sliderInput = document.createElement('input');
+        sliderInput.type = 'range';
+        sliderInput.className = 'form-control-range sentence-difficulty-slider';
+        sliderInput.min = 0;
+        sliderInput.max = 100;
+        sliderInput.value = difficulty;
+
+        sliderDiv.appendChild(sliderLabel);
+        sliderDiv.appendChild(sliderInput);
+
+        sentenceDiv.appendChild(sliderDiv);
+
+        // Jumbled sentence paragraph
+        var jumbledP = document.createElement('p');
+        jumbledP.className = 'jumbled-sentence';
+        jumbledP.textContent = jumbledSentence;
+        sentenceDiv.appendChild(jumbledP);
+
+        // Original sentence paragraph (hidden)
+        var originalP = document.createElement('p');
+        originalP.textContent = originalSentence;
+        originalP.className = 'original-sentence';
+        originalP.style.display = 'none';
+        sentenceDiv.appendChild(originalP);
+
+        // Reveal button
+        var revealButton = document.createElement('button');
+        revealButton.className = 'btn btn-info btn-sm';
+        revealButton.textContent = 'Reveal';
+        revealButton.addEventListener('click', function() {
+            originalP.style.display = 'block';
+        });
+        sentenceDiv.appendChild(revealButton);
+
+        // Hide button
+        var hideButton = document.createElement('button');
+        hideButton.className = 'btn btn-warning btn-sm ml-2';
+        hideButton.textContent = 'Hide';
+        hideButton.addEventListener('click', function() {
+            sentenceDiv.style.display = 'none';
+        });
+        sentenceDiv.appendChild(hideButton);
+
+        // Slider input event listener
+        sliderInput.addEventListener('input', function() {
+            var newDifficulty = parseInt(sliderInput.value);
+            sliderValueSpan.textContent = newDifficulty;
+
+            // Re-jumble the sentence with new difficulty
+            var newJumbledSentence = jumbleSentence(originalSentence, newDifficulty);
+            jumbledP.textContent = newJumbledSentence;
+        });
+
+        outputArea.appendChild(sentenceDiv);
+    });
+}
+
+// Function to jumble a sentence based on difficulty
+function jumbleSentence(sentence, difficulty) {
+    // Remove leading/trailing whitespace
+    sentence = sentence.trim();
+
+    // Split sentence into words, keeping punctuation
+    var words = sentence.match(/\b[\w']+\b|[^\w\s]/g);
+    if (words === null) return sentence;
+
+    // Get indices of actual words (excluding punctuation)
+    var wordIndices = [];
+    for (var i = 0; i < words.length; i++) {
+        if (/^\b[\w']+\b$/.test(words[i])) {
+            wordIndices.push(i);
+        }
+    }
+
+    // Shuffle words based on difficulty
+    var shuffledIndices = wordIndices.slice();
+    if (difficulty > 0) {
+        for (var i = shuffledIndices.length - 1; i > 0; i--) {
+            if (Math.random() < (difficulty / 100)) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = shuffledIndices[i];
+                shuffledIndices[i] = shuffledIndices[j];
+                shuffledIndices[j] = temp;
+            }
+        }
+    }
+
+    // Create a mapping from original indices to shuffled indices
+    var indexMap = {};
+    for (var i = 0; i < wordIndices.length; i++) {
+        indexMap[wordIndices[i]] = shuffledIndices[i];
+    }
+
+    // Construct the new sentence
+    var newWords = words.slice();
+    for (var originalIndex in indexMap) {
+        var shuffledIndex = indexMap[originalIndex];
+        newWords[originalIndex] = words[shuffledIndex];
+    }
+
+    return newWords.join(' ');
+}
+
+// Function to import data
+function importData() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+
+    input.onchange = e => {
+        var file = e.target.files[0];
+
+        var reader = new FileReader();
+        reader.readAsText(file,'UTF-8');
+
+        reader.onload = readerEvent => {
+            var content = readerEvent.target.result;
+            try {
+                var data = JSON.parse(content);
+                // Clear previous output
+                var outputArea = document.getElementById('outputArea');
+                outputArea.innerHTML = '';
+                // Hide the input area
+                document.getElementById('inputArea').style.display = 'none';
+                // Display the sentences
+                displayImportedSentences(data);
+            } catch (e) {
+                console.error('Invalid JSON data:', e);
+            }
+        }
+    }
+
+    input.click();
+}
+
+// Function to display imported sentences
+function displayImportedSentences(data) {
+    var outputArea = document.getElementById('outputArea');
+    data.forEach(function(item) {
+        var originalSentence = item.originalSentence;
+        var difficulty = item.difficulty;
+
+        // Jumble the sentence with the difficulty
+        var jumbledSentence = jumbleSentence(originalSentence, difficulty);
+
+        // Create sentence record div
+        var sentenceDiv = document.createElement('div');
+        sentenceDiv.className = 'sentence-record';
+
+        // Difficulty Slider
+        var sliderDiv = document.createElement('div');
+        sliderDiv.className = 'form-group';
+
+        var sliderLabel = document.createElement('label');
+        sliderLabel.textContent = 'Difficulty: ';
+
+        var sliderValueSpan = document.createElement('span');
+        sliderValueSpan.className = 'sentence-difficulty-value';
+        sliderValueSpan.textContent = difficulty;
+
+        sliderLabel.appendChild(sliderValueSpan);
+
+        var sliderInput = document.createElement('input');
+        sliderInput.type = 'range';
+        sliderInput.className = 'form-control-range sentence-difficulty-slider';
+        sliderInput.min = 0;
+        sliderInput.max = 100;
+        sliderInput.value = difficulty;
+
+        sliderDiv.appendChild(sliderLabel);
+        sliderDiv.appendChild(sliderInput);
+
+        sentenceDiv.appendChild(sliderDiv);
+
+        // Jumbled sentence paragraph
+        var jumbledP = document.createElement('p');
+        jumbledP.className = 'jumbled-sentence';
+        jumbledP.textContent = jumbledSentence;
+        sentenceDiv.appendChild(jumbledP);
+
+        // Original sentence paragraph (hidden)
+        var originalP = document.createElement('p');
+        originalP.textContent = originalSentence;
+        originalP.className = 'original-sentence';
+        originalP.style.display = 'none';
+        sentenceDiv.appendChild(originalP);
+
+        // Reveal button
+        var revealButton = document.createElement('button');
+        revealButton.className = 'btn btn-info btn-sm';
+        revealButton.textContent = 'Reveal';
+        revealButton.addEventListener('click', function() {
+            originalP.style.display = 'block';
+        });
+        sentenceDiv.appendChild(revealButton);
+
+        // Hide button
+        var hideButton = document.createElement('button');
+        hideButton.className = 'btn btn-warning btn-sm ml-2';
+        hideButton.textContent = 'Hide';
+        hideButton.addEventListener('click', function() {
+            sentenceDiv.style.display = 'none';
+        });
+        sentenceDiv.appendChild(hideButton);
+
+        // Slider input event listener
+        sliderInput.addEventListener('input', function() {
+            var newDifficulty = parseInt(sliderInput.value);
+            sliderValueSpan.textContent = newDifficulty;
+
+            // Re-jumble the sentence with new difficulty
+            var newJumbledSentence = jumbleSentence(originalSentence, newDifficulty);
+            jumbledP.textContent = newJumbledSentence;
+        });
+
+        outputArea.appendChild(sentenceDiv);
+    });
+}
+
+// Function to export data
+function exportData() {
+    var sentenceRecords = document.querySelectorAll('.sentence-record');
+    var data = [];
+
+    sentenceRecords.forEach(function(record) {
+        var originalSentence = record.querySelector('.original-sentence').textContent;
+        var difficulty = parseInt(record.querySelector('.sentence-difficulty-slider').value);
+
+        data.push({
+            originalSentence: originalSentence,
+            difficulty: difficulty
+        });
+    });
+
+    var jsonData = JSON.stringify(data);
+
+    var blob = new Blob([jsonData], { type: 'application/json' });
+    var url = window.URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'state.json';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+// Function to load data from {target}.json
+function loadTargetData(target) {
+    var url = target + '.json';
+
+    fetch(url)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(data => {
+        document.getElementById('inputTextArea').value = data;
+    })
+    .catch(error => {
+        console.error('There has been a problem with your fetch operation:', error);
+    });
+}
+</script>
+
+</body>
+</html>
