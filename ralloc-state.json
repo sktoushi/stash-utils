@@ -117,7 +117,7 @@
       "name": "Ankiweb",
       "link": "https://ankiweb.net/decks",
       "type": "Review",
-      "frequency": 32,
+      "frequency": 72,
       "tags": "",
       "lastPicked": null
     },
@@ -149,7 +149,17 @@
       "type": "Generator",
       "frequency": 54,
       "tags": "",
-      "lastPicked": 1727782893149
+      "lastPicked": 1727787235249
+    },
+    {
+      "id": 1727787215205,
+      "selected": true,
+      "name": "Always Applicable",
+      "link": "https://github.com/cjcaf1995/redirect0915/issues/70",
+      "type": "Review",
+      "frequency": 1,
+      "tags": "",
+      "lastPicked": null
     }
   ],
   "topRecords": [
@@ -251,14 +261,14 @@
     },
     {
       "id": 1727782833856,
-      "totalCount": 1,
+      "totalCount": 2,
       "reviewCount": 0,
-      "generatorCount": 1
+      "generatorCount": 2
     }
   ],
-  "totalRolls": 248,
+  "totalRolls": 249,
   "totalReviewRolls": 125,
-  "totalGeneratorRolls": 113,
+  "totalGeneratorRolls": 114,
   "userLevel": 2,
   "storageDestination": "https://github.com/sktoushi/stash-utils/upload/main"
 }
