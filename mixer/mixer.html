@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Text Jumbler</title>
+    <!-- Viewport meta tag for responsiveness -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Include Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <!-- Include Swiper CSS -->
@@ -23,47 +25,51 @@
             height: 200px;
         }
         .suica-card {
-            color: #fff;
+            color: #000;
             border: none;
-            border-radius: 15px;
+            border-radius: 6px;
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            max-height: 100%;
-            overflow-y: auto;
+            max-width: 600px; /* Similar to GitHub issues width */
+            margin: auto;
+            width: 100%;
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
         .suica-card .card-header {
-            background: rgba(0, 0, 0, 0.1);
-            border-bottom: none;
-            font-size: 1.5rem;
-            font-weight: bold;
+            background: #f6f8fa;
+            border-bottom: 1px solid #e1e4e8;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 16px;
         }
         .suica-card .card-body {
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.8);
-            color: #000;
+            padding: 16px;
             flex: 1 1 auto;
         }
         .suica-card .card-text {
-            font-size: 1.2rem;
+            font-size: 1rem;
+            margin-bottom: 16px;
         }
         .suica-card .hex-code {
             position: absolute;
             bottom: 10px;
             right: 15px;
             font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(0, 0, 0, 0.7);
         }
         .swiper-container {
             width: 100%;
-            height: 80vh;
+            padding: 20px 0;
         }
         .swiper-slide {
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100%;
+            align-items: flex-start;
+            height: auto;
         }
         .slider-container {
             width: 100%;
@@ -72,11 +78,19 @@
             color: #000;
         }
         @media (max-width: 768px) {
+            .suica-card {
+                border-radius: 0;
+                margin: 0;
+            }
+            .suica-card .card-header,
             .suica-card .card-body {
-                padding: 1rem;
+                padding: 12px;
             }
             .suica-card .card-text {
-                font-size: 1rem;
+                font-size: 0.9rem;
+            }
+            .swiper-button-next, .swiper-button-prev {
+                display: none;
             }
         }
     </style>
@@ -130,8 +144,8 @@
         <!-- Add Pagination -->
         <div class="swiper-pagination"></div>
         <!-- Add Navigation -->
-        <div class="swiper-button-next"></div>
-        <div class="swiper-button-prev"></div>
+        <div class="swiper-button-next d-none d-md-block"></div>
+        <div class="swiper-button-prev d-none d-md-block"></div>
     </div>
 
 </div>
@@ -263,13 +277,18 @@
             // Create card
             var cardDiv = document.createElement('div');
             cardDiv.className = 'card suica-card';
-            cardDiv.style.backgroundColor = hexColor;
 
             // Hex code display
             var hexCodeSpan = document.createElement('span');
             hexCodeSpan.className = 'hex-code';
             hexCodeSpan.textContent = hexColor;
             cardDiv.appendChild(hexCodeSpan);
+
+            // Card header (optional, if you want to include a header)
+            // var cardHeader = document.createElement('div');
+            // cardHeader.className = 'card-header';
+            // cardHeader.textContent = 'Card ' + (index + 1);
+            // cardDiv.appendChild(cardHeader);
 
             // Card body
             var cardBody = document.createElement('div');
@@ -482,7 +501,6 @@
             // Create card
             var cardDiv = document.createElement('div');
             cardDiv.className = 'card suica-card';
-            cardDiv.style.backgroundColor = hexColor;
 
             // Hex code display
             var hexCodeSpan = document.createElement('span');
