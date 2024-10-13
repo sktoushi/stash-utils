@@ -40,8 +40,8 @@
             overflow: hidden;
         }
         .suica-card .card-header {
-            background: rgba(0, 0, 0, 0.1);
-            border-bottom: none;
+            background: #f6f8fa;
+            border-bottom: 1px solid #e1e4e8;
             font-size: 1rem;
             font-weight: 600;
             padding: 16px;
@@ -270,9 +270,6 @@
             // Generate a random hex color
             var hexColor = getRandomHexColor();
 
-            // Determine text color based on background luminance
-            var textColor = getContrastingTextColor(hexColor);
-
             // Create swiper slide
             var swiperSlide = document.createElement('div');
             swiperSlide.className = 'swiper-slide';
@@ -280,14 +277,18 @@
             // Create card
             var cardDiv = document.createElement('div');
             cardDiv.className = 'card suica-card';
-            cardDiv.style.backgroundColor = hexColor;
-            cardDiv.style.color = textColor; // Set text color
 
             // Hex code display
             var hexCodeSpan = document.createElement('span');
             hexCodeSpan.className = 'hex-code';
             hexCodeSpan.textContent = hexColor;
             cardDiv.appendChild(hexCodeSpan);
+
+            // Card header (optional, if you want to include a header)
+            // var cardHeader = document.createElement('div');
+            // cardHeader.className = 'card-header';
+            // cardHeader.textContent = 'Card ' + (index + 1);
+            // cardDiv.appendChild(cardHeader);
 
             // Card body
             var cardBody = document.createElement('div');
@@ -426,20 +427,6 @@
         return hex.padEnd(7, '0'); // Ensure the hex code is 7 characters
     }
 
-    // Function to determine text color based on background color luminance
-    function getContrastingTextColor(hexColor) {
-        // Convert hex color to RGB
-        var r = parseInt(hexColor.substr(1,2),16);
-        var g = parseInt(hexColor.substr(3,2),16);
-        var b = parseInt(hexColor.substr(5,2),16);
-
-        // Calculate luminance
-        var luminance = (0.299*r + 0.587*g + 0.114*b)/255;
-
-        // Return black for light backgrounds, white for dark backgrounds
-        return luminance > 0.5 ? '#000000' : '#FFFFFF';
-    }
-
     // Function to import data
     function importData() {
         var input = document.createElement('input');
@@ -507,9 +494,6 @@
             // Generate a random hex color
             var hexColor = getRandomHexColor();
 
-            // Determine text color based on background luminance
-            var textColor = getContrastingTextColor(hexColor);
-
             // Create swiper slide
             var swiperSlide = document.createElement('div');
             swiperSlide.className = 'swiper-slide';
@@ -517,8 +501,6 @@
             // Create card
             var cardDiv = document.createElement('div');
             cardDiv.className = 'card suica-card';
-            cardDiv.style.backgroundColor = hexColor;
-            cardDiv.style.color = textColor; // Set text color
 
             // Hex code display
             var hexCodeSpan = document.createElement('span');
