@@ -384,12 +384,12 @@
                 $('#sliderValue').text(reviewPercent + '% Review / ' + generatorPercent + '% Generator');
                 // Save to LocalStorage
                 let data = getCurrentData();
-                localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+                localStorage.setItem('rallocStorageKey2025', JSON.stringify(data));
             });
 
             // Load data from LocalStorage or ralloc-state.json
             function loadData() {
-                let data = localStorage.getItem('rallocStorageKey');
+                let data = localStorage.getItem('rallocStorageKey2025');
                 if (data) {
                     data = JSON.parse(data);
                     totalRolls = data.totalRolls || 0;
@@ -413,7 +413,7 @@
                         dataType: 'json',
                         success: function(jsonData) {
                             // Store in LocalStorage
-                            localStorage.setItem('rallocStorageKey', JSON.stringify(jsonData));
+                            localStorage.setItem('rallocStorageKey2025', JSON.stringify(jsonData));
                             totalRolls = jsonData.totalRolls || 0;
                             totalReviewRolls = jsonData.totalReviewRolls || 0;
                             totalGeneratorRolls = jsonData.totalGeneratorRolls || 0;
@@ -441,7 +441,7 @@
                                 userLevel: 1,
                                 storageDestination: defaultStorageDestination
                             };
-                            localStorage.setItem('rallocStorageKey', JSON.stringify(initialData));
+                            localStorage.setItem('rallocStorageKey2025', JSON.stringify(initialData));
                             $('#storageDestination').val(defaultStorageDestination);
                             // Update gamification UI
                             updateGamificationUI();
@@ -767,7 +767,7 @@
                     };
                     data.records.push(record);
                 });
-                data.topRecords = JSON.parse(localStorage.getItem('rallocStorageKey') || '{}').topRecords || [];
+                data.topRecords = JSON.parse(localStorage.getItem('rallocStorageKey2025') || '{}').topRecords || [];
                 data.totalRolls = totalRolls;
                 data.totalReviewRolls = totalReviewRolls;
                 data.totalGeneratorRolls = totalGeneratorRolls;
@@ -783,7 +783,7 @@
 
             function saveData() {
                 let data = getCurrentData();
-                localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+                localStorage.setItem('rallocStorageKey2025', JSON.stringify(data));
             }
 
             // Get record by ID
@@ -954,7 +954,7 @@
                             throw new Error('Invalid data structure.');
                         }
                         // Save to LocalStorage
-                        localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+                        localStorage.setItem('rallocStorageKey2025', JSON.stringify(data));
                         // Reload the page
                         location.reload();
                     } catch (error) {
@@ -967,7 +967,7 @@
             // Reset State button handler
             $('#resetStateBtn').click(function() {
                 if (confirm('Are you sure you want to reset the state? This action cannot be undone.')) {
-                    localStorage.removeItem('rallocStorageKey');
+                    localStorage.removeItem('rallocStorageKey2025');
                     location.reload();
                 }
             });
@@ -1127,7 +1127,7 @@
                 $('#editDestinationBtn').show();
                 $('#saveDestinationBtn, #cancelDestinationBtn').hide();
                 // Reload the value from localStorage
-                let data = JSON.parse(localStorage.getItem('rallocStorageKey') || '{}');
+                let data = JSON.parse(localStorage.getItem('rallocStorageKey2025') || '{}');
                 $('#storageDestination').val(data.storageDestination || defaultStorageDestination);
             });
 
@@ -1216,7 +1216,7 @@
                 data.totalReviewRolls = totalReviewRolls;
                 data.totalGeneratorRolls = totalGeneratorRolls;
                 data.userLevel = userLevel;
-                localStorage.setItem('rallocStorageKey', JSON.stringify(data));
+                localStorage.setItem('rallocStorageKey2025', JSON.stringify(data));
 
                 // Update the top records list and chart
                 populateTopRecords(topRecords);
