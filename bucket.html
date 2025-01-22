@@ -75,13 +75,13 @@
         }
     </style>
     <script>
-        let currentTargetState = {}; // State for the current target
-        let initialFiles = []; // To be populated based on target
-        let unifiedState = {}; // Unified state object for all targets
-        const unifiedStorageKey = 'randomUrlPickerState'; // Unified localStorage key
-        let drawHistory = []; // History of drawn URLs
-        const historyLimit = 5; // Maximum number of history items
-        let lastDrawnId = null; // To track last drawn item for undo
+        let currentTargetState = {}; 
+        let initialFiles = [];
+        let drawHistory = [];
+        const historyLimit = 5;
+        let lastDrawnId = null;
+        let currentTarget = "";
+        let localStorageKey = ""; // LocalStorage key based on the target
 
         /**
          * Function to get a secure random number between 0 (inclusive) and 1 (exclusive)
@@ -127,79 +127,54 @@
         }
 
         /**
-         * Function to save the current state to unified localStorage
+         * Function to save the current target's state to localStorage
          */
         function saveState() {
-            // Update the unified state with the current target's state
-            unifiedState[currentTarget] = {
-                b1: currentTargetState.b1,
-                b2: currentTargetState.b2,
-                uniqueBucket1Count: currentTargetState.uniqueBucket1Count,
-                b1Prob: currentTargetState.b1Prob,
-                b2Prob: currentTargetState.b2Prob,
-                defaultFrequency: currentTargetState.defaultFrequency,
-                urlPrefix: currentTargetState.urlPrefix,
-                urlSuffix: currentTargetState.urlSuffix,
-                drawHistory: currentTargetState.drawHistory
-            };
-            // Save the entire unified state back to localStorage
-            localStorage.setItem(unifiedStorageKey, JSON.stringify(unifiedState));
+            localStorage.setItem(localStorageKey, JSON.stringify(currentTargetState));
         }
 
         /**
-         * Function to load the state from unified localStorage or bucket-state.json
+         * Function to load the current target's state from localStorage or bucket-state.json
          */
         async function loadState() {
-            const storedState = JSON.parse(localStorage.getItem(unifiedStorageKey));
-            if (storedState) {
-                unifiedState = storedState;
-                if (currentTarget in unifiedState) {
-                    currentTargetState = { ...unifiedState[currentTarget] };
-                } else {
-                    initializeTargetState();
-                }
+            const storedStateString = localStorage.getItem(localStorageKey);
+            if (storedStateString) {
+                currentTargetState = JSON.parse(storedStateString);
             } else {
-                // Fetch bucket-state.json
+                // If not found in localStorage, try bucket-state.json fallback
                 try {
                     const response = await fetch('bucket-state.json');
                     if (!response.ok) {
                         throw new Error('Unable to fetch bucket-state.json');
                     }
                     const data = await response.json();
-                    unifiedState = data;
-                    // Save to localStorage
-                    localStorage.setItem(unifiedStorageKey, JSON.stringify(unifiedState));
-                    if (currentTarget in unifiedState) {
-                        currentTargetState = { ...unifiedState[currentTarget] };
+                    // If bucket-state.json has an entry for this target, load it; otherwise, init
+                    if (data[currentTarget]) {
+                        currentTargetState = { ...data[currentTarget] };
                     } else {
                         initializeTargetState();
                     }
+                    // Save to localStorage for future usage
+                    saveState();
                 } catch (error) {
                     alert('Error loading initial state: ' + error.message);
-                    initializeUnifiedState(); // Fallback
+                    initializeTargetState();
+                    saveState();
                 }
             }
         }
 
         /**
-         * Function to initialize the unified state if not present
-         */
-        function initializeUnifiedState() {
-            unifiedState = {};
-            initializeTargetState();
-            saveState();
-        }
-
-        /**
          * Function to initialize the state for the current target
+         * Note the default b1Prob is set to 0.33 (33%)
          */
         function initializeTargetState() {
             currentTargetState = {
                 b1: {},
                 b2: {},
                 uniqueBucket1Count: 0,
-                b1Prob: 0.66,
-                b2Prob: 0.34,
+                b1Prob: 0.33, // default 33%
+                b2Prob: 0.67, // default 67%
                 defaultFrequency: 1,
                 urlPrefix: '',
                 urlSuffix: '',
@@ -213,30 +188,31 @@
         }
 
         /**
-         * Function to reset the state for the current target
+         * Function to reset the state for the current target only
          */
         function resetState() {
             if (!confirm('Are you sure you want to reset the state? This action cannot be undone.')) return;
-            delete unifiedState[currentTarget];
-            saveState();
+            // Remove only THIS target's key, preserving others
+            localStorage.removeItem(localStorageKey);
             initializeTargetState();
+            saveState();
             updateDisplay();
             initializeSlider();
             populateBucketLists();
             populateHistoryList();
-            showToast('State has been reset.');
+            showToast('State has been reset for this target only.');
         }
 
         /**
-         * Function to export the entire unified state to a JSON file
+         * Function to export the current target's state to a JSON file
          */
         function exportState() {
-            const stateStr = JSON.stringify(unifiedState, null, 4);
+            const stateStr = JSON.stringify(currentTargetState, null, 4);
 
             // Get current date and time for filename
             const now = new Date();
             const timestamp = now.toISOString().replace(/[:.]/g, '-');
-            const filename = `bucket-state-${timestamp}.json`;
+            const filename = `bucket-state-${currentTarget}-${timestamp}.json`;
 
             const blob = new Blob([stateStr], { type: 'application/json' });
             const link = document.createElement('a');
@@ -244,11 +220,11 @@
             link.download = filename;
             link.click();
 
-            showToast('State exported successfully.');
+            showToast('Current target state exported successfully.');
         }
 
         /**
-         * Function to import the entire unified state from a JSON file
+         * Function to import state from a JSON file (overwrites/merges current target’s state)
          */
         function importState() {
             const fileInput = document.createElement('input');
@@ -261,30 +237,21 @@
                     reader.onload = event => {
                         try {
                             const importedState = JSON.parse(event.target.result);
-                            // Merge imported state with existing unified state
-                            for (const [target, state] of Object.entries(importedState)) {
-                                if (unifiedState[target]) {
-                                    // Merge states for existing targets
-                                    unifiedState[target] = {
-                                        ...unifiedState[target],
-                                        ...state,
-                                        drawHistory: [...(unifiedState[target].drawHistory || []), ...(state.drawHistory || [])].slice(-historyLimit)
-                                    };
-                                } else {
-                                    // Add new targets
-                                    unifiedState[target] = state;
-                                }
-                            }
-                            // Update the current target's state if it was imported
-                            if (currentTarget in importedState) {
-                                currentTargetState = { ...unifiedState[currentTarget] };
-                            }
+                            // Merge or overwrite currentTargetState
+                            currentTargetState = {
+                                ...currentTargetState,
+                                ...importedState,
+                                drawHistory: [
+                                    ...(currentTargetState.drawHistory || []),
+                                    ...(importedState.drawHistory || [])
+                                ].slice(-historyLimit)
+                            };
                             saveState();
                             updateDisplay();
                             initializeSlider();
                             populateBucketLists();
                             populateHistoryList();
-                            showToast('State has been imported successfully.');
+                            showToast('State has been imported successfully for this target.');
                         } catch (e) {
                             alert('Invalid state data.');
                         }
@@ -372,7 +339,7 @@
             }
             const urlBody = fileDetails[1];
 
-            // Updated URL construction
+            // Build final URL with prefix/suffix
             let url = urlBody;
             if (currentTargetState.urlPrefix) {
                 url = currentTargetState.urlPrefix + url;
@@ -469,7 +436,6 @@
          * Function to get the initial total frequency of Bucket2
          */
         function getInitialB2Total() {
-            // Calculate the initial total frequency based on initialFiles and defaultFrequency
             let total = 0;
             initialFiles.forEach(file => {
                 const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
@@ -511,7 +477,7 @@
                 const df = parseInt(dfValue);
                 if (!isNaN(df) && df > 0) {
                     currentTargetState.defaultFrequency = df;
-                    // Apply default frequency to elements with null frequency
+                    // Apply default frequency to items with null or old default
                     initialFiles.forEach(file => {
                         if (file[2] === null || file[2] === currentTargetState.defaultFrequency) {
                             const id = file[0];
@@ -649,16 +615,18 @@
                 return;
             }
 
-            currentTarget = target; // Set the current target
+            // Use that target to build a unique localStorage key
+            currentTarget = target;
+            localStorageKey = 'randomUrlPickerState_' + currentTarget;
 
-            // Fetch the initialFiles from the corresponding JSON file
+            // Fetch the initialFiles from the corresponding JSON file (i.e., foo.json if target=foo)
             initialFiles = await fetchInitialFiles(target);
             if (initialFiles.length === 0) {
                 alert('No files to initialize. Please check the target parameter and corresponding JSON file.');
                 return;
             }
 
-            // Load the unified state and set up the current target's state
+            // Load or init the current target's state
             await loadState();
             updateDisplay();
             initializeSlider();
@@ -671,9 +639,6 @@
             document.getElementById('urlSuffix').value = currentTargetState.urlSuffix;
             document.getElementById('defaultFrequency').disabled = true;
         }
-
-        // Declare currentTarget globally
-        let currentTarget = '';
 
         window.onload = main;
     </script>
@@ -721,10 +686,11 @@
 
         <div class="slider-container">
             <label for="probSlider" class="form-label">Adjust Probabilities:</label>
-            <input type="range" class="form-range" id="probSlider" min="0" max="100" value="66" oninput="updateProbabilities()" title="Adjust the probability of selecting from Bucket 1">
+            <!-- Default is 33% (Bucket1) / 67% (Bucket2) -->
+            <input type="range" class="form-range" id="probSlider" min="0" max="100" value="33" oninput="updateProbabilities()" title="Adjust the probability of selecting from Bucket 1">
             <div class="slider-label">
-                <span>Bucket 1: <span id="probBucket1">66%</span></span>
-                <span>Bucket 2: <span id="probBucket2">34%</span></span>
+                <span>Bucket 1: <span id="probBucket1">33%</span></span>
+                <span>Bucket 2: <span id="probBucket2">67%</span></span>
             </div>
         </div>
 
@@ -757,35 +723,29 @@
         <div class="row">
             <div class="col-md-6">
                 <h5>Bucket 1 Total Frequency: <span id="bucket1Freq">0</span></h5>
-                <ul class="list-group bucket-list" id="bucket1List" aria-label="Bucket 1 Items">
-                    <!-- Bucket1 items will be populated here -->
-                </ul>
+                <ul class="list-group bucket-list" id="bucket1List" aria-label="Bucket 1 Items"></ul>
             </div>
             <div class="col-md-6">
                 <h5>Bucket 2 Total Frequency: <span id="bucket2Freq">0</span></h5>
-                <ul class="list-group bucket-list" id="bucket2List" aria-label="Bucket 2 Items">
-                    <!-- Bucket2 items will be populated here -->
-                </ul>
+                <ul class="list-group bucket-list" id="bucket2List" aria-label="Bucket 2 Items"></ul>
             </div>
         </div>
 
         <!-- Draw History -->
         <div class="mt-4">
             <h5>Draw History (Last 5):</h5>
-            <ul class="list-group history-list" id="historyList" aria-label="Draw History">
-                <!-- History items will be populated here -->
-            </ul>
+            <ul class="list-group history-list" id="historyList" aria-label="Draw History"></ul>
         </div>
 
         <!-- Action Buttons -->
         <div class="text-center mt-4">
-            <button class="btn btn-secondary btn-export" onclick="exportState()" title="Export current state as JSON">
+            <button class="btn btn-secondary btn-export" onclick="exportState()" title="Export current target state as JSON">
                 <i class="fas fa-file-export"></i> Export State
             </button>
-            <button class="btn btn-secondary btn-export" onclick="importState()" title="Import state from a JSON file">
+            <button class="btn btn-secondary btn-export" onclick="importState()" title="Import state for this target from a JSON file">
                 <i class="fas fa-file-import"></i> Import State
             </button>
-            <button class="btn btn-danger btn-export" onclick="resetState()" title="Reset all settings and states">
+            <button class="btn btn-danger btn-export" onclick="resetState()" title="Reset this target's settings and state">
                 <i class="fas fa-trash-alt"></i> Reset State
             </button>
         </div>
@@ -815,7 +775,7 @@
                             <li><strong>Adjust Probabilities:</strong> Control the likelihood of selecting from Bucket1 or Bucket2.</li>
                             <li><strong>Draw History:</strong> View a log of the last 5 drawn URLs.</li>
                             <li><strong>Undo Last Draw:</strong> Revert the last draw action.</li>
-                            <li><strong>Import/Export State:</strong> Save and load your current state using JSON files.</li>
+                            <li><strong>Import/Export State:</strong> Save and load your current state using JSON files (per target).</li>
                             <li><strong>Dark Mode:</strong> Toggle between light and dark themes for better visibility.</li>
                         </ul>
                         <h6>How to Use</h6>
@@ -827,15 +787,16 @@
                             <li><strong>Undo Draw</strong>: If you accidentally draw a URL, click "Undo Last Draw" to revert the last action.</li>
                             <li><strong>View Buckets</strong>: Check the lists under Bucket1 and Bucket2 to see current items and their frequencies.</li>
                             <li><strong>View Draw History</strong>: Scroll through the "Draw History" section to see the last 5 drawn URLs.</li>
-                            <li><strong>Import/Export State</strong>: Use the respective buttons to save your current state or load a previously saved state.</li>
+                            <li><strong>Import/Export State</strong>: Use the respective buttons to save your current state or load a previously saved state for this target.</li>
                             <li><strong>Toggle Dark Mode</strong>: Click the "Dark Mode" button at the top-right to switch themes.</li>
-                            <li><strong>Reset State</strong>: Click "Reset State" to clear all settings and start fresh.</li>
+                            <li><strong>Reset State</strong>: Click "Reset State" to clear all settings and start fresh for this target only.</li>
                         </ol>
                         <h6>Notes</h6>
                         <ul>
-                            <li>Ensure that the <code>target</code> parameter in the URL matches the JSON file you intend to use.</li>
-                            <li>Imported states will merge with existing states. Ensure that the <code>target</code> parameter corresponds to the intended data.</li>
+                            <li>Ensure that the <code>target</code> parameter in the URL matches the JSON file you intend to use (e.g., <code>?target=foo</code> uses <code>foo.json</code>).</li>
+                            <li>Imported states overwrite/merge only for the current target, preserving others in localStorage.</li>
                             <li>Toast notifications will appear at the bottom-right corner for various actions.</li>
+                            <li>Check or create the <code>bucket-state.json</code> if you’d like a fallback initial state for multiple targets.</li>
                         </ul>
                     </div>
                     <div class="modal-footer">
@@ -846,7 +807,9 @@
         </div>
 
         <!-- Bootstrap JS and dependencies -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-wpsYrgENSMwvWDnK+0hqyc+8zhu+uZdzsOCS8KQmS1b2y2lZjY0Chvh6e+GD44G" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" 
+                integrity="sha384-wpsYrgENSMwvWDnK+0hqyc+8zhu+uZdzsOCS8KQmS1b2y2lZjY0Chvh6e+GD44G" 
+                crossorigin="anonymous"></script>
     </div>
 </body>
 </html>
