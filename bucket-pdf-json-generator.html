@@ -464,13 +464,13 @@
       });
 
       // Create a comma-separated list of all JSON filenames
-      const allJsonFileNames = jsonFilenames.join(",");
+      const allJsonFileNames = jsonFilenames.map(filename => filename.replace(/\.json$/, "")).join(",");
 
       // Replace "bucket-xxxxxxx" in bucketUrlInput's value
       if (allJsonFileNames) {
         bucketUrlInput.value = bucketUrlInput.value.replace(
-          "bucket-xxxxxxx",
-          allJsonFileNames
+          "target=bucket-xxxxxxx",
+          ("targets=" + allJsonFileNames)
         );
       }
       
