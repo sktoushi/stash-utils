@@ -609,7 +609,7 @@
          */
         async function main() {
             loadDarkMode();
-            // Handle 'targets' parameter with CSV value
+            const target = getUrlParameter('target');
             const targets = getUrlParameter('targets');
             if (targets) {
                 const targetValue = getUrlParameter('targets');
@@ -621,7 +621,6 @@
                 }
                 currentTarget = targetArray[0];
             } else {
-                const target = getUrlParameter('target');
                 if (!target) {
                     alert('Error: "target" parameter is missing in the URL.');
                     return;
@@ -630,7 +629,6 @@
             }
 
             // Use that target to build a unique localStorage key
-            currentTarget = target;
             localStorageKey = 'randomUrlPickerState_' + currentTarget;
 
             // Fetch the initialFiles from the corresponding JSON file (i.e., foo.json if target=foo)
