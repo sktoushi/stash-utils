@@ -122,14 +122,15 @@
   <div class="container py-4">
     <h1 class="mb-4">PDF Bucket JSON Generator</h1>
 
-    <!-- PDF Upload -->
+    <!-- PDF Upload (Multiple) -->
     <div class="mb-3">
-      <label for="pdfFile" class="form-label fw-bold">Upload PDF</label>
+      <label for="pdfFile" class="form-label fw-bold">Upload PDF(s)</label>
       <input
         type="file"
         class="form-control"
         id="pdfFile"
         accept=".pdf"
+        multiple
       />
       <small class="text-muted">
         PDFs must follow the format:
@@ -154,6 +155,10 @@
         <button id="saveUrlPrefix" type="button" class="btn btn-primary" disabled>
           Save
         </button>
+        <!-- Copy button for URL Prefix -->
+        <button id="copyUrlPrefix" type="button" class="btn btn-secondary">
+          Copy
+        </button>
       </div>
     </div>
 
@@ -174,6 +179,10 @@
         <button id="saveBucketUrl" type="button" class="btn btn-primary" disabled>
           Save
         </button>
+        <!-- Copy button for Bucket URL -->
+        <button id="copyBucketUrl" type="button" class="btn btn-secondary">
+          Copy
+        </button>
       </div>
     </div>
 
@@ -187,6 +196,10 @@
       </button>
       <button id="downloadJSON" type="button" class="btn btn-info" disabled>
         Download JSON
+      </button>
+      <!-- New Bulk Button -->
+      <button id="downloadJSONBulk" type="button" class="btn btn-info" disabled>
+        Download JSON (Bulk)
       </button>
     </div>
 
@@ -209,8 +222,8 @@
   ></script>
 
   <script>
-    // Global variable to store uploaded PDF file name
-    let uploadedPdfFileName = "";
+    // Global variables to store uploaded PDF file names
+    let uploadedPdfFiles = [];
 
     // References to DOM elements
     const pdfFileInput = document.getElementById("pdfFile");
@@ -219,23 +232,28 @@
 
     const editUrlPrefixBtn = document.getElementById("editUrlPrefix");
     const saveUrlPrefixBtn = document.getElementById("saveUrlPrefix");
+    const copyUrlPrefixBtn = document.getElementById("copyUrlPrefix");
 
     const editBucketUrlBtn = document.getElementById("editBucketUrl");
     const saveBucketUrlBtn = document.getElementById("saveBucketUrl");
+    const copyBucketUrlBtn = document.getElementById("copyBucketUrl");
 
     const generateJSONBtn = document.getElementById("generateJSON");
     const copyJSONBtn = document.getElementById("copyJSON");
     const downloadJSONBtn = document.getElementById("downloadJSON");
+    const downloadJSONBulkBtn = document.getElementById("downloadJSONBulk");
+
     const jsonOutput = document.getElementById("jsonOutput");
 
-    let generatedJSON = ""; // Will hold the final JSON string
-    let baseNameForDownload = ""; // For naming the downloaded JSON file
-
-    // Handle PDF file selection
+    let generatedJSON = ""; // Will hold the final JSON string (for single file).
+    let baseNameForDownload = ""; // For naming the downloaded JSON file (single).
+    
+    // When user selects one or more PDF files
     pdfFileInput.addEventListener("change", function () {
-      const file = this.files[0];
-      if (file) {
-        uploadedPdfFileName = file.name;
+      uploadedPdfFiles = Array.from(this.files);
+      // Enable the bulk download button if there's at least one file
+      if (uploadedPdfFiles.length > 0) {
+        downloadJSONBulkBtn.disabled = false;
       }
     });
 
@@ -252,6 +270,18 @@
       editUrlPrefixBtn.disabled = false;
     });
 
+    // Copy URL Prefix
+    copyUrlPrefixBtn.addEventListener("click", function() {
+      navigator.clipboard.writeText(urlPrefixInput.value)
+        .then(() => {
+          alert("URL Prefix copied to clipboard!");
+        })
+        .catch(err => {
+          console.error("Error copying URL Prefix: ", err);
+          alert("Failed to copy URL Prefix.");
+        });
+    });
+
     // Toggle read-only for Bucket URL
     editBucketUrlBtn.addEventListener("click", function () {
       bucketUrlInput.readOnly = false;
@@ -265,7 +295,19 @@
       editBucketUrlBtn.disabled = false;
     });
 
-    // Generate Bucket JSON
+    // Copy Bucket URL
+    copyBucketUrlBtn.addEventListener("click", function() {
+      navigator.clipboard.writeText(bucketUrlInput.value)
+        .then(() => {
+          alert("Bucket URL copied to clipboard!");
+        })
+        .catch(err => {
+          console.error("Error copying Bucket URL: ", err);
+          alert("Failed to copy Bucket URL.");
+        });
+    });
+
+    // Generate JSON for a single file
     generateJSONBtn.addEventListener("click", function () {
       // Reset output
       generatedJSON = "";
@@ -273,10 +315,14 @@
       copyJSONBtn.disabled = true;
       downloadJSONBtn.disabled = true;
 
-      if (!uploadedPdfFileName) {
-        alert("Please upload a PDF file first.");
+      if (uploadedPdfFiles.length === 0) {
+        alert("Please upload at least one PDF file first.");
         return;
       }
+
+      // We'll operate on the first file only for single-file generation
+      const file = uploadedPdfFiles[0];
+      const uploadedPdfFileName = file.name;
 
       // The PDF is assumed to end in -{startIndex}-{endIndex}.pdf
       // e.g. example-5-10.pdf => startIndex=5, endIndex=10
@@ -288,11 +334,11 @@
       }
 
       // Extract the numeric start and end from the last two parts
-      const endIndexStr = parts.pop(); // e.g. "10"
-      const startIndexStr = parts.pop(); // e.g. "5"
-      // Whatever remains is the base name (e.g. "example")
+      const endIndexStr = parts.pop();
+      const startIndexStr = parts.pop();
+      // Whatever remains is the base name
       const baseName = parts.join("-");
-      baseNameForDownload = baseName; // store for the download .json
+      baseNameForDownload = baseName;
 
       const startIndex = parseInt(startIndexStr, 10);
       const endIndex = parseInt(endIndexStr, 10);
@@ -306,15 +352,12 @@
       const pdfFileNameFull = uploadedPdfFileName;
 
       // Construct the JSON array
-      // "integer order in the series" always begins at 1
       const resultArray = [];
       const prefix = urlPrefixInput.value.trim();
 
-      // rowNumber = 1 for the first, 2 for the second, etc.
       let rowNumber = 1;
       for (let i = startIndex; i <= endIndex; i++) {
         const generatedUrl = `${prefix}${pdfFileNameFull}&startIdx=${i}&endIdx=${i}`;
-        // e.g. [1, generatedUrl, 1]
         resultArray.push([rowNumber, generatedUrl, 1]);
         rowNumber++;
       }
@@ -323,17 +366,14 @@
         initialFiles: resultArray,
       };
 
-      // Convert final structure to string
       generatedJSON = JSON.stringify(outputObject, null, 4);
-      // Display JSON in the <pre> block
       jsonOutput.textContent = generatedJSON;
 
-      // Enable copy and download buttons
       copyJSONBtn.disabled = false;
       downloadJSONBtn.disabled = false;
     });
 
-    // Copy JSON to clipboard
+    // Copy JSON to clipboard (single-file)
     copyJSONBtn.addEventListener("click", function () {
       if (!generatedJSON) return;
       navigator.clipboard.writeText(generatedJSON)
@@ -346,23 +386,100 @@
         });
     });
 
-    // Download JSON as file
+    // Download JSON as file (single-file)
     downloadJSONBtn.addEventListener("click", function () {
       if (!generatedJSON) return;
-      // Make a blob
       const blob = new Blob([generatedJSON], { type: "application/json" });
       const url = URL.createObjectURL(blob);
 
-      // Construct hidden anchor, trigger download
       const link = document.createElement("a");
       link.href = url;
-      // e.g. "bucket-someName.json"
       link.download = "bucket-" + baseNameForDownload + ".json";
       document.body.appendChild(link);
       link.click();
-      // Clean up
+
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+    });
+
+    // Bulk download JSON for all uploaded files (skip preview)
+    downloadJSONBulkBtn.addEventListener("click", function () {
+      if (uploadedPdfFiles.length === 0) {
+        alert("No PDF files uploaded.");
+        return;
+      }
+
+      // We'll build an array of JSON filenames
+      const jsonFilenames = [];
+
+      // For each file, generate and download the JSON
+      uploadedPdfFiles.forEach(file => {
+        const pdfFileName = file.name;
+        const fileNameNoExt = pdfFileName.replace(".pdf", "");
+        const parts = fileNameNoExt.split("-");
+        if (parts.length < 3) {
+          // If any file is invalid, skip it or alert. 
+          // For now, we just skip gracefully:
+          return;
+        }
+
+        const endIndexStr = parts.pop();
+        const startIndexStr = parts.pop();
+        const baseName = parts.join("-");
+        const startIndex = parseInt(startIndexStr, 10);
+        const endIndex = parseInt(endIndexStr, 10);
+        if (isNaN(startIndex) || isNaN(endIndex)) {
+          // skip
+          return;
+        }
+
+        const prefix = urlPrefixInput.value.trim();
+        const resultArray = [];
+        let rowNumber = 1;
+        for (let i = startIndex; i <= endIndex; i++) {
+          const generatedUrl = `${prefix}${pdfFileName}&startIdx=${i}&endIdx=${i}`;
+          resultArray.push([rowNumber, generatedUrl, 1]);
+          rowNumber++;
+        }
+
+        const outputObject = {
+          initialFiles: resultArray,
+        };
+        const jsonStr = JSON.stringify(outputObject, null, 4);
+
+        // Download file immediately
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        const jsonFileName = "bucket-" + baseName + ".json";
+        link.download = jsonFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        // Collect the JSON filename
+        jsonFilenames.push(jsonFileName);
+      });
+
+      // Create a comma-separated list of all JSON filenames
+      const allJsonFileNames = jsonFilenames.join(",");
+
+      // Replace "bucket-xxxxxxx" in bucketUrlInput's value
+      if (allJsonFileNames) {
+        bucketUrlInput.value = bucketUrlInput.value.replace(
+          "bucket-xxxxxxx",
+          allJsonFileNames
+        );
+      }
+      
+      // We skip showing the JSON preview
+      // Just clear anything that might be there
+      jsonOutput.textContent = "";
+      generatedJSON = "";
+      copyJSONBtn.disabled = true;
+      downloadJSONBtn.disabled = true;
     });
   </script>
 </body>
