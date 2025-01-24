@@ -9,6 +9,114 @@
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
+  <!-- Elegant Custom Styles -->
+  <style>
+    /* Overall page styling */
+    body {
+      background-color: #f8f9fa; /* Light, clean background */
+      color: #343a40;            /* Darker text color for contrast */
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Container */
+    .container {
+      max-width: 900px; /* Slightly limit width for a neat layout */
+      background-color: #ffffff;
+      padding: 2rem;
+      margin-top: 2rem;
+      margin-bottom: 2rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    }
+
+    /* Headings */
+    h1 {
+      font-weight: 700;
+      color: #2f2f2f;
+      border-bottom: 2px solid #eaeaea;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .form-label.fw-bold {
+      color: #5a5a5a;
+    }
+
+    /* Buttons */
+    .btn-primary {
+      background-color: #6c5ce7; /* Soft regal purple */
+      border-color: #6c5ce7;
+    }
+    .btn-primary:hover {
+      background-color: #5b4cd5;
+      border-color: #5b4cd5;
+    }
+    .btn-secondary {
+      background-color: #b2bec3; 
+      border-color: #b2bec3;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background-color: #a1a9ad;
+      border-color: #a1a9ad;
+      color: #fff;
+    }
+    .btn-success {
+      background-color: #55efc4; /* Light minty green */
+      border-color: #55efc4;
+      color: #1e392a;
+    }
+    .btn-success:hover {
+      background-color: #48d4ac;
+      border-color: #48d4ac;
+      color: #fff;
+    }
+    .btn-info {
+      background-color: #74b9ff; /* Soft sky blue */
+      border-color: #74b9ff;
+      color: #1e3b54;
+    }
+    .btn-info:hover {
+      background-color: #66a3e6;
+      border-color: #66a3e6;
+      color: #fff;
+    }
+
+    /* Card */
+    .card {
+      border: none;
+      box-shadow: 0 0 5px rgba(0,0,0,0.05);
+      margin-top: 1rem;
+    }
+    .card-header {
+      background-color: #f1f3f5; /* Subtle header background */
+      font-weight: 600;
+      color: #333;
+    }
+    .card-body {
+      background-color: #ffffff;
+      color: #343a40;
+    }
+
+    /* JSON output pre block */
+    #jsonOutput {
+      background-color: #fdfdfd;
+      border: 1px solid #eaeaea;
+      border-radius: 0.25rem;
+    }
+
+    /* Input focus states for elegance */
+    .form-control:focus {
+      border-color: #6c5ce7;
+      box-shadow: 0 0 0 0.2rem rgba(108, 92, 231, 0.25);
+    }
+
+    /* Fine-tune spacing on smaller screens */
+    @media (max-width: 576px) {
+      .d-flex.flex-wrap.gap-2.mb-3 {
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container py-4">
