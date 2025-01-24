@@ -609,19 +609,10 @@
          */
         async function main() {
             loadDarkMode();
-            const target = getUrlParameter('target');
-            if (!target) {
-                alert('Error: "target" parameter is missing in the URL.');
-                return;
-            }
-        
             // Handle 'targets' parameter with CSV value
-            if (target === "targets") {
+            const targets = getUrlParameter('targets');
+            if (targets) {
                 const targetValue = getUrlParameter('targets');
-                if (!targetValue) {
-                    alert('Error: "targets" parameter is missing or empty in the URL.');
-                    return;
-                }
                 // Split CSV, shuffle the array, and pick one
                 const targetArray = targetValue.split(',').map(t => t.trim());
                 for (let i = targetArray.length - 1; i > 0; i--) {
@@ -630,33 +621,38 @@
                 }
                 currentTarget = targetArray[0];
             } else {
+                const target = getUrlParameter('target');
+                if (!target) {
+                    alert('Error: "target" parameter is missing in the URL.');
+                    return;
+                }
                 currentTarget = target;
             }
-        
+
             // Use that target to build a unique localStorage key
+            currentTarget = target;
             localStorageKey = 'randomUrlPickerState_' + currentTarget;
-        
+
             // Fetch the initialFiles from the corresponding JSON file (i.e., foo.json if target=foo)
-            initialFiles = await fetchInitialFiles(currentTarget);
+            initialFiles = await fetchInitialFiles(target);
             if (initialFiles.length === 0) {
                 alert('No files to initialize. Please check the target parameter and corresponding JSON file.');
                 return;
             }
-        
+
             // Load or init the current target's state
             await loadState();
             updateDisplay();
             initializeSlider();
             populateBucketLists();
             populateHistoryList();
-        
+
             // Set initial values for inputs
             document.getElementById('defaultFrequency').value = currentTargetState.defaultFrequency;
             document.getElementById('urlPrefix').value = currentTargetState.urlPrefix;
             document.getElementById('urlSuffix').value = currentTargetState.urlSuffix;
             document.getElementById('defaultFrequency').disabled = true;
         }
-
 
         window.onload = main;
     </script>
