@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Redirect</title>
+    <script>
+        function getSecureRandomNumber() {
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return array[0] / (0xFFFFFFFF + 1);
+        }
+
+        (function() {
+            // Grab the full query string (e.g. ?modes=...&usernameRepoList=...)
+            const paramsString = window.location.search;
+            
+            // Parse it using URLSearchParams
+            const searchParams = new URLSearchParams(paramsString);
+
+            // Extract the 'modes' parameter and split into array
+            const modesParam = searchParams.get('modes') || ''; 
+            const modesArray = modesParam.split(',');
+
+            // Extract the 'usernameRepoList' parameter and split into array
+            const userRepoParam = searchParams.get('usernameRepoList') || '';
+            const userRepoArray = userRepoParam.split(',');
+
+            // Randomly pick one item from modesArray
+            const randomMode = modesArray[Math.floor(getSecureRandomNumber() * modesArray.length)];
+
+            // Randomly pick one item from userRepoArray
+            const randomUserRepo = userRepoArray[Math.floor(getSecureRandomNumber() * userRepoArray.length)];
+
+            // Split the selected user/repo record by underscore
+            const userRepoParts = randomUserRepo.split('_');
+            // userRepoParts[0] -> element1 (username)
+            // userRepoParts[1] -> element2 (repository)
+            // userRepoParts[2] -> element3 (startIndex)
+            // userRepoParts[3] -> element4 (endIndex)
+
+            // Build the final redirect URL
+            const redirectUrl = [
+                'https://sktoushi.github.io/stash-utils/redirect0915-',
+                encodeURIComponent(randomMode),
+                '.html?username=',
+                encodeURIComponent(userRepoParts[0] || ''),
+                '&repository=',
+                encodeURIComponent(userRepoParts[1] || ''),
+                '&startIndex=',
+                encodeURIComponent(userRepoParts[2] || ''),
+                '&endIndex=',
+                encodeURIComponent(userRepoParts[3] || '')
+            ].join('');
+
+            // Finally, redirect the user
+            window.location.href = redirectUrl;
+        })();
+    </script>
+</head>
+<body>
+    <!-- Bare-bones HTML: no content necessary -->
+</body>
+</html>
