@@ -13,13 +13,12 @@
 var links = [];
 
 /**
- * Optional function for updating a visitor counter or other logging.
- * Currently left as-is.
+ * Optional function for visitor logging, left here as a placeholder.
  */
 function updateCounter() {
     fetch(UPDATE_VISITOR_API, { mode: 'no-cors' })
         .then(response => {
-            // Since we can't read the response due to no-cors, handle if needed
+            // no-cors => cannot inspect response
             console.log('Request completed');
         })
         .catch(error => console.error('Error:', error));
@@ -27,7 +26,7 @@ function updateCounter() {
 
 // ----------------------- CRYPTO RANDOM HELPERS -----------------------
 /**
- * Returns a floating‐point number in [0, 1).
+ * Returns a float in [0,1).
  */
 function getSecureRandomNumber() {
   const array = new Uint32Array(1);
@@ -56,37 +55,32 @@ function getRandomIndexByFrequency(frequencyArray) {
     return 0;
 }
 
-// ----------------------- EXPONENTIAL WEIGHTING WITH POSSIBLE REVERSAL -----------------------
+// ----------------------- EXPONENTIAL WEIGHTING (with possible reversal) -----------------------
 /**
- * Picks a single integer from [startIndex..endIndex] with an exponential
- * weighting. By default, "newer" (closer to endIndex) is favored. However,
- * there's a 33% chance we REVERSE it so that "earlier" (near startIndex) 
- * is favored instead.
+ * Picks a single integer from [startIndex..endIndex] with exponential
+ * weighting. By default, "newer" (closer to endIndex) is favored. 
+ * There's also a 33% chance we reverse it so "older" (near startIndex) is favored.
  *
- * alpha = 0.9 by default (you can tweak).
+ * alpha = 0.9 by default, can be tweaked.
  */
 function pickExponentiallyFromRange(startIndex, endIndex, alpha = 0.9) {
     if (endIndex < startIndex) {
-      // no valid range
+      // invalid range => fallback
       return startIndex;
     }
 
-    // 33% chance to reverse the weighting
+    // 33% chance we flip the weighting so it favors the lower end
     let reversed = (getSecureRandomNumber() <= 0.33);
 
     let weights = [];
-    // We'll define the exponent differently depending on reversed or not.
-    // If not reversed: item i => exponent = (endIndex - i) => items near endIndex are favored.
-    // If reversed: item i => exponent = (i - startIndex) => items near startIndex are favored.
     for (let i = startIndex; i <= endIndex; i++) {
         let exponent = reversed
-          ? (i - startIndex)
-          : (endIndex - i);
+          ? (i - startIndex)  // items near startIndex => exponent=0 => highest weight
+          : (endIndex - i);   // items near endIndex => exponent=0 => highest weight
         let w = Math.pow(alpha, exponent);
         weights.push(w);
     }
 
-    // pick an index from the weights
     let chosenOffset = getRandomIndexByFrequency(weights);
     return startIndex + chosenOffset;
 }
@@ -97,26 +91,26 @@ function isLeapYear(year) {
 }
 
 /**
- * Returns the day of year as an integer 1..365 (or 366).
+ * Returns the day of year as an integer in 1..365 or 366.
  */
 function getDayOfYear(date) {
   const start = new Date(date.getFullYear(), 0, 1);
   const diff = date - start;
-  // +1 so that Jan 1 => dayOfYear=1, Jan 31 => 31, etc.
+  // +1 so that Jan 1 => 1, Jan 31 => 31, etc.
   return Math.floor(diff / (24 * 60 * 60 * 1000)) + 1;
 }
 
 /**
- * For today's date (or ?triggerDate=YYYY-MM-DD), 
- * figure out what fraction of the year has passed.
- * Then apply that fraction to [startIndex..endIndex],
- * so we only consider [startIndex..adjustedEnd].
- * Then pick from that subrange with exponential weighting
- * (with a 33% chance of reversing to favor older records).
+ * For today's date (or ?triggerDate=YYYY-MM-DD), figure out the fraction 
+ * of the year that has elapsed. Then compute a cutoff in [startIndex..endIndex].
+ * 
+ * - 33% of the time => pick from [startIndex..cutoff].
+ * - 67% of the time => pick from [cutoff+1..endIndex].
+ * 
+ * We'll apply the same exponential weighting logic in both subranges.
  */
-function pickBasedOnFractionOfYear(startIndex, endIndex, triggerDateStr) {
+function pickBasedOnFractionOrOutside(startIndex, endIndex, triggerDateStr) {
     let date = triggerDateStr ? new Date(triggerDateStr) : new Date();
-
     let year = date.getFullYear();
     let totalDays = isLeapYear(year) ? 366 : 365;
     let dayOfYear = getDayOfYear(date);
@@ -128,24 +122,51 @@ function pickBasedOnFractionOfYear(startIndex, endIndex, triggerDateStr) {
 
     // ensure at least 1
     if (cutoff < 1) cutoff = 1;
-    let adjustedEnd = startIndex + cutoff - 1;
+    if (cutoff > totalRange) cutoff = totalRange;
 
-    // pick from [startIndex..adjustedEnd]
-    return pickExponentiallyFromRange(startIndex, adjustedEnd, 0.9);
+    // subrange1 => fraction-of-year portion
+    let sub1Start = startIndex;
+    let sub1End   = startIndex + cutoff - 1;  // inclusive
+
+    // subrange2 => "outside" portion
+    let sub2Start = sub1End + 1;
+    let sub2End   = endIndex;
+
+    // 33% of the time => pick from subrange1
+    // 67% => pick from subrange2
+    let useSubrange1 = (getSecureRandomNumber() <= 0.33);
+
+    if (useSubrange1) {
+        // pick from subrange1, fallback if invalid
+        if (sub1End >= sub1Start) {
+            return pickExponentiallyFromRange(sub1Start, sub1End, 0.9);
+        } else {
+            // fallback to subrange2 if sub1 invalid
+            return pickExponentiallyFromRange(sub2Start, sub2End, 0.9);
+        }
+    } else {
+        // pick from subrange2, fallback if invalid
+        if (sub2End >= sub2Start) {
+            return pickExponentiallyFromRange(sub2Start, sub2End, 0.9);
+        } else {
+            // fallback to subrange1
+            return pickExponentiallyFromRange(sub1Start, sub1End, 0.9);
+        }
+    }
 }
 
 // ----------------------- MAIN HANDLER: openStuff -----------------------
 openStuff = function () {
     const urlParams = new URLSearchParams(window.location.search);
 
-    const repository = urlParams.get('repository');
-    const username   = urlParams.get('username') || "cjcaf1995";
-    const startIndex = Number(urlParams.get('startIndex'));
-    const endIndex   = Number(urlParams.get('endIndex'));
-    const triggerDateStr = urlParams.get('triggerDate'); // e.g. "2025-01-31"
+    const repository    = urlParams.get('repository');
+    const username      = urlParams.get('username') || "cjcaf1995";
+    const startIndex    = Number(urlParams.get('startIndex'));
+    const endIndex      = Number(urlParams.get('endIndex'));
+    const triggerDateStr= urlParams.get('triggerDate'); // e.g. "2025-01-31"
 
-    // fraction-of-year approach + possible reversed weighting
-    let randomInteger = pickBasedOnFractionOfYear(startIndex, endIndex, triggerDateStr);
+    // pick from fraction-of-year or the "outside" portion 
+    let randomInteger = pickBasedOnFractionOrOutside(startIndex, endIndex, triggerDateStr);
 
     // redirect to the chosen GitHub issue
     window.open("https://github.com/" + username + "/" + repository + "/issues/" + randomInteger);
@@ -239,8 +260,7 @@ function uuidv4() {
 }
 
 /**
- * Summation of character values, then we do a modulo to get [0..99]
- * to pick from a bucket. (unchanged)
+ * Summation of character values, then we do a modulo to get [0..99].
  */
 function getNumberEquivalent(strChar) {
     let retVal = 0;
@@ -272,7 +292,7 @@ function getNumberEquivalent(strChar) {
       case 'y': retVal = 25; break;
       case 'z': retVal = 26; break;
       default:
-        // if it's a digit or something else, return 0 for unknown letters
+        // if it's a digit or unknown char => 0
         break;
     }
     return retVal;
@@ -281,7 +301,6 @@ function getNumberEquivalent(strChar) {
 function getRandomNumber(uuidString) {
     let uuidWithoutDash = uuidString.replaceAll("-", "");
     var retVal = 0;
-    // Sum up 32 characters from the UUID
     for (let i = 0; i < 32; i++) {
         const char = uuidWithoutDash.charAt(i);
         if (/^\d+$/.test(char)) {
