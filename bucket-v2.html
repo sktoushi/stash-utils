@@ -455,7 +455,7 @@
         }
 
         /**
-         * Update the display elements.
+         * Update the display elements. (Bucket 1 & 2 progress bars remain unchanged)
          */
         function updateDisplay() {
             // Update Review1 Gauge
@@ -673,8 +673,8 @@
 
             const total = currentTargetState.bucket3.length;
             // For a simple approach, let "max" = number of items originally in the session,
-            // but if the user re-generates the session, we reset it. We'll do that in generateSession.
-            // For now, the "value" is how many remain.
+            // but if the user re-generates the session, we reset it in generateSession.
+            // The "value" is how many remain.
 
             const max = parseInt(progressBar.getAttribute('data-bucket3-max') || "0");
             // If the "max" is smaller than 'total' (in case user re-generates?), we can reset it:
@@ -683,14 +683,9 @@
                 progressBar.max = total;
             }
 
-            // Make sure the progress bar always has at least the current "max" if not set
             const newMax = parseInt(progressBar.getAttribute('data-bucket3-max'));
             progressBar.max = newMax;
             progressBar.value = total;
-
-            // Update progress text
-            const percent = newMax === 0 ? 0 : ((total / newMax) * 100).toFixed(0);
-            document.getElementById('bucket3ProgressText').innerText = percent + '%';
 
             // Update the progress bar's background color to the last used Pantone color
             progressBar.style.backgroundColor = lastPantoneColor;
@@ -868,7 +863,7 @@
                     continue;
                 }
 
-                // Check if hot streak reduction is active
+                // Check if hotStreakReductionActive
                 if (hotStreakReductionActive) {
                     hotStreakReductionCounter++;
                     if (hotStreakReductionCounter <= hotStreakReductionDuration) {
@@ -959,11 +954,21 @@
 
         /**
          * Draw from Bucket 3 -> remove next link and open it
+         * If Bucket 3 is empty, auto-generate a session first, then proceed.
          */
         async function drawFromBucket3() {
-            await getRandomColor(); // change background color on button press
+            // If bucket3 is empty, generate session automatically
             if (!currentTargetState.bucket3 || currentTargetState.bucket3.length === 0) {
-                alert("Bucket 3 is empty. Please Generate Session first.");
+                // We'll generate the session, then immediately proceed with the draw
+                await generateSession();
+            }
+
+            // Now we proceed with the usual color change + actual draw
+            await getRandomColor(); // change background color on button press
+
+            if (!currentTargetState.bucket3 || currentTargetState.bucket3.length === 0) {
+                // If it's still empty after generation, that means there's no data to pick
+                alert("No items available for Bucket 3 session.");
                 return;
             }
 
@@ -1147,7 +1152,7 @@
             <i class="fas fa-arrow-down"></i> Draw from Bucket 3
         </button>
 
-        <!-- Review Gauges -->
+        <!-- Review Gauges (Bucket 1 & 2) -->
         <div class="gauge-container">
             <label for="review1Gauge" class="form-label">Review1 (Unique Bucket1 Items / Initial Bucket2 Total):</label>
             <progress id="review1Gauge" class="form-range w-100" value="0" max="100" aria-label="Review1 Gauge"></progress>
@@ -1176,6 +1181,12 @@
             </div>
         </div>
 
+        <!-- ALWAYS-SHOWN Bucket 3 Progress bar (no percentage text) -->
+        <div class="mt-4">
+            <label for="bucket3Progress" class="form-label"><strong>Bucket 3 Session Progress:</strong></label>
+            <progress id="bucket3Progress" class="form-range w-100" value="0" max="100" data-bucket3-max="0"></progress>
+        </div>
+
         <!-- NEW: Radio button to show/hide Bucket 3 -->
         <div class="mt-4">
             <span class="me-2">Show Bucket 3?</span>
@@ -1185,18 +1196,10 @@
             <label for="hideBucket3Radio">No</label>
         </div>
 
-        <!-- NEW: Bucket 3 region, hidden by default -->
+        <!-- Bucket 3 container, hidden by default -->
         <div id="bucket3Container" class="row mt-4 hidden">
             <div class="col-12">
                 <h5>Bucket 3 (Session)</h5>
-                <!-- Bucket 3 progress bar -->
-                <div class="gauge-container">
-                    <label for="bucket3Progress" class="form-label">Bucket 3 Session Progress:</label>
-                    <progress id="bucket3Progress" class="form-range w-100" value="0" max="100" data-bucket3-max="0"></progress>
-                    <div class="text-center">
-                        <span id="bucket3ProgressText">0%</span>
-                    </div>
-                </div>
                 <ul class="list-group bucket-list" id="bucket3List" aria-label="Bucket 3 Items" style="max-height:400px; overflow-y:auto;"></ul>
             </div>
         </div>
@@ -1207,7 +1210,7 @@
             <ul class="list-group history-list" id="historyList" aria-label="Draw History"></ul>
         </div>
 
-        <!-- NEW: Default Session Cards (below bucket 3, as requested) -->
+        <!-- Default Session Cards -->
         <div class="input-container">
             <label class="form-label">Default Session Cards:</label>
             <div class="input-group">
@@ -1218,7 +1221,7 @@
             </div>
         </div>
 
-        <!-- NEW: Fun Card fields (below bucket 3, as requested) -->
+        <!-- Fun Card fields -->
         <div class="input-container">
             <label class="form-label">Fun Card #1:</label>
             <input type="text" class="form-control" id="funCard1" />
@@ -1276,8 +1279,8 @@
                             <li><strong>Import/Export State:</strong> Save and load your current state using JSON files (per target).</li>
                             <li><strong>Dark Mode:</strong> Toggle between light and dark themes for better visibility.</li>
                             <li><strong>Fun Cards & Session:</strong> Define up to 5 “Fun Cards” and generate a session (Bucket 3) that blends “fun” and “study” items via an “addictive” system.</li>
-                            <li><strong>Bucket 3 Visibility:</strong> Use radio buttons to show/hide the session area.</li>
-                            <li><strong>Bucket 3 Progress Bar:</strong> Visual indicator of how many session cards remain.</li>
+                            <li><strong>Bucket 3 Session Progress:</strong> Always visible progress bar showing how many session cards remain.</li>
+                            <li><strong>Auto-Generate Session on Empty:</strong> Attempting to draw from an empty Bucket 3 will automatically generate a new session for convenience.</li>
                         </ul>
                         <h6>How to Use</h6>
                         <ol>
@@ -1285,8 +1288,8 @@
                             <li><strong>Set Default Frequency</strong>: Click the "Edit" button next to "Default Frequency", enter a positive integer, and click "Save".</li>
                             <li><strong>Adjust Probabilities</strong>: Use the slider to set the probability of selecting from Bucket1 and Bucket2.</li>
                             <li><strong>Generate Session</strong>: Click "Generate Session" to fill Bucket 3 with a random blend of study items and fun items, using an internal “variable reward” algorithm.</li>
-                            <li><strong>Bucket 3 Visibility</strong>: Toggle the radio button to show or hide the Bucket 3 contents. (Default hidden.)</li>
-                            <li><strong>Draw from Bucket 3</strong>: Pull the next card from Bucket 3 and open it in a new tab. The drawn card is removed from Bucket 3, and the Bucket 3 progress bar updates.</li>
+                            <li><strong>Draw from Bucket 3</strong>: Click "Draw from Bucket 3" to remove the next card from the session and open it. If the session is empty, a new session will be generated automatically.</li>
+                            <li><strong>Bucket 3 Visibility</strong>: Toggle the radio button to show or hide the Bucket 3 contents. The session progress bar is always visible.</li>
                             <li><strong>Default Session Cards</strong>: Specify how many total draws you want in each generated session (default=100).</li>
                             <li><strong>Define Fun Cards</strong>: Provide up to 5 "Fun Card" URLs. Leave any blank if you don’t want them used.</li>
                             <li><strong>Draw URL (Buckets 1 & 2)</strong>: You can still click "Draw and Open URL" for the original logic with Bucket1/Bucket2.</li>
