@@ -72,6 +72,10 @@
             background: #6c757d;
             border-radius: 4px;
         }
+        /* Hide Bucket 3 by default (radio button will toggle) */
+        #bucket3Container.hidden {
+            display: none;
+        }
     </style>
     <script>
         let currentTargetState = {}; 
@@ -81,6 +85,9 @@
         let lastDrawnId = null;
         let currentTarget = "";
         let localStorageKey = ""; // LocalStorage key based on the target
+
+        // We'll store the last Pantone color used, so we can also apply it to the Bucket 3 progress bar
+        let lastPantoneColor = '#ffffff';
 
         /**
          * Function to get a secure random number between 0 (inclusive) and 1 (exclusive).
@@ -178,7 +185,7 @@
             if (currentTargetState.funCard3 === undefined) currentTargetState.funCard3 = "intent://www.instagram.com/reels/#Intent;package=com.instagram.android;scheme=https;end; ";
             if (currentTargetState.funCard4 === undefined) currentTargetState.funCard4 = "";
             if (currentTargetState.funCard5 === undefined) currentTargetState.funCard5 = "";
-            if (currentTargetState.defaultSessionCards === undefined) currentTargetState.defaultSessionCards = "";
+            if (currentTargetState.defaultSessionCards === undefined) currentTargetState.defaultSessionCards = "100"; // default to 100
             if (currentTargetState.bucket3 === undefined) currentTargetState.bucket3 = [];
 
         }
@@ -204,7 +211,7 @@
                 funCard3: "intent://www.instagram.com/reels/#Intent;package=com.instagram.android;scheme=https;end; ",
                 funCard4: "",
                 funCard5: "",
-                defaultSessionCards: "",
+                defaultSessionCards: "100",
                 bucket3: []
             };
             initialFiles.forEach(file => {
@@ -229,6 +236,7 @@
             populateBucketLists();
             populateHistoryList();
             populateBucket3List();
+            updateBucket3Progress(); // ensure progress bar resets
             showToast('State has been reset for this target only.');
         }
 
@@ -283,6 +291,7 @@
                             populateBucketLists();
                             populateHistoryList();
                             populateBucket3List();
+                            updateBucket3Progress();
                             showToast('State has been imported successfully for this target.');
                         } catch (e) {
                             alert('Invalid state data.');
@@ -655,7 +664,41 @@
             });
         }
 
-        // Fetch random color from pantone-colors.json
+        /**
+         * Update the Bucket 3 progress bar to match the number of items in bucket3
+         */
+        function updateBucket3Progress() {
+            const progressBar = document.getElementById('bucket3Progress');
+            if (!progressBar) return;
+
+            const total = currentTargetState.bucket3.length;
+            // For a simple approach, let "max" = number of items originally in the session,
+            // but if the user re-generates the session, we reset it. We'll do that in generateSession.
+            // For now, the "value" is how many remain.
+
+            const max = parseInt(progressBar.getAttribute('data-bucket3-max') || "0");
+            // If the "max" is smaller than 'total' (in case user re-generates?), we can reset it:
+            if (total > max) {
+                progressBar.setAttribute('data-bucket3-max', total);
+                progressBar.max = total;
+            }
+
+            // Make sure the progress bar always has at least the current "max" if not set
+            const newMax = parseInt(progressBar.getAttribute('data-bucket3-max'));
+            progressBar.max = newMax;
+            progressBar.value = total;
+
+            // Update progress text
+            const percent = newMax === 0 ? 0 : ((total / newMax) * 100).toFixed(0);
+            document.getElementById('bucket3ProgressText').innerText = percent + '%';
+
+            // Update the progress bar's background color to the last used Pantone color
+            progressBar.style.backgroundColor = lastPantoneColor;
+        }
+
+        /**
+         * Fetch random color from pantone-colors.json and apply it to body + store lastPantoneColor
+         */
         async function getRandomColor() {
             try {
                 const response = await fetch('pantone-colors.json');
@@ -680,10 +723,14 @@
                     colorDisplay.textContent = `${randomName} (${randomValue})`;
                 }
 
+                // Store the color so we can apply it to the Bucket 3 progress bar as well
+                lastPantoneColor = randomValue;
+
                 return randomValue;
             } catch (error) {
                 console.error('Error fetching pantone-colors.json:', error);
                 document.body.style.backgroundColor = '#ffffff';
+                lastPantoneColor = '#ffffff';
                 return '#ffffff';
             }
         }
@@ -866,11 +913,16 @@
 
             saveState();
             populateBucket3List();
+
+            // Initialize the Bucket 3 progress bar max to the new session length
+            const progressBar = document.getElementById('bucket3Progress');
+            progressBar.setAttribute('data-bucket3-max', currentTargetState.bucket3.length.toString());
+            updateBucket3Progress();
+
             showToast('Session generated in Bucket 3.');
 
             // function to pick a random fun card + tier
             function pickFunCard() {
-                // Decide rarity tier (common, rare, super-rare)
                 // Weighted example: Common (75%), Rare (20%), Super rare (5%)
                 const tierRand = getSecureRandomNumber();
                 let tier = 'common';
@@ -880,7 +932,6 @@
                     tier = 'rare';
                 }
 
-                // pick a random fun card from the available
                 const fcIdx = Math.floor(getSecureRandomNumber() * availableFunCards.length);
                 const fcUrl = availableFunCards[fcIdx];
                 return {
@@ -920,6 +971,7 @@
             const nextItem = currentTargetState.bucket3.shift();
             saveState();
             populateBucket3List();
+            updateBucket3Progress();
 
             // Build final URL with prefix/suffix
             let url = nextItem.url;
@@ -932,6 +984,19 @@
 
             window.open(url, '_blank');
             showToast(`Drew from Bucket 3: ${nextItem.description}`);
+        }
+
+        /**
+         * Toggle visibility of Bucket 3 container (based on radio buttons)
+         */
+        function toggleBucket3Visibility() {
+            const showRadio = document.getElementById('showBucket3Radio');
+            const bucket3Container = document.getElementById('bucket3Container');
+            if (showRadio.checked) {
+                bucket3Container.classList.remove('hidden');
+            } else {
+                bucket3Container.classList.add('hidden');
+            }
         }
 
         /**
@@ -985,6 +1050,7 @@
             populateBucketLists();
             populateHistoryList();
             populateBucket3List();
+            updateBucket3Progress();
 
             // Set initial values for inputs
             document.getElementById('defaultFrequency').value = currentTargetState.defaultFrequency;
@@ -1000,6 +1066,11 @@
             document.getElementById('funCard5').value = currentTargetState.funCard5;
             // Populate default session cards
             document.getElementById('defaultSessionCards').value = currentTargetState.defaultSessionCards;
+
+            // Radio default = hide Bucket 3
+            const hideRadio = document.getElementById('hideBucket3Radio');
+            hideRadio.checked = true;
+            toggleBucket3Visibility();
         }
 
         window.onload = main;
@@ -1045,34 +1116,6 @@
                     <i class="fas fa-edit"></i> Edit
                 </button>
                 <button class="btn btn-primary" onclick="saveDefaultFrequency()" title="Save Default Frequency">
-                    <i class="fas fa-save"></i> Save
-                </button>
-            </div>
-        </div>
-
-        <!-- NEW: Fun Card fields -->
-        <div class="input-container">
-            <label class="form-label">Fun Card #1:</label>
-            <input type="text" class="form-control" id="funCard1" />
-            <label class="form-label">Fun Card #2:</label>
-            <input type="text" class="form-control" id="funCard2" />
-            <label class="form-label">Fun Card #3:</label>
-            <input type="text" class="form-control" id="funCard3" />
-            <label class="form-label">Fun Card #4:</label>
-            <input type="text" class="form-control" id="funCard4" />
-            <label class="form-label">Fun Card #5:</label>
-            <input type="text" class="form-control" id="funCard5" />
-            <button class="btn btn-secondary mt-2" onclick="saveFunCards()" title="Save Fun Card URLs">
-                Save Fun Cards
-            </button>
-        </div>
-
-        <!-- NEW: Default Session Cards -->
-        <div class="input-container">
-            <label class="form-label">Default Session Cards:</label>
-            <div class="input-group">
-                <input type="number" class="form-control" id="defaultSessionCards" placeholder="Number of cards per session" />
-                <button class="btn btn-primary" onclick="saveDefaultSessionCards()" title="Save Default Session Cards">
                     <i class="fas fa-save"></i> Save
                 </button>
             </div>
@@ -1133,10 +1176,27 @@
             </div>
         </div>
 
-        <!-- NEW: Bucket 3 region (size ~ Bucket 1 + Bucket 2, placed below them) -->
-        <div class="row mt-4">
+        <!-- NEW: Radio button to show/hide Bucket 3 -->
+        <div class="mt-4">
+            <span class="me-2">Show Bucket 3?</span>
+            <input type="radio" name="showBucket3" id="showBucket3Radio" value="show" onclick="toggleBucket3Visibility()" />
+            <label for="showBucket3Radio" class="me-3">Yes</label>
+            <input type="radio" name="showBucket3" id="hideBucket3Radio" value="hide" onclick="toggleBucket3Visibility()" checked />
+            <label for="hideBucket3Radio">No</label>
+        </div>
+
+        <!-- NEW: Bucket 3 region, hidden by default -->
+        <div id="bucket3Container" class="row mt-4 hidden">
             <div class="col-12">
-                <h4>Bucket 3 (Session)</h4>
+                <h5>Bucket 3 (Session)</h5>
+                <!-- Bucket 3 progress bar -->
+                <div class="gauge-container">
+                    <label for="bucket3Progress" class="form-label">Bucket 3 Session Progress:</label>
+                    <progress id="bucket3Progress" class="form-range w-100" value="0" max="100" data-bucket3-max="0"></progress>
+                    <div class="text-center">
+                        <span id="bucket3ProgressText">0%</span>
+                    </div>
+                </div>
                 <ul class="list-group bucket-list" id="bucket3List" aria-label="Bucket 3 Items" style="max-height:400px; overflow-y:auto;"></ul>
             </div>
         </div>
@@ -1145,6 +1205,34 @@
         <div class="mt-4">
             <h5>Draw History (Last 5):</h5>
             <ul class="list-group history-list" id="historyList" aria-label="Draw History"></ul>
+        </div>
+
+        <!-- NEW: Default Session Cards (below bucket 3, as requested) -->
+        <div class="input-container">
+            <label class="form-label">Default Session Cards:</label>
+            <div class="input-group">
+                <input type="number" class="form-control" id="defaultSessionCards" placeholder="Number of cards per session" />
+                <button class="btn btn-primary" onclick="saveDefaultSessionCards()" title="Save Default Session Cards">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </div>
+
+        <!-- NEW: Fun Card fields (below bucket 3, as requested) -->
+        <div class="input-container">
+            <label class="form-label">Fun Card #1:</label>
+            <input type="text" class="form-control" id="funCard1" />
+            <label class="form-label">Fun Card #2:</label>
+            <input type="text" class="form-control" id="funCard2" />
+            <label class="form-label">Fun Card #3:</label>
+            <input type="text" class="form-control" id="funCard3" />
+            <label class="form-label">Fun Card #4:</label>
+            <input type="text" class="form-control" id="funCard4" />
+            <label class="form-label">Fun Card #5:</label>
+            <input type="text" class="form-control" id="funCard5" />
+            <button class="btn btn-secondary mt-2" onclick="saveFunCards()" title="Save Fun Card URLs">
+                Save Fun Cards
+            </button>
         </div>
 
         <!-- Action Buttons -->
@@ -1188,20 +1276,22 @@
                             <li><strong>Import/Export State:</strong> Save and load your current state using JSON files (per target).</li>
                             <li><strong>Dark Mode:</strong> Toggle between light and dark themes for better visibility.</li>
                             <li><strong>Fun Cards & Session:</strong> Define up to 5 “Fun Cards” and generate a session (Bucket 3) that blends “fun” and “study” items via an “addictive” system.</li>
+                            <li><strong>Bucket 3 Visibility:</strong> Use radio buttons to show/hide the session area.</li>
+                            <li><strong>Bucket 3 Progress Bar:</strong> Visual indicator of how many session cards remain.</li>
                         </ul>
                         <h6>How to Use</h6>
                         <ol>
                             <li><strong>Set URL Prefix/Suffix</strong>: Enter any prefix or suffix you want to add to the URLs and click "Save URL Prefix/Suffix".</li>
                             <li><strong>Set Default Frequency</strong>: Click the "Edit" button next to "Default Frequency", enter a positive integer, and click "Save".</li>
                             <li><strong>Adjust Probabilities</strong>: Use the slider to set the probability of selecting from Bucket1 and Bucket2.</li>
-                            <li><strong>Define Fun Cards</strong>: Provide up to 5 "Fun Card" URLs. Leave any blank if you don’t want them used.</li>
-                            <li><strong>Default Session Cards</strong>: Specify how many total draws you want in each generated session (e.g., 10).</li>
                             <li><strong>Generate Session</strong>: Click "Generate Session" to fill Bucket 3 with a random blend of study items and fun items, using an internal “variable reward” algorithm.</li>
-                            <li><strong>Draw from Bucket 3</strong>: Pull the next card from Bucket 3 and open it in a new tab. The drawn card is removed from Bucket 3.</li>
+                            <li><strong>Bucket 3 Visibility</strong>: Toggle the radio button to show or hide the Bucket 3 contents. (Default hidden.)</li>
+                            <li><strong>Draw from Bucket 3</strong>: Pull the next card from Bucket 3 and open it in a new tab. The drawn card is removed from Bucket 3, and the Bucket 3 progress bar updates.</li>
+                            <li><strong>Default Session Cards</strong>: Specify how many total draws you want in each generated session (default=100).</li>
+                            <li><strong>Define Fun Cards</strong>: Provide up to 5 "Fun Card" URLs. Leave any blank if you don’t want them used.</li>
                             <li><strong>Draw URL (Buckets 1 & 2)</strong>: You can still click "Draw and Open URL" for the original logic with Bucket1/Bucket2.</li>
                             <li><strong>Undo Draw</strong>: If you accidentally draw a URL from the main pick, click "Undo Last Draw" to revert that action.</li>
                             <li><strong>View Buckets</strong>: Check the lists under Bucket1 and Bucket2 to see current items and their frequencies.</li>
-                            <li><strong>View Bucket 3</strong>: Look at the "Session" area to see what’s queued up for the session draws.</li>
                             <li><strong>View Draw History</strong>: Scroll through the "Draw History" section to see the last 5 drawn URLs.</li>
                             <li><strong>Import/Export State</strong>: Use the respective buttons to save your current state or load a previously saved state for this target.</li>
                             <li><strong>Toggle Dark Mode</strong>: Click the "Dark Mode" button at the top-right to switch themes.</li>
