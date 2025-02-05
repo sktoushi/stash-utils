@@ -1069,7 +1069,7 @@
 
                 // Convert the comma-separated URLs into our standard [id, url, freq] format
                 // freq can be null initially; we'll handle it when we initialize state
-                const urlsArr = bucket2Param.split(',');
+                const urlsArr = bucket2Param.split('~');
                 initialFiles = urlsArr.map((u, idx) => [100000 + idx, u.trim(), null]);
 
             } else {
