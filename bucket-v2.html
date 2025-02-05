@@ -183,11 +183,10 @@
             if (currentTargetState.funCard1 === undefined) currentTargetState.funCard1 = "intent://com.google.android.apps.youtube.music#Intent;scheme=android-app;end;";
             if (currentTargetState.funCard2 === undefined) currentTargetState.funCard2 = "intent://www.youtube.com/shorts/#Intent;package=com.google.android.youtube;scheme=https;end; ";
             if (currentTargetState.funCard3 === undefined) currentTargetState.funCard3 = "intent://www.instagram.com/reels/#Intent;package=com.instagram.android;scheme=https;end; ";
-            if (currentTargetState.funCard4 === undefined) currentTargetState.funCard4 = "";
+            if (currentTargetState.funCard4 === undefined) currentTargetState.funCard4 = "intent://www.netflix.com/title/MOVIE_ID#Intent;package=com.netflix.mediaclient;scheme=https;end;";
             if (currentTargetState.funCard5 === undefined) currentTargetState.funCard5 = "";
             if (currentTargetState.defaultSessionCards === undefined) currentTargetState.defaultSessionCards = "100"; // default to 100
             if (currentTargetState.bucket3 === undefined) currentTargetState.bucket3 = [];
-
         }
 
         /**
@@ -216,6 +215,7 @@
             };
             initialFiles.forEach(file => {
                 const id = file[0];
+                // If file[2] is null, use defaultFrequency
                 const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
                 currentTargetState.b2[id] = freq;
             });
@@ -788,7 +788,7 @@
             let recentFunCount = 0;
             let hotStreakLimit = 3;   // if 3 fun in short span => artificially reduce chance
             let hotStreakReductionActive = false;
-            let hotStreakReductionDuration = 3; 
+            let hotStreakReductionDuration = 3;
             let hotStreakReductionCounter = 0;
 
             // For the "cooldown" mechanic
@@ -1004,6 +1004,53 @@
             }
         }
 
+        // ---------------------------------------------------------------------
+        // NEW: Function that changes the “I’m Feeling Lucky” button color
+        //      to a random Pantone color that’s never equal to the background.
+        // ---------------------------------------------------------------------
+        async function setLuckyButtonColor() {
+            try {
+                const response = await fetch('pantone-colors.json');
+                const pantoneData = await response.json();
+                const { names, values } = pantoneData;
+
+                if (!names || !values || names.length !== values.length) {
+                    throw new Error('Invalid pantone-colors.json format. "names" and "values" must be parallel arrays.');
+                }
+
+                let attemptCount = 0;
+                while (attemptCount < 1000) {
+                    const randomIndex = Math.floor(getSecureRandomNumber() * names.length);
+                    const randomValue = values[randomIndex];
+                    const bodyBg = document.body.style.backgroundColor.toLowerCase();
+                    // If new color is not the same as the body's background, use it
+                    if (randomValue.toLowerCase() !== bodyBg) {
+                        document.getElementById('feelingLuckyBtn').style.backgroundColor = randomValue;
+                        break;
+                    }
+                    attemptCount++;
+                }
+            } catch (error) {
+                console.error('Error fetching Pantone colors for lucky button:', error);
+            }
+        }
+
+        // ---------------------------------------------------------------------
+        // NEW: “I’m Feeling Lucky” button handler
+        // ---------------------------------------------------------------------
+        async function imFeelingLucky() {
+            // First, set the lucky button's color
+            await setLuckyButtonColor();
+
+            // 50/50 chance to pick from Bucket 3 or from Bucket 1/Bucket 2
+            const r = getSecureRandomNumber();
+            if (r < 0.5) {
+                drawFromBucket3();
+            } else {
+                pickRandom();
+            }
+        }
+
         /**
          * Main initialization function.
          */
@@ -1013,27 +1060,46 @@
             // Use the new async getRandomColor to set the background
             await getRandomColor();
 
-            // Grab both possible params
-            let targetParam = getUrlParameter('target');
-            const targetsParam = getUrlParameter('targets');
+            // NEW: Check for bucket2 param first. If present, we skip target/targets logic entirely
+            let bucket2Param = getUrlParameter('bucket2');
+            if (bucket2Param) {
+                // We'll treat this as our "target"
+                currentTarget = 'bucket2Param';
+                localStorageKey = 'randomUrlPickerState_bucket2Param';
 
-            // If "targets" param exists, split, shuffle, and pick one value as the target
-            if (targetsParam) {
-                const arr = targetsParam.split(',');
-                shuffleArray(arr);
-                targetParam = arr[0];
-                console.log('Randomly chosen target from "targets" param:', targetParam);
+                // Convert the comma-separated URLs into our standard [id, url, freq] format
+                // freq can be null initially; we'll handle it when we initialize state
+                const urlsArr = bucket2Param.split(',');
+                initialFiles = urlsArr.map((u, idx) => [100000 + idx, u.trim(), null]);
+
+            } else {
+                // If no bucket2 param, fall back to the original logic with target/targets
+                let targetParam = getUrlParameter('target');
+                const targetsParam = getUrlParameter('targets');
+
+                if (targetsParam) {
+                    const arr = targetsParam.split(',');
+                    shuffleArray(arr);
+                    targetParam = arr[0];
+                    console.log('Randomly chosen target from "targets" param:', targetParam);
+                }
+
+                if (!targetParam) {
+                    alert('Error: neither "bucket2" nor "target"/"targets" parameter found in the URL.');
+                    return;
+                }
+
+                currentTarget = targetParam;
+                // Build a unique localStorage key
+                localStorageKey = 'randomUrlPickerState_' + currentTarget;
+
+                // Fetch the initialFiles from the corresponding JSON
+                initialFiles = await fetchInitialFiles(currentTarget);
+                if (initialFiles.length === 0) {
+                    alert('No files to initialize. Please check your JSON file and parameters.');
+                    return;
+                }
             }
-
-            // If we still have no target, show an error
-            if (!targetParam) {
-                alert('Error: neither "target" nor "targets" parameter found in the URL.');
-                return;
-            }
-
-            currentTarget = targetParam;
-            // Build a unique localStorage key
-            localStorageKey = 'randomUrlPickerState_' + currentTarget;
 
             // NEW: Update the existing <h1> upon knowing currentTarget
             const titleEl = document.getElementById('pageTitle');
@@ -1041,15 +1107,13 @@
                 titleEl.textContent = `${currentTarget}`;
             }
 
-            // Fetch the initialFiles from the corresponding JSON
-            initialFiles = await fetchInitialFiles(currentTarget);
-            if (initialFiles.length === 0) {
-                alert('No files to initialize. Please check your JSON file and parameters.');
-                return;
-            }
-
             // Load or init the current target's state
             await loadState();
+
+            // If bucket2Param was used, we just assigned initialFiles to hold user’s URLs (with freq=null).
+            // initializeTargetState() will place them into bucket2 automatically.
+            // If targetParam was used, we loaded from JSON. Either way, we proceed:
+
             updateDisplay();
             initializeSlider();
             populateBucketLists();
@@ -1136,6 +1200,21 @@
             </div>
         </div>
 
+        <!-- NEW Lucky Button (on top of Draw from Bucket 3), thrice size -->
+        <button
+          class="btn btn-warning btn-draw"
+          id="feelingLuckyBtn"
+          onclick="imFeelingLucky()"
+          style="transform: scale(3); display:block; margin-bottom:20px;"
+        >
+          I'm Feeling Lucky®
+        </button>
+
+        <!-- NEW: Draw from Bucket 3 Buttons -->
+        <button class="btn btn-info btn-draw" onclick="drawFromBucket3()" title="Draw from Bucket 3">
+            <i class="fas fa-arrow-down"></i> Draw from Bucket 3
+        </button>
+
         <button class="btn btn-primary btn-draw" onclick="pickRandom()" title="Draw a random URL">
             <i class="fas fa-random"></i> Draw and Open URL
         </button>
@@ -1144,12 +1223,9 @@
             <i class="fas fa-undo"></i> Undo Last Draw
         </button>
 
-        <!-- NEW: Generate Session and Draw from Bucket 3 Buttons -->
+        <!-- NEW: Generate Session Button-->
         <button class="btn btn-success btn-draw" onclick="generateSession()" title="Generate a session in Bucket 3">
             <i class="fas fa-play"></i> Generate Session
-        </button>
-        <button class="btn btn-info btn-draw" onclick="drawFromBucket3()" title="Draw from Bucket 3">
-            <i class="fas fa-arrow-down"></i> Draw from Bucket 3
         </button>
 
         <!-- Review Gauges (Bucket 1 & 2) -->
@@ -1302,7 +1378,7 @@
                         </ol>
                         <h6>Notes</h6>
                         <ul>
-                            <li>Use the <code>target</code> parameter (<em>e.g.</em>, <code>?target=foo</code>) or <code>targets</code> parameter (<em>e.g.</em>, <code>?targets=foo,bar,baz</code>) to define which JSON file(s) to randomly pick from.</li>
+                            <li>Use the <code>target</code> parameter (<em>e.g.</em>, <code>?target=foo</code>) or <code>targets</code> parameter (<em>e.g.</em>, <code>?targets=foo,bar,baz</code>) to define which JSON file(s) to randomly pick from—or use <code>bucket2</code> to supply a comma-separated list directly.</li>
                             <li>Imported states overwrite/merge only for the current target, preserving others in localStorage.</li>
                             <li>Toast notifications will appear at the bottom-right corner for various actions.</li>
                             <li>Check or create the <code>bucket-state.json</code> if you’d like a fallback initial state for multiple targets.</li>
