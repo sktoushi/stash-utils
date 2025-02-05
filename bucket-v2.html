@@ -1060,17 +1060,24 @@
             // Use the new async getRandomColor to set the background
             await getRandomColor();
 
-            // NEW: Check for bucket2 param first. If present, we skip target/targets logic entirely
+            // Check for bucket2 param first. If present, we skip target/targets logic entirely
             let bucket2Param = getUrlParameter('bucket2');
             if (bucket2Param) {
                 // We'll treat this as our "target"
                 currentTarget = 'bucket2Param';
                 localStorageKey = 'randomUrlPickerState_bucket2Param';
 
-                // Convert the comma-separated URLs into our standard [id, url, freq] format
-                // freq can be null initially; we'll handle it when we initialize state
-                const urlsArr = bucket2Param.split('~');
-                initialFiles = urlsArr.map((u, idx) => [100000 + idx, u.trim(), null]);
+                // Split on tilde ~
+                // Then remove leading/trailing double quotes from each piece if present
+                const parts = bucket2Param.split('~');
+                const urlsArr = parts.map((p, idx) => {
+                    // Trim whitespace
+                    let cleaned = p.trim();
+                    // Remove surrounding quotes if any
+                    cleaned = cleaned.replace(/^"|"$/g, '');
+                    return [100000 + idx, cleaned, null];
+                });
+                initialFiles = urlsArr;
 
             } else {
                 // If no bucket2 param, fall back to the original logic with target/targets
@@ -1101,7 +1108,7 @@
                 }
             }
 
-            // NEW: Update the existing <h1> upon knowing currentTarget
+            // Update the existing <h1> upon knowing currentTarget
             const titleEl = document.getElementById('pageTitle');
             if (titleEl) {
                 titleEl.textContent = `${currentTarget}`;
@@ -1378,7 +1385,7 @@
                         </ol>
                         <h6>Notes</h6>
                         <ul>
-                            <li>Use the <code>target</code> parameter (<em>e.g.</em>, <code>?target=foo</code>) or <code>targets</code> parameter (<em>e.g.</em>, <code>?targets=foo,bar,baz</code>) to define which JSON file(s) to randomly pick from—or use <code>bucket2</code> to supply a comma-separated list directly.</li>
+                            <li>Use the <code>target</code> parameter (<em>e.g.</em>, <code>?target=foo</code>) or <code>targets</code> parameter (<em>e.g.</em>, <code>?targets=foo,bar,baz</code>) to define which JSON file(s) to randomly pick from—or use <code>bucket2</code> with tilde-delimited URLs directly.</li>
                             <li>Imported states overwrite/merge only for the current target, preserving others in localStorage.</li>
                             <li>Toast notifications will appear at the bottom-right corner for various actions.</li>
                             <li>Check or create the <code>bucket-state.json</code> if you’d like a fallback initial state for multiple targets.</li>
