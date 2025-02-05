@@ -208,13 +208,14 @@
                 funCard1: "intent://com.google.android.apps.youtube.music#Intent;scheme=android-app;end;",
                 funCard2: "intent://www.youtube.com/shorts/#Intent;package=com.google.android.youtube;scheme=https;end; ",
                 funCard3: "intent://www.instagram.com/reels/#Intent;package=com.instagram.android;scheme=https;end; ",
-                funCard4: "",
+                funCard4: "intent://www.netflix.com/title/MOVIE_ID#Intent;package=com.netflix.mediaclient;scheme=https;end;",
                 funCard5: "",
                 defaultSessionCards: "100",
                 bucket3: []
             };
             initialFiles.forEach(file => {
                 const id = file[0];
+                // If file[2] is null, use defaultFrequency
                 const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
                 currentTargetState.b2[id] = freq;
             });
@@ -787,7 +788,7 @@
             let recentFunCount = 0;
             let hotStreakLimit = 3;   // if 3 fun in short span => artificially reduce chance
             let hotStreakReductionActive = false;
-            let hotStreakReductionDuration = 3; 
+            let hotStreakReductionDuration = 3;
             let hotStreakReductionCounter = 0;
 
             // For the "cooldown" mechanic
@@ -1059,43 +1060,67 @@
             // Use the new async getRandomColor to set the background
             await getRandomColor();
 
-            // Grab both possible params
-            let targetParam = getUrlParameter('target');
-            const targetsParam = getUrlParameter('targets');
+            // Check for bucket2 param first. If present, we skip target/targets logic entirely
+            let bucket2Param = getUrlParameter('bucket2');
+            if (bucket2Param) {
+                // We'll treat this as our "target"
+                currentTarget = 'bucket2Param';
+                localStorageKey = 'randomUrlPickerState_bucket2Param';
 
-            // If "targets" param exists, split, shuffle, and pick one value as the target
-            if (targetsParam) {
-                const arr = targetsParam.split(',');
-                shuffleArray(arr);
-                targetParam = arr[0];
-                console.log('Randomly chosen target from "targets" param:', targetParam);
+                // Split on tilde ~
+                // Then remove leading/trailing double quotes from each piece if present
+                const parts = bucket2Param.split('~');
+                const urlsArr = parts.map((p, idx) => {
+                    // Trim whitespace
+                    let cleaned = p.trim();
+                    // Remove surrounding quotes if any
+                    cleaned = cleaned.replace(/^"|"$/g, '');
+                    return [100000 + idx, cleaned, null];
+                });
+                initialFiles = urlsArr;
+
+            } else {
+                // If no bucket2 param, fall back to the original logic with target/targets
+                let targetParam = getUrlParameter('target');
+                const targetsParam = getUrlParameter('targets');
+
+                if (targetsParam) {
+                    const arr = targetsParam.split(',');
+                    shuffleArray(arr);
+                    targetParam = arr[0];
+                    console.log('Randomly chosen target from "targets" param:', targetParam);
+                }
+
+                if (!targetParam) {
+                    alert('Error: neither "bucket2" nor "target"/"targets" parameter found in the URL.');
+                    return;
+                }
+
+                currentTarget = targetParam;
+                // Build a unique localStorage key
+                localStorageKey = 'randomUrlPickerState_' + currentTarget;
+
+                // Fetch the initialFiles from the corresponding JSON
+                initialFiles = await fetchInitialFiles(currentTarget);
+                if (initialFiles.length === 0) {
+                    alert('No files to initialize. Please check your JSON file and parameters.');
+                    return;
+                }
             }
 
-            // If we still have no target, show an error
-            if (!targetParam) {
-                alert('Error: neither "target" nor "targets" parameter found in the URL.');
-                return;
-            }
-
-            currentTarget = targetParam;
-            // Build a unique localStorage key
-            localStorageKey = 'randomUrlPickerState_' + currentTarget;
-
-            // NEW: Update the existing <h1> upon knowing currentTarget
+            // Update the existing <h1> upon knowing currentTarget
             const titleEl = document.getElementById('pageTitle');
             if (titleEl) {
                 titleEl.textContent = `${currentTarget}`;
             }
 
-            // Fetch the initialFiles from the corresponding JSON
-            initialFiles = await fetchInitialFiles(currentTarget);
-            if (initialFiles.length === 0) {
-                alert('No files to initialize. Please check your JSON file and parameters.');
-                return;
-            }
-
             // Load or init the current target's state
             await loadState();
+
+            // If bucket2Param was used, we just assigned initialFiles to hold user’s URLs (with freq=null).
+            // initializeTargetState() will place them into bucket2 automatically.
+            // If targetParam was used, we loaded from JSON. Either way, we proceed:
+
             updateDisplay();
             initializeSlider();
             populateBucketLists();
@@ -1360,7 +1385,7 @@
                         </ol>
                         <h6>Notes</h6>
                         <ul>
-                            <li>Use the <code>target</code> parameter (<em>e.g.</em>, <code>?target=foo</code>) or <code>targets</code> parameter (<em>e.g.</em>, <code>?targets=foo,bar,baz</code>) to define which JSON file(s) to randomly pick from.</li>
+                            <li>Use the <code>target</code> parameter (<em>e.g.</em>, <code>?target=foo</code>) or <code>targets</code> parameter (<em>e.g.</em>, <code>?targets=foo,bar,baz</code>) to define which JSON file(s) to randomly pick from—or use <code>bucket2</code> with tilde-delimited URLs directly.</li>
                             <li>Imported states overwrite/merge only for the current target, preserving others in localStorage.</li>
                             <li>Toast notifications will appear at the bottom-right corner for various actions.</li>
                             <li>Check or create the <code>bucket-state.json</code> if you’d like a fallback initial state for multiple targets.</li>
