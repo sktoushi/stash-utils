@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Random CSV Redirect</title>
+  <title>Random CSV Redirect (Nested CSV Support)</title>
 </head>
 <body>
 <script>
@@ -15,59 +15,65 @@ function getSecureRandomNumber() {
   return array[0] / (0xFFFFFFFF + 1);
 }
 
-async function main() {
-  // 1. Read "target" parameter from the URL
-  const urlParams = new URLSearchParams(window.location.search);
-  const target = urlParams.get('target');
-  if (!target) {
-    document.body.textContent = 'No "target" parameter found in the URL. Example usage: ?target=filename.csv';
-    return;
-  }
-
-  // 2. Fetch CSV from the same directory (relative to this HTML file)
-  let csvText;
+/**
+ * Fetch and parse a CSV file, returning an array of rows.
+ * Each row is itself an array of cells split by commas.
+ *
+ * @param {string} csvFilename  The CSV filename to fetch (relative to this HTML file)
+ * @returns {Promise<string[][]>}  The parsed CSV rows
+ */
+async function fetchCSV(csvFilename) {
   try {
-    const response = await fetch(target);
+    const response = await fetch(csvFilename);
     if (!response.ok) {
       throw new Error(`Failed to fetch CSV file: ${response.status} ${response.statusText}`);
     }
-    csvText = await response.text();
+    const csvText = await response.text();
+    // Parse into rows
+    return csvText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => line.split(','));
   } catch (error) {
-    document.body.textContent = 'Error fetching CSV: ' + error.message;
+    throw new Error('Error fetching CSV: ' + error.message);
+  }
+}
+
+/**
+ * Given an array of CSV rows, pick one row at random.
+ * Then handle the row type accordingly.
+ *
+ * @param {string[][]} rows - Parsed CSV rows
+ * @param {number} recursionDepth - Tracks nested "csv" lookups to prevent infinite loops
+ */
+async function processRows(rows, recursionDepth = 0) {
+  // Basic safeguard against unexpected infinite loops:
+  if (recursionDepth > 20) {
+    document.body.textContent = 'Error: Exceeded maximum CSV nesting depth.';
     return;
   }
-
-  // 3. Parse CSV contents
-  //    Split by lines, then split each line by commas
-  let rows = csvText
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .map(line => line.split(','));
 
   if (!rows.length) {
     document.body.textContent = 'CSV is empty or could not be parsed.';
     return;
   }
 
-  // 4. Pick a random row using a secure random number
+  // Pick a random row using secure randomness
   const randomIndex = Math.floor(getSecureRandomNumber() * rows.length);
   const selectedRow = rows[randomIndex];
-
-  // 5. Interpret the row based on its first cell (row type)
   const rowType = selectedRow[0];
 
   if (rowType === 'link') {
-    // Row format: link,https://www.google.com/
-    // second cell is the actual link
+    // Format: link,https://...
     const url = selectedRow[1];
     window.location.href = url;
-
-  } else if (rowType === 'git-specific') {
-    // Row format: git-specific,username=xxxx,repository=yyyy,issueNumbers=1_2_3
+  }
+  else if (rowType === 'git-specific') {
+    // Format: git-specific,username=xxxx,repository=yyyy,issueNumbers=1_2_3
     const username = selectedRow[1].split('=')[1];
     const repository = selectedRow[2].split('=')[1];
-    const issueNumbersStr = selectedRow[3].split('=')[1];  // e.g. 68_69_70
+    const issueNumbersStr = selectedRow[3].split('=')[1]; // e.g. "68_69_70"
     const issueNumbersArr = issueNumbersStr.split('_');
 
     const randIdx = Math.floor(getSecureRandomNumber() * issueNumbersArr.length);
@@ -75,9 +81,9 @@ async function main() {
 
     const finalUrl = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
     window.location.href = finalUrl;
-
-  } else if (rowType === 'git-range') {
-    // Row format: git-range,username=xxxx,repository=yyyy,issueNumbers=min_max
+  }
+  else if (rowType === 'git-range') {
+    // Format: git-range,username=xxxx,repository=yyyy,issueNumbers=min_max
     const username = selectedRow[1].split('=')[1];
     const repository = selectedRow[2].split('=')[1];
     const rangeStr = selectedRow[3].split('=')[1]; // e.g. "1_3"
@@ -93,13 +99,50 @@ async function main() {
     const randomVal = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
     const finalUrl = `https://github.com/${username}/${repository}/issues/${randomVal}`;
     window.location.href = finalUrl;
-
-  } else {
+  }
+  else if (rowType === 'csv') {
+    // Format: csv,another-file.csv
+    // We fetch that new CSV, parse it, then process again (recursively).
+    const nestedCsv = selectedRow[1];
+    if (!nestedCsv) {
+      document.body.textContent = 'CSV type found but no filename specified.';
+      return;
+    }
+    try {
+      const nestedRows = await fetchCSV(nestedCsv);
+      // Recursively call processRows with incremented recursion depth
+      await processRows(nestedRows, recursionDepth + 1);
+    } catch (error) {
+      document.body.textContent = error.message;
+    }
+  }
+  else {
     document.body.textContent = 'Unknown row type: ' + rowType;
   }
 }
 
-// Execute on page load
+/**
+ * Main entry point.
+ * 1. Read target param from URL
+ * 2. Fetch/parse CSV
+ * 3. Process rows
+ */
+async function main() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const target = urlParams.get('target');
+  if (!target) {
+    document.body.textContent = 'No "target" parameter found. Use ?target=filename.csv';
+    return;
+  }
+
+  try {
+    const rows = await fetchCSV(target);
+    await processRows(rows, 0);
+  } catch (error) {
+    document.body.textContent = 'Failed to process CSV: ' + error.message;
+  }
+}
+
 window.onload = main;
 </script>
 </body>
