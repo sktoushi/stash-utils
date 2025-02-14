@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Random CSV Redirect (Nested CSV Support)</title>
+  <title>Random CSV Redirect (Nested CSV Support + Debug)</title>
 </head>
 <body>
 <script>
@@ -23,18 +23,25 @@ function getSecureRandomNumber() {
  * @returns {Promise<string[][]>}  The parsed CSV rows
  */
 async function fetchCSV(csvFilename) {
+  console.log(`Attempting to fetch CSV: ${csvFilename}`);
   try {
     const response = await fetch(csvFilename);
     if (!response.ok) {
       throw new Error(`Failed to fetch CSV file: ${response.status} ${response.statusText}`);
     }
     const csvText = await response.text();
-    // Parse into rows
-    return csvText
+
+    // Parse into rows. We remove extra blank lines, etc.
+    const lines = csvText
       .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
-      .map(line => line.split(','));
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
+    console.log('Raw lines:', lines);
+
+    const rows = lines.map(line => line.split(','));
+    console.log('Parsed rows:', rows);
+    return rows;
   } catch (error) {
     throw new Error('Error fetching CSV: ' + error.message);
   }
@@ -62,11 +69,18 @@ async function processRows(rows, recursionDepth = 0) {
   // Pick a random row using secure randomness
   const randomIndex = Math.floor(getSecureRandomNumber() * rows.length);
   const selectedRow = rows[randomIndex];
-  const rowType = selectedRow[0];
+
+  // Debug info: see what row was chosen
+  console.log('All rows:', rows);
+  console.log('Random index chosen:', randomIndex);
+  console.log('Selected row:', selectedRow);
+
+  const rowType = selectedRow[0].trim();
 
   if (rowType === 'link') {
     // Format: link,https://...
     const url = selectedRow[1];
+    console.log('Redirecting to link:', url);
     window.location.href = url;
   }
   else if (rowType === 'git-specific') {
@@ -80,6 +94,7 @@ async function processRows(rows, recursionDepth = 0) {
     const chosenIssue = issueNumbersArr[randIdx];
 
     const finalUrl = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
+    console.log('Redirecting to git-specific issue:', finalUrl);
     window.location.href = finalUrl;
   }
   else if (rowType === 'git-range') {
@@ -98,6 +113,7 @@ async function processRows(rows, recursionDepth = 0) {
 
     const randomVal = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
     const finalUrl = `https://github.com/${username}/${repository}/issues/${randomVal}`;
+    console.log('Redirecting to git-range issue:', finalUrl);
     window.location.href = finalUrl;
   }
   else if (rowType === 'csv') {
@@ -108,6 +124,7 @@ async function processRows(rows, recursionDepth = 0) {
       document.body.textContent = 'CSV type found but no filename specified.';
       return;
     }
+    console.log('Nested CSV found. Fetching:', nestedCsv);
     try {
       const nestedRows = await fetchCSV(nestedCsv);
       // Recursively call processRows with incremented recursion depth
