@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Random CSV Redirect (Nested CSV Support + Debug)</title>
+  <title>Random CSV Redirect (Nested CSV Support + Stripped Quotes)</title>
 </head>
 <body>
 <script>
@@ -16,8 +16,20 @@ function getSecureRandomNumber() {
 }
 
 /**
+ * Strips leading/trailing quotes from a string. Also trims whitespace.
+ * Example:  "\"https://www.youtube.com\"" => "https://www.youtube.com"
+ */
+function cleanCell(cell) {
+  // Remove leading/trailing whitespace
+  cell = cell.trim();
+  // Remove leading/trailing quotes (single or double)
+  cell = cell.replace(/^["']+|["']+$/g, '');
+  return cell;
+}
+
+/**
  * Fetch and parse a CSV file, returning an array of rows.
- * Each row is itself an array of cells split by commas.
+ * Each row is an array of "cleaned" cells.
  *
  * @param {string} csvFilename  The CSV filename to fetch (relative to this HTML file)
  * @returns {Promise<string[][]>}  The parsed CSV rows
@@ -31,16 +43,22 @@ async function fetchCSV(csvFilename) {
     }
     const csvText = await response.text();
 
-    // Parse into rows. We remove extra blank lines, etc.
+    // Split into lines, filtering out blank lines
     const lines = csvText
       .split('\n')
-      .map(l => l.trim())
-      .filter(l => l.length > 0);
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
 
     console.log('Raw lines:', lines);
 
-    const rows = lines.map(line => line.split(','));
-    console.log('Parsed rows:', rows);
+    // Split each line by commas, then strip quotes from each cell
+    const rows = lines.map(line => {
+      const splitted = line.split(',');
+      // Clean each cell to remove extra quotes
+      return splitted.map(cell => cleanCell(cell));
+    });
+
+    console.log('Parsed rows (with cleaned cells):', rows);
     return rows;
   } catch (error) {
     throw new Error('Error fetching CSV: ' + error.message);
@@ -78,7 +96,7 @@ async function processRows(rows, recursionDepth = 0) {
   const rowType = selectedRow[0].trim();
 
   if (rowType === 'link') {
-    // Format: link,https://...
+    // Format: link,<url>
     const url = selectedRow[1];
     console.log('Redirecting to link:', url);
     window.location.href = url;
@@ -117,7 +135,7 @@ async function processRows(rows, recursionDepth = 0) {
     window.location.href = finalUrl;
   }
   else if (rowType === 'csv') {
-    // Format: csv,another-file.csv
+    // Format: csv,<another-file.csv>
     // We fetch that new CSV, parse it, then process again (recursively).
     const nestedCsv = selectedRow[1];
     if (!nestedCsv) {
