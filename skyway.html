@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Random CSV Redirect</title>
+</head>
+<body>
+<script>
+/**
+ * Returns a cryptographically secure random number between 0 (inclusive) and 1 (exclusive).
+ */
+function getSecureRandomNumber() {
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  return array[0] / (0xFFFFFFFF + 1);
+}
+
+async function main() {
+  // 1. Read "target" parameter from the URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const target = urlParams.get('target');
+  if (!target) {
+    document.body.textContent = 'No "target" parameter found in the URL. Example usage: ?target=filename.csv';
+    return;
+  }
+
+  // 2. Fetch CSV from the same directory (relative to this HTML file)
+  let csvText;
+  try {
+    const response = await fetch(target);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch CSV file: ${response.status} ${response.statusText}`);
+    }
+    csvText = await response.text();
+  } catch (error) {
+    document.body.textContent = 'Error fetching CSV: ' + error.message;
+    return;
+  }
+
+  // 3. Parse CSV contents
+  //    Split by lines, then split each line by commas
+  let rows = csvText
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map(line => line.split(','));
+
+  if (!rows.length) {
+    document.body.textContent = 'CSV is empty or could not be parsed.';
+    return;
+  }
+
+  // 4. Pick a random row using a secure random number
+  const randomIndex = Math.floor(getSecureRandomNumber() * rows.length);
+  const selectedRow = rows[randomIndex];
+
+  // 5. Interpret the row based on its first cell (row type)
+  const rowType = selectedRow[0];
+
+  if (rowType === 'link') {
+    // Row format: link,https://www.google.com/
+    // second cell is the actual link
+    const url = selectedRow[1];
+    window.location.href = url;
+
+  } else if (rowType === 'git-specific') {
+    // Row format: git-specific,username=xxxx,repository=yyyy,issueNumbers=1_2_3
+    const username = selectedRow[1].split('=')[1];
+    const repository = selectedRow[2].split('=')[1];
+    const issueNumbersStr = selectedRow[3].split('=')[1];  // e.g. 68_69_70
+    const issueNumbersArr = issueNumbersStr.split('_');
+
+    const randIdx = Math.floor(getSecureRandomNumber() * issueNumbersArr.length);
+    const chosenIssue = issueNumbersArr[randIdx];
+
+    const finalUrl = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
+    window.location.href = finalUrl;
+
+  } else if (rowType === 'git-range') {
+    // Row format: git-range,username=xxxx,repository=yyyy,issueNumbers=min_max
+    const username = selectedRow[1].split('=')[1];
+    const repository = selectedRow[2].split('=')[1];
+    const rangeStr = selectedRow[3].split('=')[1]; // e.g. "1_3"
+    const [minStr, maxStr] = rangeStr.split('_');
+    const min = parseInt(minStr, 10);
+    const max = parseInt(maxStr, 10);
+
+    if (isNaN(min) || isNaN(max)) {
+      document.body.textContent = 'Invalid range in "git-range" row.';
+      return;
+    }
+
+    const randomVal = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
+    const finalUrl = `https://github.com/${username}/${repository}/issues/${randomVal}`;
+    window.location.href = finalUrl;
+
+  } else {
+    document.body.textContent = 'Unknown row type: ' + rowType;
+  }
+}
+
+// Execute on page load
+window.onload = main;
+</script>
+</body>
+</html>
