@@ -8,4 +8,4 @@ link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-jpnews-2
 link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-pmbok-2025
 link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-pmbok-2025
 csv,1,skyway-modifiable-redirect0915-150-stash2-recent10percent.csv
-link,1,https://en.wikipedia.org/wiki/Special:Random
+csv,1,skyway-random-stuff.csv
