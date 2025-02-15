@@ -5,5 +5,8 @@ csv,1,skyway-bucket-main.csv
 csv,1,skyway-bucket-main-jp.csv
 csv,1,skyway-modifiable-redirect0915-133-stash-of-stashes.csv
 link,1,https://github.com/cjcaf1995/redirect0915/issues/148
-link,1,"https://sktoushi.github.io/stash-utils/bucket.html?targets=bucket-pmbok-2025,bucket-jpnews-250202,bucket-jpnews-250212,bucket-pmbok-2025"
+link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-jpnews-250202
+link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-jpnews-250212
+link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-pmbok-2025
+link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-pmbok-2025
 csv,1,skyway-modifiable-redirect0915-150-stash2-recent10percent.csv
