@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Random CSV Redirect (Weighted + Nested CSV Support + Stripped Quotes)</title>
+  <meta charset="UTF-8">
+  <title>Random CSV Redirect (Weighted + Nested CSV + Proper Quoted CSV Parsing)</title>
 </head>
 <body>
 <script>
@@ -17,7 +17,7 @@ function getSecureRandomNumber() {
 
 /**
  * Strips leading/trailing quotes from a string. Also trims whitespace.
- * Example:  "\"https://www.youtube.com\"" => "https://www.youtube.com"
+ * Example: "\"https://www.youtube.com\"" => "https://www.youtube.com"
  */
 function cleanCell(cell) {
   cell = cell.trim();
@@ -27,14 +27,62 @@ function cleanCell(cell) {
 }
 
 /**
- * Fetch and parse a CSV file, returning an array of rows.
- * Each row is an array of "cleaned" cells.
+ * Parses a single CSV line into an array of cell strings, 
+ * respecting double quotes so commas inside quotes are not split.
  *
- * @param {string} csvFilename The CSV filename to fetch (relative to this HTML file)
+ * Example line:
+ *   link,1,"https://example.com/some?query=1,2,3"
+ * Should parse to:
+ *   ["link", "1", "https://example.com/some?query=1,2,3"]
+ *
+ * This handles escaped quotes inside a quoted cell by doubling them: ""
+ */
+function parseCsvLine(line) {
+  const result = [];
+  let curCell = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+
+    if (c === '"') {
+      // Look ahead for another quote => escaped double-quote
+      if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+        // Add a literal quote to the current cell
+        curCell += '"';
+        i++;
+      } else {
+        // Toggle the inQuotes flag
+        inQuotes = !inQuotes;
+      }
+    }
+    else if (c === ',' && !inQuotes) {
+      // Split point
+      result.push(curCell);
+      curCell = '';
+    }
+    else {
+      // Normal character
+      curCell += c;
+    }
+  }
+
+  // Push the last cell
+  result.push(curCell);
+
+  return result;
+}
+
+/**
+ * Fetch and parse a CSV file, returning an array of rows.
+ * Each row is an array of "cleaned" cells, respecting quoted fields.
+ *
+ * @param {string} csvFilename The CSV filename to fetch (relative path)
  * @returns {Promise<string[][]>} The parsed CSV rows
  */
 async function fetchCSV(csvFilename) {
   console.log(`Attempting to fetch CSV: ${csvFilename}`);
+
   try {
     const response = await fetch(csvFilename);
     if (!response.ok) {
@@ -42,7 +90,7 @@ async function fetchCSV(csvFilename) {
     }
     const csvText = await response.text();
 
-    // Split into lines, filtering out blank lines
+    // Split text into lines, filtering out blank lines
     const lines = csvText
       .split('\n')
       .map(line => line.trim())
@@ -50,10 +98,10 @@ async function fetchCSV(csvFilename) {
 
     console.log('Raw lines:', lines);
 
-    // Split each line by commas, then strip quotes from each cell
+    // For each line, parse properly, then clean each cell
     const rows = lines.map(line => {
-      const splitted = line.split(',');
-      return splitted.map(cell => cleanCell(cell));
+      const parsedCells = parseCsvLine(line);
+      return parsedCells.map(cell => cleanCell(cell));
     });
 
     console.log('Parsed rows (with cleaned cells):', rows);
@@ -64,20 +112,20 @@ async function fetchCSV(csvFilename) {
 }
 
 /**
- * Picks one row based on the integer weight in the second cell of each row.
+ * Picks one row based on integer weight in the second cell of each row.
  *   row[0] = type
- *   row[1] = weight (an integer >= 1 by assumption)
+ *   row[1] = weight (integer >= 1)
  *   row[2..] = other data
  *
- * If totalWeight <= 0 (e.g., all invalid or zero), we fall back to uniform random.
+ * If totalWeight <= 0 (all invalid or zero), we fall back to uniform random.
  *
  * @param {string[][]} rows
  * @returns {string[]} The selected row
  */
 function pickRowByWeight(rows) {
   const weightedRows = rows.map(r => {
-    // Attempt parse as integer; default to 1 if invalid or < 1
     let w = parseInt(r[1], 10);
+    // Default weight to 1 if it's invalid or < 1
     if (isNaN(w) || w < 1) {
       w = 1;
     }
@@ -112,10 +160,10 @@ function pickRowByWeight(rows) {
 }
 
 /**
- * Processes the rows by picking one row (weighted) and then acting based on row type.
+ * Processes rows by picking one (weighted) and acting according to its type.
  *
  * @param {string[][]} rows Parsed CSV rows
- * @param {number} recursionDepth Tracks nested "csv" lookups to prevent infinite loops
+ * @param {number} recursionDepth Avoid infinite recursion on nested CSV references
  */
 async function processRows(rows, recursionDepth = 0) {
   // Basic safeguard against unexpected infinite loops
@@ -129,7 +177,7 @@ async function processRows(rows, recursionDepth = 0) {
     return;
   }
 
-  // Pick a row by weight
+  // Weighted selection
   const selectedRow = pickRowByWeight(rows);
 
   console.log('All rows:', rows);
@@ -147,7 +195,7 @@ async function processRows(rows, recursionDepth = 0) {
     // Format: git-specific,<weight>,username=xxxx,repository=yyyy,issueNumbers=1_2_3
     const username = selectedRow[2].split('=')[1];
     const repository = selectedRow[3].split('=')[1];
-    const issueNumbersStr = selectedRow[4].split('=')[1]; // e.g. "68_69_70"
+    const issueNumbersStr = selectedRow[4].split('=')[1];
     const issueNumbersArr = issueNumbersStr.split('_');
 
     const randIdx = Math.floor(getSecureRandomNumber() * issueNumbersArr.length);
@@ -161,7 +209,7 @@ async function processRows(rows, recursionDepth = 0) {
     // Format: git-range,<weight>,username=xxxx,repository=yyyy,issueNumbers=min_max
     const username = selectedRow[2].split('=')[1];
     const repository = selectedRow[3].split('=')[1];
-    const rangeStr = selectedRow[4].split('=')[1]; // e.g. "1_3"
+    const rangeStr = selectedRow[4].split('=')[1];
     const [minStr, maxStr] = rangeStr.split('_');
     const min = parseInt(minStr, 10);
     const max = parseInt(maxStr, 10);
@@ -178,7 +226,7 @@ async function processRows(rows, recursionDepth = 0) {
     window.location.href = finalUrl;
   }
   else if (rowType === 'csv') {
-    // Format: csv,<weight>,<filename>
+    // Format: csv,<weight>,<another-file.csv>
     const nestedCsv = selectedRow[2];
     if (!nestedCsv) {
       document.body.textContent = 'CSV type found but no filename specified.';
@@ -200,8 +248,8 @@ async function processRows(rows, recursionDepth = 0) {
 
 /**
  * Main entry point:
- * 1. Read the "target" param from URL (e.g. ?target=filename.csv)
- * 2. Fetch/parse the CSV
+ * 1. Read "target" param from URL (?target=filename.csv)
+ * 2. Fetch/parse CSV
  * 3. Process rows
  */
 async function main() {
