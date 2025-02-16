@@ -157,6 +157,9 @@
             <button class="btn btn-outline-primary" onclick="googleSearchBack()">Search Google (Back)</button>
             <button class="btn btn-outline-success" onclick="chatGPTSearchFront()">Search ChatGPT (Front)</button>
             <button class="btn btn-outline-success" onclick="chatGPTSearchBack()">Search ChatGPT (Back)</button>
+            <!-- Added Jisho.org search buttons -->
+            <button class="btn btn-outline-info" onclick="jishoSearchFront()">Search Jisho (Front)</button>
+            <button class="btn btn-outline-info" onclick="jishoSearchBack()">Search Jisho (Back)</button>
         </div>
 
         <!-- Review Gauges -->
@@ -521,7 +524,7 @@
         }
 
         /* ---------------------------
-         * GOOGLE / CHATGPT SEARCH FUNCTIONS
+         * GOOGLE / CHATGPT / JISHO SEARCH FUNCTIONS
          * --------------------------- */
         function googleSearchFront() {
             if (!currentFront) return;
@@ -545,6 +548,19 @@
             if (!currentBack) return;
             const query = encodeURIComponent(currentBack);
             window.open("https://chat.openai.com/?q=" + query);
+        }
+
+        // Added Jisho.org search functions
+        function jishoSearchFront() {
+            if (!currentFront) return;
+            const query = encodeURIComponent(currentFront);
+            window.open("https://jisho.org/search/" + query, "_blank");
+        }
+
+        function jishoSearchBack() {
+            if (!currentBack) return;
+            const query = encodeURIComponent(currentBack);
+            window.open("https://jisho.org/search/" + query, "_blank");
         }
 
         /* ---------------------------
