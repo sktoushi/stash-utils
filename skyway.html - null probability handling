@@ -250,7 +250,8 @@ async function processRows(rows, recursionDepth = 0) {
  * Main entry point:
  * 1. Read "target" param from URL (?target=filename.csv)
  * 2. Fetch/parse CSV
- * 3. Process rows
+ * 3. Handle any "null" values in the second column by assigning random integers from the min/max of valid second-column values
+ * 4. Process rows
  */
 async function main() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -263,6 +264,26 @@ async function main() {
 
   try {
     const rows = await fetchCSV(target);
+
+    // Find all valid (non-null) second-column integer values
+    const nonNullValues = rows
+      .map(r => (r[1] !== 'null' ? parseInt(r[1], 10) : NaN))
+      .filter(val => !isNaN(val));
+
+    // If we have any valid numbers at all, proceed
+    if (nonNullValues.length > 0) {
+      const minVal = Math.min(...nonNullValues);
+      const maxVal = Math.max(...nonNullValues);
+
+      // Assign random values between minVal and maxVal (inclusive) where second column is "null"
+      for (let i = 0; i < rows.length; i++) {
+        if (rows[i][1] === 'null') {
+          const randomVal = Math.floor(getSecureRandomNumber() * (maxVal - minVal + 1)) + minVal;
+          rows[i][1] = String(randomVal);
+        }
+      }
+    }
+
     await processRows(rows, 0);
   } catch (error) {
     document.body.textContent = 'Failed to process CSV: ' + error.message;
