@@ -151,10 +151,12 @@
             </div>
         </div>
 
-        <!-- Google Search Buttons (hidden until reveal) -->
+        <!-- Search Buttons (Google & ChatGPT); hidden until reveal -->
         <div id="googleSearchButtons" style="display: none; text-align:center; margin-bottom:20px;">
             <button class="btn btn-outline-primary" onclick="googleSearchFront()">Search Google (Front)</button>
             <button class="btn btn-outline-primary" onclick="googleSearchBack()">Search Google (Back)</button>
+            <button class="btn btn-outline-success" onclick="chatGPTSearchFront()">Search ChatGPT (Front)</button>
+            <button class="btn btn-outline-success" onclick="chatGPTSearchBack()">Search ChatGPT (Back)</button>
         </div>
 
         <!-- Review Gauges -->
@@ -233,7 +235,10 @@
                                 Example: <code>?target=flashcards.csv</code> or <code>?target=flashcards-jp.csv</code>.
                             </li>
                             <li><strong>Draw Card</strong>: Click “Draw Card” to select one card front/back side according to the set probabilities.</li>
-                            <li><strong>Reveal Answer</strong>: Shows the back side of the currently drawn card and displays two extra buttons to search Google for the front text or the back text.</li>
+                            <li>
+                                <strong>Reveal Answer</strong>: Shows the back side of the currently drawn card. 
+                                It also displays four extra buttons to search Google or ChatGPT for the front or back text.
+                            </li>
                             <li><strong>Undo Last Draw</strong>: Reverts the last drawn card’s bucket changes.</li>
                             <li><strong>Probabilities Slider</strong>: Adjust how often to pick from Bucket 1 vs. Bucket 2.</li>
                             <li><strong>Import/Export State</strong>: Save or load your progress (buckets & frequencies) as JSON.</li>
@@ -328,7 +333,7 @@
             // Show which CSV we loaded in the pageTitle
             const pageTitle = document.getElementById("pageTitle");
             if (pageTitle) {
-                pageTitle.innerText = `Flashcard Reviewer - ${csvTarget}`;
+                pageTitle.innerText = `${csvTarget}`;
             }
 
             // 5) Make *all* buttons also trigger a background color change
@@ -408,7 +413,7 @@
             // Hide the card's back if it was previously revealed
             document.getElementById("backTextContainer").style.display = "none";
 
-            // Also hide the Google search buttons again upon new draw
+            // Also hide the Google/ChatGPT search buttons again upon new draw
             document.getElementById("googleSearchButtons").style.display = "none";
 
             // Weighted pick from b1 or b2
@@ -478,7 +483,7 @@
         function revealAnswer() {
             document.getElementById("backTextContainer").style.display = "block";
 
-            // Show the Google search buttons
+            // Show the Google/ChatGPT search buttons
             document.getElementById("googleSearchButtons").style.display = "block";
         }
 
@@ -516,7 +521,7 @@
         }
 
         /* ---------------------------
-         * NEW: GOOGLE SEARCH FUNCTIONS
+         * GOOGLE / CHATGPT SEARCH FUNCTIONS
          * --------------------------- */
         function googleSearchFront() {
             if (!currentFront) return;
@@ -528,6 +533,18 @@
             if (!currentBack) return;
             const query = encodeURIComponent(currentBack);
             window.open("https://www.google.com/search?q=" + query, "_blank");
+        }
+
+        function chatGPTSearchFront() {
+            if (!currentFront) return;
+            const query = encodeURIComponent(currentFront);
+            window.location.href = "https://chat.openai.com/?q=" + query;
+        }
+
+        function chatGPTSearchBack() {
+            if (!currentBack) return;
+            const query = encodeURIComponent(currentBack);
+            window.location.href = "https://chat.openai.com/?q=" + query;
         }
 
         /* ---------------------------
