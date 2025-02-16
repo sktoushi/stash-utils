@@ -80,6 +80,7 @@
             text-align: center;
             min-height: 120px;
             display: flex;
+            flex-direction: column; /* Stack front and back vertically */
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
@@ -93,6 +94,11 @@
         .reveal-section {
             display: none; /* Hidden until "Reveal Answer" is clicked */
         }
+
+        /* Extra spacing between front/back containers */
+        #frontTextContainer {
+            margin-bottom: 40px; /* bigger gap so it’s not just side by side */
+        }
     </style>
 </head>
 <body>
@@ -100,7 +106,7 @@
     <div id="pantoneColorDisplay" style="position: absolute; top: 10px; right: 10px; background-color: #ffffffcc; padding: 5px; border-radius: 5px; font-weight: bold;"></div>
 
     <div class="container">
-        <h1 class="text-center" id="pageTitle">Flashcard Reviewer</h1>
+        <h1 class="text-center" id="pageTitle"></h1>
 
         <!-- Theme Toggle & Help -->
         <div class="text-end mb-3">
@@ -135,8 +141,20 @@
 
         <!-- Flashcard Display -->
         <div class="flashcard" id="flashcard">
-            <span id="frontText"></span>
-            <span id="backText" class="reveal-section"></span>
+            <!-- FRONT TEXT container -->
+            <div id="frontTextContainer">
+                <span id="frontText"></span>
+            </div>
+            <!-- BACK TEXT container (hidden by default until reveal) -->
+            <div id="backTextContainer" class="reveal-section">
+                <span id="backText"></span>
+            </div>
+        </div>
+
+        <!-- Google Search Buttons (hidden until reveal) -->
+        <div id="googleSearchButtons" style="display: none; text-align:center; margin-bottom:20px;">
+            <button class="btn btn-outline-primary" onclick="googleSearchFront()">Search Google (Front)</button>
+            <button class="btn btn-outline-primary" onclick="googleSearchBack()">Search Google (Back)</button>
         </div>
 
         <!-- Review Gauges -->
@@ -215,18 +233,23 @@
                                 Example: <code>?target=flashcards.csv</code> or <code>?target=flashcards-jp.csv</code>.
                             </li>
                             <li><strong>Draw Card</strong>: Click “Draw Card” to select one card front/back side according to the set probabilities.</li>
-                            <li><strong>Reveal Answer</strong>: Shows the back side of the currently drawn card.</li>
+                            <li><strong>Reveal Answer</strong>: Shows the back side of the currently drawn card and displays two extra buttons to search Google for the front text or the back text.</li>
                             <li><strong>Undo Last Draw</strong>: Reverts the last drawn card’s bucket changes.</li>
                             <li><strong>Probabilities Slider</strong>: Adjust how often to pick from Bucket 1 vs. Bucket 2.</li>
                             <li><strong>Import/Export State</strong>: Save or load your progress (buckets & frequencies) as JSON.</li>
                             <li><strong>Reset State</strong>: Clears all local progress. Reloads the CSV from scratch.</li>
                             <li><strong>Dark Mode</strong>: Toggle the button at the top-right to switch themes.</li>
+                            <li>
+                                <strong>Background Color Updates</strong>: On each button click, 
+                                a new random Pantone color is fetched from <code>pantone-colors.json</code> and applied as the page background.
+                            </li>
                         </ol>
                         <h6>Notes</h6>
                         <ul>
                             <li><strong>Draw History</strong> keeps track of the last 5 cards drawn.</li>
                             <li><strong>Review1 gauge</strong> shows the percentage of unique items that have been moved into Bucket 1 vs. the total number of cards.</li>
                             <li>The code automatically doubles each CSV line: if you have "food,食べ物", you'll get both a "food→食べ物" card and a "食べ物→food" card.</li>
+                            <li>If either front or back text is very short (few characters), the display font size will be bigger for visibility.</li>
                         </ul>
                     </div>
                     <div class="modal-footer">
@@ -307,6 +330,14 @@
             if (pageTitle) {
                 pageTitle.innerText = `Flashcard Reviewer - ${csvTarget}`;
             }
+
+            // 5) Make *all* buttons also trigger a background color change
+            const allButtons = document.querySelectorAll('button');
+            allButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    getRandomColor();
+                });
+            });
         }
 
         window.onload = main;
@@ -375,7 +406,10 @@
          * --------------------------- */
         function drawCard() {
             // Hide the card's back if it was previously revealed
-            document.getElementById("backText").style.display = "none";
+            document.getElementById("backTextContainer").style.display = "none";
+
+            // Also hide the Google search buttons again upon new draw
+            document.getElementById("googleSearchButtons").style.display = "none";
 
             // Weighted pick from b1 or b2
             const rand = cryptoRand();
@@ -425,8 +459,16 @@
             }
             currentFront = card.front;
             currentBack = card.back;
-            document.getElementById("frontText").innerText = currentFront;
-            document.getElementById("backText").innerText = currentBack;
+
+            const frontEl = document.getElementById("frontText");
+            const backEl = document.getElementById("backText");
+
+            frontEl.innerText = currentFront;
+            backEl.innerText = currentBack;
+
+            // Adjust font sizes depending on length
+            adjustFontSize(frontEl, currentFront);
+            adjustFontSize(backEl, currentBack);
 
             // Add to drawHistory
             addToHistory(selectedId);
@@ -434,7 +476,10 @@
         }
 
         function revealAnswer() {
-            document.getElementById("backText").style.display = "inline";
+            document.getElementById("backTextContainer").style.display = "block";
+
+            // Show the Google search buttons
+            document.getElementById("googleSearchButtons").style.display = "block";
         }
 
         function undoLastDraw() {
@@ -468,6 +513,39 @@
             populateBucketLists();
             populateHistoryList();
             showToast("Last draw undone.");
+        }
+
+        /* ---------------------------
+         * NEW: GOOGLE SEARCH FUNCTIONS
+         * --------------------------- */
+        function googleSearchFront() {
+            if (!currentFront) return;
+            const query = encodeURIComponent(currentFront);
+            window.open("https://www.google.com/search?q=" + query, "_blank");
+        }
+
+        function googleSearchBack() {
+            if (!currentBack) return;
+            const query = encodeURIComponent(currentBack);
+            window.open("https://www.google.com/search?q=" + query, "_blank");
+        }
+
+        /* ---------------------------
+         * FONT SIZE LOGIC
+         * --------------------------- */
+        function adjustFontSize(element, text) {
+            // If text is very short (e.g. 1-3 chars), bump up size significantly.
+            // If medium length, somewhat large. If very long, default to a smaller size for readability.
+            const length = text.length;
+            if (length <= 3) {
+                element.style.fontSize = "3rem";   // Very large for single character or short
+            } else if (length <= 10) {
+                element.style.fontSize = "2.5rem"; // Large
+            } else if (length <= 30) {
+                element.style.fontSize = "2rem";   // Medium
+            } else {
+                element.style.fontSize = "1.25rem"; // Normal paragraph size
+            }
         }
 
         /* ---------------------------
