@@ -538,13 +538,13 @@
         function chatGPTSearchFront() {
             if (!currentFront) return;
             const query = encodeURIComponent(currentFront);
-            window.location.href = "https://chat.openai.com/?q=" + query;
+            window.open("https://chat.openai.com/?q=" + query);
         }
 
         function chatGPTSearchBack() {
             if (!currentBack) return;
             const query = encodeURIComponent(currentBack);
-            window.location.href = "https://chat.openai.com/?q=" + query;
+            window.open("https://chat.openai.com/?q=" + query);
         }
 
         /* ---------------------------
