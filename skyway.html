@@ -160,6 +160,33 @@ function pickRowByWeight(rows) {
 }
 
 /**
+ * Stores redirect analytics (row type, final URL, timestamp) in localStorage.
+ * @param {string} rowType The type of the row (e.g., 'link', 'git-specific', etc.)
+ * @param {string} url The final URL the user is being redirected to
+ */
+function storeRedirectAnalytics(rowType, url) {
+  try {
+    let analyticsData = localStorage.getItem('redirectAnalytics');
+    if (!analyticsData) {
+      analyticsData = [];
+    } else {
+      analyticsData = JSON.parse(analyticsData);
+    }
+
+    analyticsData.push({
+      rowType: rowType,
+      url: url,
+      timestamp: new Date().toISOString()
+    });
+
+    localStorage.setItem('redirectAnalytics', JSON.stringify(analyticsData));
+  } catch (err) {
+    // If localStorage is not available or any other error occurs, silently fail
+    console.error('Failed to store redirect analytics:', err);
+  }
+}
+
+/**
  * Processes rows by picking one (weighted) and acting according to its type.
  *
  * @param {string[][]} rows Parsed CSV rows
@@ -189,6 +216,10 @@ async function processRows(rows, recursionDepth = 0) {
     // Format: link,<weight>,<url>
     const url = selectedRow[2];
     console.log('Redirecting to link:', url);
+
+    // Store analytics
+    storeRedirectAnalytics(rowType, url);
+
     window.location.href = url;
   }
   else if (rowType === 'git-specific') {
@@ -203,6 +234,10 @@ async function processRows(rows, recursionDepth = 0) {
     const finalUrl = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
 
     console.log('Redirecting to git-specific issue:', finalUrl);
+
+    // Store analytics
+    storeRedirectAnalytics(rowType, finalUrl);
+
     window.location.href = finalUrl;
   }
   else if (rowType === 'git-range') {
@@ -223,6 +258,10 @@ async function processRows(rows, recursionDepth = 0) {
     const finalUrl = `https://github.com/${username}/${repository}/issues/${randomVal}`;
 
     console.log('Redirecting to git-range issue:', finalUrl);
+
+    // Store analytics
+    storeRedirectAnalytics(rowType, finalUrl);
+
     window.location.href = finalUrl;
   }
   else if (rowType === 'csv') {
