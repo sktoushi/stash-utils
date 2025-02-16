@@ -1,8 +1,7 @@
-
-csv,4,skyway-bucket-finer-things-in-life.csv
-csv,3,skyway-modifiable-redirect0915-133-stash-of-stashes.csv
+csv,null,skyway-bucket-finer-things-in-life.csv
+csv,null,skyway-modifiable-redirect0915-133-stash-of-stashes.csv
 csv,3,skyway-bucket-main.csv
-csv,2,skyway-bucket-main-jp.csv
+csv,3,skyway-bucket-main-jp.csv
 csv,3,skyway-modifiable-redirect0915-144-japanese-learning-alloc
 csv,3,skyway-modifiable-redirect0915-150-stash2-recent10percent.csv
 link,2,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-pmbok-2025
