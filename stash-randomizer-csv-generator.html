@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Redirect</title>
+    <script>
+        // Secure random number generator function
+        function getSecureRandomNumber() {
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return array[0] / (0xFFFFFFFF + 1);
+        }
+
+        // Weighted random pick function
+        function weightedRandomPick(items, weights) {
+            // Sum all weights
+            const totalWeight = weights.reduce((acc, val) => acc + val, 0);
+
+            // Get a random value between 0 and totalWeight
+            let randomVal = getSecureRandomNumber() * totalWeight;
+
+            // Iterate through items, deduct weight until we find the chosen item
+            for (let i = 0; i < items.length; i++) {
+                if (randomVal < weights[i]) {
+                    return items[i];
+                }
+                randomVal -= weights[i];
+            }
+
+            // Fallback (should not happen if everything is valid), return last item
+            return items[items.length - 1];
+        }
+
+        (function() {
+            // Grab the full query string (e.g. ?modes=...&usernameRepoList=...&allocation=...)
+            const paramsString = window.location.search;
+
+            // Parse it using URLSearchParams
+            const searchParams = new URLSearchParams(paramsString);
+
+            // Extract the 'modes' parameter and split into array
+            const modesParam = searchParams.get('modes') || '';
+            const modesArray = modesParam.split(',').filter(item => item);
+
+            // Extract the 'usernameRepoList' parameter and split into array
+            const userRepoParam = searchParams.get('usernameRepoList') || '';
+            const userRepoArray = userRepoParam.split(',').filter(item => item);
+
+            // Extract the 'allocation' parameter and convert to array of numbers
+            // Each weight corresponds to the same index in userRepoArray
+            const allocationParam = searchParams.get('allocation') || '';
+            const allocationArray = allocationParam
+                .split(',')
+                .map(str => Number(str))
+                .filter(num => !isNaN(num));
+
+            // If allocationArray doesn't match userRepoArray length or is invalid,
+            // fall back to equal likelihood for each item
+            let validWeights = false;
+            if (allocationArray.length === userRepoArray.length && allocationArray.length > 0) {
+                validWeights = allocationArray.every(weight => weight >= 0);
+            }
+
+            // NEW: Extract the 'csvRowCount' parameter (defaults to 1 if missing/invalid)
+            let csvRowCountParam = parseInt(searchParams.get('csvRowCount') || '1', 10);
+            if (isNaN(csvRowCountParam) || csvRowCountParam < 1) {
+                csvRowCountParam = 1;
+            }
+
+            // Prepare to store all generated URLs
+            const generatedUrls = [];
+
+            // Simple YYMMDD date format
+            const now = new Date();
+            const year = String(now.getFullYear()).slice(-2);
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dateStr = `${year}${month}${day}`;
+
+            // Perform the randomization process 'n' times
+            for (let i = 0; i < csvRowCountParam; i++) {
+
+                // Randomly pick a mode (unweighted, as before)
+                const randomMode = modesArray[Math.floor(getSecureRandomNumber() * modesArray.length)];
+
+                // Randomly pick one item from userRepoArray (weighted if valid, otherwise uniform)
+                let randomUserRepo;
+                if (validWeights) {
+                    randomUserRepo = weightedRandomPick(userRepoArray, allocationArray);
+                } else {
+                    // Fallback to uniform selection if weights are missing/invalid
+                    randomUserRepo = userRepoArray[Math.floor(getSecureRandomNumber() * userRepoArray.length)];
+                }
+
+                // Split the selected user/repo record by underscore
+                const userRepoParts = randomUserRepo.split('_');
+                // userRepoParts[0] -> element1 (username)
+                // userRepoParts[1] -> element2 (repository)
+                // userRepoParts[2] -> element3 (startIndex)
+                // userRepoParts[3] -> element4 (endIndex)
+
+                // Build the final URL (previously "redirectUrl")
+                const finalUrl = [
+                    'https://sktoushi.github.io/stash-utils/redirect0915-',
+                    encodeURIComponent(randomMode),
+                    '.html?username=',
+                    encodeURIComponent(userRepoParts[0] || ''),
+                    '&repository=',
+                    encodeURIComponent(userRepoParts[1] || ''),
+                    '&startIndex=',
+                    encodeURIComponent(userRepoParts[2] || ''),
+                    '&endIndex=',
+                    encodeURIComponent(userRepoParts[3] || '')
+                ].join('');
+
+                // Store the URL for CSV output (no redirect)
+                generatedUrls.push(finalUrl);
+            }
+
+            // Generate CSV content with no headers ( "URL,YYMMDD" )
+            const csvContent = generatedUrls
+                .map(url => `${url},${dateStr}`)
+                .join('\n');
+
+            // Trigger CSV file download
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const csvBlobUrl = URL.createObjectURL(blob);
+            const tempLink = document.createElement('a');
+            tempLink.href = csvBlobUrl;
+            tempLink.download = 'output.csv';
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            document.body.removeChild(tempLink);
+            URL.revokeObjectURL(csvBlobUrl);
+
+            // Removed the redirect, replaced with CSV download
+        })();
+    </script>
+</head>
+<body>
+    <!-- Bare-bones HTML: no content necessary -->
+</body>
+</html>
