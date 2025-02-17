@@ -385,7 +385,8 @@
                 // ----------------------------------
                 // ONLY CHANGE: wrap the URL in <a> so it's clickable in Ankidroid
                 // ----------------------------------
-                let linkCell = `<a href="${finalUrl}">${finalUrl}</a>`;
+                // let linkCell = `<a href="${finalUrl}">${finalUrl}</a>`;
+                let linkCell = "<a href=\"" + finalUrl + "\">" + finalUrl + "</a>";
                 generatedUrls.push([linkCell, dateStr]);
             }
 
