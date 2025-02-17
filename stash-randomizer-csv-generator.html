@@ -3,6 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <title>Redirect</title>
+    <!-- (No Bootstrap or additional libraries needed; just "drawing inspiration" from the snippet) -->
+    <style>
+        /* Minimal styling for clarity */
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            font-family: sans-serif;
+        }
+        .container h2 {
+            margin-bottom: 20px;
+        }
+        #csvOutput {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 10px;
+            min-height: 200px;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+        }
+        button {
+            margin-top: 20px;
+        }
+    </style>
     <script>
         // Secure random number generator function
         function getSecureRandomNumber() {
@@ -31,7 +54,8 @@
             return items[items.length - 1];
         }
 
-        (function() {
+        // We wrap the existing logic in a function so we can populate the CSV text and allow a manual download.
+        function generateCsv() {
             // Grab the full query string (e.g. ?modes=...&usernameRepoList=...&allocation=...)
             const paramsString = window.location.search;
 
@@ -79,7 +103,6 @@
 
             // Perform the randomization process 'n' times
             for (let i = 0; i < csvRowCountParam; i++) {
-
                 // Randomly pick a mode (unweighted, as before)
                 const randomMode = modesArray[Math.floor(getSecureRandomNumber() * modesArray.length)];
 
@@ -99,7 +122,7 @@
                 // userRepoParts[2] -> element3 (startIndex)
                 // userRepoParts[3] -> element4 (endIndex)
 
-                // Build the final URL (previously "redirectUrl")
+                // Build the final URL
                 const finalUrl = [
                     'https://sktoushi.github.io/stash-utils/redirect0915-',
                     encodeURIComponent(randomMode),
@@ -113,7 +136,7 @@
                     encodeURIComponent(userRepoParts[3] || '')
                 ].join('');
 
-                // Store the URL for CSV output (no redirect)
+                // Store the URL for CSV output
                 generatedUrls.push(finalUrl);
             }
 
@@ -122,8 +145,23 @@
                 .map(url => `${url},${dateStr}`)
                 .join('\n');
 
-            // Trigger CSV file download
-            const blob = new Blob([csvContent], { type: 'text/csv' });
+            return csvContent;
+        }
+
+        // We'll store CSV content in a global variable to display and download
+        let generatedCsvContent = '';
+
+        // When the page loads, we generate the CSV content
+        window.addEventListener('DOMContentLoaded', () => {
+            generatedCsvContent = generateCsv();
+            // Display the CSV content in the <pre> element
+            document.getElementById('csvOutput').textContent = generatedCsvContent;
+        });
+
+        // Download function triggered by the button
+        function downloadCsv() {
+            if (!generatedCsvContent) return;
+            const blob = new Blob([generatedCsvContent], { type: 'text/csv' });
             const csvBlobUrl = URL.createObjectURL(blob);
             const tempLink = document.createElement('a');
             tempLink.href = csvBlobUrl;
@@ -132,12 +170,14 @@
             tempLink.click();
             document.body.removeChild(tempLink);
             URL.revokeObjectURL(csvBlobUrl);
-
-            // Removed the redirect, replaced with CSV download
-        })();
+        }
     </script>
 </head>
 <body>
-    <!-- Bare-bones HTML: no content necessary -->
+    <div class="container">
+        <h2>CSV Generator</h2>
+        <div id="csvOutput"></div>
+        <button onclick="downloadCsv()">Download CSV</button>
+    </div>
 </body>
 </html>
