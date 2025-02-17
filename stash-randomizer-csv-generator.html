@@ -382,12 +382,18 @@
                     ].join('');
                 }
 
-                // Push finalUrl into array
-                generatedUrls.push(finalUrl);
+                // ----------------------------------
+                // ONLY CHANGE: wrap the URL in <a> so it's clickable in Ankidroid
+                // ----------------------------------
+                let linkCell = `<a href="${finalUrl}">${finalUrl}</a>`;
+                generatedUrls.push([linkCell, dateStr]);
             }
 
-            // CSV lines => "URL,YYMMDD"
-            const csvContent = generatedUrls.map(url => `${url},${dateStr}`).join('\n');
+            // Build CSV lines => "\"<a href=...>...</a>\",YYMMDD"
+            const csvContent = generatedUrls
+                .map(([linkCell, ds]) => `"${linkCell}",${ds}`)
+                .join('\n');
+
             return csvContent;
         }
 
