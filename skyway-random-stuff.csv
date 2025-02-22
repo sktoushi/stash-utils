@@ -1,6 +1,9 @@
-link,3,https://en.wikipedia.org/wiki/Special:Random
-link,3,https://simple.wikipedia.org/wiki/Special:Random
-link,3,https://en.wikinews.org/wiki/Special:Random
-link,6,https://randomstreetview.com/jp
-link,3,https://tatoeba.org/en/sentences/show/jpn
-link,1,https://apod.nasa.gov/apod/astropix.html
+link,null,https://en.wikipedia.org/wiki/Special:Random
+link,null,https://simple.wikipedia.org/wiki/Special:Random
+link,null,https://en.wikinews.org/wiki/Special:Random
+link,null,https://randomstreetview.com/jp
+link,null,https://tatoeba.org/en/sentences/show/jpn
+link,null,https://apod.nasa.gov/apod/astropix.html
+link,1,https://randomstreetview.com/jp
+link,10,https://randomstreetview.com/jp
+link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Kwaidan-Stories-and-Studies-of-Strange-Things
