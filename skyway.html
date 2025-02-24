@@ -302,60 +302,42 @@ async function processRows(rows, recursionDepth = 0) {
   }
 }
 
-/* -------------------------------------------------------------------------
-   NEW FUNCTION #1:
-   Detect if the final URL is "bucket.html" on GitHub pages, and if so,
-   replicate the picking logic from your bucket.html. We'll do a simplified
-   approach that tries to replicate "imFeelingLucky()" or "pickRandom()" 
-   from your reference code. This returns a "real" final URL.
-------------------------------------------------------------------------- */
+/* ============================================================================
+   NEW: BUCKET preemptive logic (from prior step)
+   - We replicate the "bucket.html" picking if the link starts with
+   - "https://sktoushi.github.io/stash-utils/bucket.html"
+============================================================================ */
 async function simulateBucketFlowIfNeeded(initialUrl) {
   const BUCKET_BASE = "https://sktoushi.github.io/stash-utils/bucket.html";
   if (!initialUrl.startsWith(BUCKET_BASE)) {
-    // Not a bucket URL, so just return the original
-    return initialUrl;
+    return initialUrl; // Not a bucket link
   }
 
-  // We'll parse out the query string from initialUrl:
-  // e.g. "https://.../bucket.html?target=foo"
-  // or   "https://.../bucket.html?bucket2=someValue"
-  const queryString = initialUrl.substring(initialUrl.indexOf("?") + 1); 
-  // parse them into an object
+  // We'll parse out the query string
+  const queryString = initialUrl.substring(initialUrl.indexOf("?") + 1);
   const params = new URLSearchParams(queryString);
   const targetParam = params.get('target');
   const bucket2Param = params.get('bucket2');
-
-  // We'll load localStorage-based state as in bucket.html's code:
-  // localStorage key = "randomUrlPickerState_<whatever>"
-  // If none found, we do a trivial fallback.
 
   let localStorageKey = "";
   let loadedState = null;
   let initialFiles = [];
   
   if (bucket2Param) {
-    // parse the tilde-based param into "initialFiles"
-    // (like bucket.html does)
     localStorageKey = "randomUrlPickerState_bucket2Param";
     const parts = bucket2Param.split('~');
     parts.forEach((p, idx) => {
       let cleaned = p.trim().replace(/^"|"$/g, '');
-      // We'll store it as [someID, theUrl, freq]
       initialFiles.push([100000 + idx, cleaned, null]);
     });
   } else if (targetParam) {
     localStorageKey = "randomUrlPickerState_" + targetParam;
-    // bucket.html normally fetches <target>.json,
-    // but we can do a minimal fallback here
-    // or attempt to parse a localStorage-based approach
-    // If you truly need to fetch that .json, do it here:
+    // Attempt to fetch `<targetParam>.json` to mimic bucket.html
     try {
-      // We'll do a fetch for <targetParam>.json if you want to mimic bucket.html exactly:
       const res = await fetch(`${targetParam}.json`);
       if (res.ok) {
         const data = await res.json();
         if (data.initialFiles) {
-          // "initialFiles" is an array of [id, url, freq]
           initialFiles = data.initialFiles;
         }
       }
@@ -363,27 +345,25 @@ async function simulateBucketFlowIfNeeded(initialUrl) {
       console.warn("Failed to fetch JSON for bucket target:", e);
     }
   } else {
-    // If neither param is set, just return original
-    return initialUrl;
+    return initialUrl; // no recognized param
   }
 
-  // Now attempt to load state from localStorage:
+  // Try loading existing state from localStorage
   try {
     const rawState = localStorage.getItem(localStorageKey);
     if (rawState) {
       loadedState = JSON.parse(rawState);
-    } 
+    }
   } catch(e) {
     console.warn("Failed to parse localStorage state for bucket:", e);
   }
 
-  // If no loaded state, create a minimal fallback
-  // (Bucket.html uses a big structure, we'll simplify)
+  // Minimal fallback
   if (!loadedState) {
     loadedState = {
       b1: {},
       b2: {},
-      b1Prob: 0.33, 
+      b1Prob: 0.33,
       b2Prob: 0.67,
       drawHistory: []
     };
@@ -395,7 +375,6 @@ async function simulateBucketFlowIfNeeded(initialUrl) {
     }
   }
 
-  // Helper to compute total freq
   function getTotalFreq(bucketObj) {
     let s = 0;
     for (let k in bucketObj) {
@@ -404,25 +383,19 @@ async function simulateBucketFlowIfNeeded(initialUrl) {
     return s;
   }
 
-  // Now replicate the picking logic, e.g. "pickRandom()"
-  // We'll read b1Prob and b2Prob from loadedState
-  // random a bucket, then pick an ID from it, reduce freq, etc.
-  function pickRandomUrlFromState() {
+  function pickRandomUrlFromStateBucket() {
     const rand = getSecureRandomNumber();
     const b1Prob = loadedState.b1Prob || 0.33;
     const selectedBucketName = (rand < b1Prob) ? "b1" : "b2";
     let bucket = loadedState[selectedBucketName];
 
-    // If that bucket is empty, fallback to the other
     if (getTotalFreq(bucket) === 0) {
       bucket = (selectedBucketName === "b1") ? loadedState.b2 : loadedState.b1;
     }
     if (getTotalFreq(bucket) === 0) {
-      // both empty, no choice
       return null;
     }
 
-    // Build a cumulative table
     let cumulative = 0;
     const table = [];
     for (const id in bucket) {
@@ -442,27 +415,19 @@ async function simulateBucketFlowIfNeeded(initialUrl) {
     return chosenId;
   }
 
-  const chosenId = pickRandomUrlFromState();
+  const chosenId = pickRandomUrlFromStateBucket();
   if (chosenId === null) {
-    // No choice
-    return initialUrl; // fallback
+    return initialUrl; 
   }
 
-  // We'll look up the actual URL from initialFiles
   const found = initialFiles.find(item => item[0] === chosenId);
   if (!found) {
-    return initialUrl; // fallback if something odd
+    return initialUrl; 
   }
-
-  // "found" is [id, url, freq]
   const realUrl = found[1];
 
-  // Minimal “update frequencies” approach: 
-  // Decrement from whichever bucket we took it from, 
-  // increment or create it in b1, etc.  (We mimic bucket.html's logic in short.)
-  // We'll do something minimal here:
+  // Minimal frequency shifting
   function moveItemToB1(id) {
-    // If we used b2 or b1, we reduce freq by 1. If it hits 0, remove it.
     if (loadedState.b2[id]) {
       loadedState.b2[id] -= 1;
       if (loadedState.b2[id] <= 0) {
@@ -474,7 +439,6 @@ async function simulateBucketFlowIfNeeded(initialUrl) {
         delete loadedState.b1[id];
       }
     }
-    // Then add/increment in b1
     if (!loadedState.b1[id]) {
       loadedState.b1[id] = 0;
     }
@@ -483,8 +447,6 @@ async function simulateBucketFlowIfNeeded(initialUrl) {
 
   moveItemToB1(chosenId);
 
-  // Append to drawHistory
-  // (We’ll do a simple approach with a max length of 5)
   loadedState.drawHistory = loadedState.drawHistory || [];
   loadedState.drawHistory.unshift({
     id: chosenId,
@@ -495,23 +457,129 @@ async function simulateBucketFlowIfNeeded(initialUrl) {
     loadedState.drawHistory.pop();
   }
 
-  // Save the updated state back to localStorage
   try {
     localStorage.setItem(localStorageKey, JSON.stringify(loadedState));
   } catch(e) {
     console.warn("Failed to save updated bucket state:", e);
   }
 
-  // Return the "real" final URL we got from the bucket
   return realUrl;
 }
 
+/* ============================================================================
+   NEW: STASH-RANDOMIZER preemptive logic
+   - If the link starts with:
+   - "https://sktoushi.github.io/stash-utils/stash-randomizer.html"
+   - we replicate that file's logic to get the final "redirect0915-<mode>.html"
+============================================================================ */
+async function simulateStashRandomizerFlowIfNeeded(initialUrl) {
+  const RANDOMIZER_BASE = "https://sktoushi.github.io/stash-utils/stash-randomizer.html";
+  if (!initialUrl.startsWith(RANDOMIZER_BASE)) {
+    return initialUrl; // Not a stash-randomizer link
+  }
+
+  // parse the query string
+  const queryString = initialUrl.substring(initialUrl.indexOf("?") + 1);
+  const params = new URLSearchParams(queryString);
+
+  // from stash-randomizer.html:
+  // ?modes=...  => array
+  // ?usernameRepoList=... => array (split by ,)
+  // ?allocation=... => array of numbers
+  const modesParam = params.get('modes') || '';
+  const modesArray = modesParam.split(',').filter(x => x.trim() !== '');
+
+  const userRepoParam = params.get('usernameRepoList') || '';
+  const userRepoArray = userRepoParam.split(',').filter(x => x.trim() !== '');
+
+  const allocationParam = params.get('allocation') || '';
+  const allocationArray = allocationParam
+    .split(',')
+    .map(str => Number(str))
+    .filter(num => !isNaN(num));
+
+  // Check if we have valid weights
+  let validWeights = false;
+  if (allocationArray.length === userRepoArray.length && allocationArray.length > 0) {
+    validWeights = allocationArray.every(weight => weight >= 0);
+  }
+
+  // Weighted random pick function from stash-randomizer
+  function weightedRandomPick(items, weights) {
+    const totalWeight = weights.reduce((acc, val) => acc + val, 0);
+    let randomVal = getSecureRandomNumber() * totalWeight;
+    for (let i = 0; i < items.length; i++) {
+      if (randomVal < weights[i]) {
+        return items[i];
+      }
+      randomVal -= weights[i];
+    }
+    return items[items.length - 1]; // fallback
+  }
+
+  // 1) randomly pick a mode from modesArray (uniform)
+  const randomModeIndex = Math.floor(getSecureRandomNumber() * modesArray.length);
+  const chosenMode = modesArray[randomModeIndex] || '';
+
+  // 2) randomly pick from userRepoArray (weighted if valid, else uniform)
+  let chosenUserRepo;
+  if (validWeights) {
+    chosenUserRepo = weightedRandomPick(userRepoArray, allocationArray);
+  } else {
+    const idx = Math.floor(getSecureRandomNumber() * userRepoArray.length);
+    chosenUserRepo = userRepoArray[idx];
+  }
+
+  // chosenUserRepo is e.g. "username_repository_start_end"
+  const parts = chosenUserRepo.split('_');
+  const username = encodeURIComponent(parts[0] || '');
+  const repository = encodeURIComponent(parts[1] || '');
+  const startIndex = encodeURIComponent(parts[2] || '');
+  const endIndex = encodeURIComponent(parts[3] || '');
+
+  // 3) build the final redirect URL
+  // "https://sktoushi.github.io/stash-utils/redirect0915-<chosenMode>.html?username=<...>&repository=<...>&startIndex=<...>&endIndex=<...>"
+  const finalUrl = [
+    'https://sktoushi.github.io/stash-utils/redirect0915-',
+    encodeURIComponent(chosenMode),
+    '.html?username=',
+    username,
+    '&repository=',
+    repository,
+    '&startIndex=',
+    startIndex,
+    '&endIndex=',
+    endIndex
+  ].join('');
+
+  // Return that finalUrl to the caller
+  return finalUrl;
+}
+
 /* 
-  NEW FUNCTION #2:
-  ----------------------------------------------------------------------------
-  We adapt the existing logic "getFinalUrlFromRows" so that if the final 
-  picked URL begins with "bucket.html" on GH Pages, we do the pre-emptive 
-  picking from the bucket and return THAT actual URL instead.
+   MASTER "PREEMPTIVE" FUNCTION:
+   -----------------------------------------------------------------------
+   A single function that runs BOTH the bucket check and the stash-randomizer 
+   check. If neither matches, we just return the original.
+*/
+async function simulatePreemptiveFlowsIfNeeded(initialUrl) {
+  // First, check stash-randomizer
+  if (initialUrl.startsWith("https://sktoushi.github.io/stash-utils/stash-randomizer.html")) {
+    return await simulateStashRandomizerFlowIfNeeded(initialUrl);
+  }
+
+  // If not stash-randomizer, check bucket
+  if (initialUrl.startsWith("https://sktoushi.github.io/stash-utils/bucket.html")) {
+    return await simulateBucketFlowIfNeeded(initialUrl);
+  }
+
+  // Otherwise do nothing
+  return initialUrl;
+}
+
+/* 
+   getFinalUrlFromRows 
+   (modified from prior steps to incorporate stash-randomizer pre-check)
 */
 async function getFinalUrlFromRows(rows, recursionDepth = 0) {
   if (recursionDepth > 20) {
@@ -528,10 +596,8 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
   if (rowType === 'link') {
     // Format: link,<weight>,<url>
     let url = selectedRow[2];
-
-    // Check if this URL is the "bucket.html" link
-    url = await simulateBucketFlowIfNeeded(url);
-
+    // Preemptive check for stash-randomizer or bucket flows
+    url = await simulatePreemptiveFlowsIfNeeded(url);
     return { rowType, url };
   }
   else if (rowType === 'git-specific') {
@@ -543,13 +609,11 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
 
     const randIdx = Math.floor(getSecureRandomNumber() * issueNumbersArr.length);
     const chosenIssue = issueNumbersArr[randIdx];
-    const finalUrl = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
+    let finalUrl = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
 
-    // Also check for "bucket.html" scenario in case your CSV is storing that pattern 
-    // under "git-specific" (unlikely, but just to be consistent):
-    const resolvedUrl = await simulateBucketFlowIfNeeded(finalUrl);
-
-    return { rowType, url: resolvedUrl };
+    // Also check if finalUrl is stash-randomizer/bucket
+    finalUrl = await simulatePreemptiveFlowsIfNeeded(finalUrl);
+    return { rowType, url: finalUrl };
   }
   else if (rowType === 'git-range') {
     // Format: git-range,<weight>,username=xxxx,repository=yyyy,issueNumbers=min_max
@@ -564,13 +628,12 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
       throw new Error('Invalid range in "git-range" row.');
     }
 
-    const randomVal = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
-    const finalUrl = `https://github.com/${username}/${repository}/issues/${randomVal}`;
+    let finalUrl = `https://github.com/${username}/${repository}/issues/` +
+      (Math.floor(getSecureRandomNumber() * (max - min + 1)) + min);
 
-    // Check bucket logic just in case
-    const resolvedUrl = await simulateBucketFlowIfNeeded(finalUrl);
-
-    return { rowType, url: resolvedUrl };
+    // Check stash/bucket logic
+    finalUrl = await simulatePreemptiveFlowsIfNeeded(finalUrl);
+    return { rowType, url: finalUrl };
   }
   else if (rowType === 'csv') {
     // Format: csv,<weight>,<another-file.csv>
@@ -578,12 +641,9 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
     if (!nestedCsv) {
       throw new Error('CSV type found but no filename specified.');
     }
-
-    // Fetch nested CSV and pick from it (recursively)
     const nestedRows = await fetchCSV(nestedCsv);
     const finalObj = await getFinalUrlFromRows(nestedRows, recursionDepth + 1);
-    // Then also check if finalObj.url starts with bucket
-    finalObj.url = await simulateBucketFlowIfNeeded(finalObj.url);
+    finalObj.url = await simulatePreemptiveFlowsIfNeeded(finalObj.url);
     return finalObj;
   }
   else {
@@ -592,15 +652,8 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
 }
 
 /* 
-  HELPER FOR "SIMILAR" URL DETECTION
-  (unchanged from prior steps—only relevant if you still want 
-   to reduce consecutive "similar" items. If you prefer exact 
-   or other logic, adjust below.)
+  "SIMILAR" URL DETECTION HELPER
 */
-
-/**
- * Returns the length of the common prefix between str1 and str2.
- */
 function getCommonPrefixLength(str1, str2) {
   const len = Math.min(str1.length, str2.length);
   let i = 0;
@@ -610,10 +663,6 @@ function getCommonPrefixLength(str1, str2) {
   return i;
 }
 
-/**
- * Decides if two URLs are "similar" if their common prefix
- * ratio is >= 70% of the shorter string’s length.
- */
 function isSimilar(url1, url2) {
   if (url1 === url2) return true; // exact match is automatically "similar"
   const prefixLen = getCommonPrefixLength(url1, url2);
@@ -623,19 +672,9 @@ function isSimilar(url1, url2) {
 }
 
 /* 
-  The function that reorders the 100 URLs to minimize adjacency 
-  of “similar” or identical items. (Unchanged from previous steps.)
+  Intersperse function to reduce consecutive duplicates or "similar" items 
 */
 function intersperseUrls(picks) {
-  /*
-    picks is an array: [ {rowType, url}, {rowType, url}, ... ]
-
-    We'll still do the naive frequency approach:
-      - Tally how many times each URL occurs
-      - Sort them descending by count
-      - Repeatedly pick from the largest group that isn't "similar" to the last placed item
-  */
-
   const freqMap = {};
   picks.forEach(item => {
     freqMap[item.url] = (freqMap[item.url] || 0) + 1;
@@ -651,7 +690,6 @@ function intersperseUrls(picks) {
     });
   }
 
-  // Sort descending by count
   freqArr.sort((a,b) => b.count - a.count);
 
   const result = [];
@@ -677,8 +715,7 @@ function intersperseUrls(picks) {
       }
     }
     if (idxToPick === -1) {
-      // all are "similar" or identical, so pick the first anyway
-      idxToPick = 0;
+      idxToPick = 0; // no choice
     }
 
     const chosen = freqArr[idxToPick];
@@ -741,7 +778,7 @@ async function generateQueue(rows) {
 
   const picks = [];
   for (let i = 1; i <= total; i++) {
-    // get the final URL (including any bucket pre-picking)
+    // get the final URL (including preemptive flows for stash-randomizer/bucket)
     const finalObj = await getFinalUrlFromRows(rows, 0);
     picks.push(finalObj);
     updateProgressBar(i, total);
@@ -749,12 +786,12 @@ async function generateQueue(rows) {
 
   hideProgressBar();
 
-  // Interspersing (reduce consecutive duplicates / similar items)
+  // Intersperse to reduce adjacency
   const interspersed = intersperseUrls(picks);
 
   // Store in localStorage with timestamp
   const payload = {
-    createdAt: Date.now(), // ms
+    createdAt: Date.now(),
     items: interspersed
   };
   localStorage.setItem('redirectQueue', JSON.stringify(payload));
@@ -774,7 +811,6 @@ function popFromQueue() {
   try {
     payload = JSON.parse(raw);
   } catch (err) {
-    // Corrupted data
     return null;
   }
   if (!payload || !payload.items || !Array.isArray(payload.items)) {
@@ -786,20 +822,15 @@ function popFromQueue() {
   const oneHour = 3600000;
 
   if (now - createdAt > oneHour) {
-    // Expired
     return null;
   }
 
   if (payload.items.length === 0) {
-    // Already empty
     return null;
   }
 
-  // Pop the first item
   const popped = payload.items.shift();
-  // Store updated array back
   localStorage.setItem('redirectQueue', JSON.stringify(payload));
-
   return popped;
 }
 
@@ -841,27 +872,24 @@ async function main() {
   // Try popping from existing queue
   let poppedItem = popFromQueue();
   if (poppedItem) {
-    // If we got something, redirect with it
     doRedirect(poppedItem);
     return;
   }
 
-  // If we get here, no valid queue or item is available
-  // => fetch and parse CSV, generate a new queue
+  // If none, fetch CSV, parse, generate new queue
   try {
     const rows = await fetchCSV(target);
 
-    // Find all valid (non-null) second-column integer values
+    // find all valid (non-null) second-column integer values
     const nonNullValues = rows
       .map(r => (r[1] !== 'null' ? parseInt(r[1], 10) : NaN))
       .filter(val => !isNaN(val));
 
-    // If we have any valid numbers at all, proceed
     if (nonNullValues.length > 0) {
       const minVal = Math.min(...nonNullValues);
       const maxVal = Math.max(...nonNullValues);
 
-      // Assign random values between minVal and maxVal (inclusive) where second column is "null"
+      // assign random values where second col is "null"
       for (let i = 0; i < rows.length; i++) {
         if (rows[i][1] === 'null') {
           const randomVal = Math.floor(getSecureRandomNumber() * (maxVal - minVal + 1)) + minVal;
@@ -870,12 +898,10 @@ async function main() {
       }
     }
 
-    // Now generate a new queue of 100 picks
+    // generate a new queue of 100 picks
     await generateQueue(rows);
-    // Pop from newly generated queue
     poppedItem = popFromQueue();
 
-    // Redirect
     if (poppedItem) {
       doRedirect(poppedItem);
     } else {
