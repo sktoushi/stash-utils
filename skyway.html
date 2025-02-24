@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <title>Random CSV Redirect (Weighted + Nested CSV + Proper Quoted CSV Parsing)</title>
   <!-- 
-    Added Bootstrap CSS for a simple progress bar styling. 
-    Remove/adjust if you already have your own setup.
+    Added Bootstrap CSS for simple progress bar styling. 
+    Remove or modify if you already include Bootstrap elsewhere.
   -->
   <link
     rel="stylesheet"
@@ -15,7 +15,7 @@
 <body>
 
 <!-- 
-  A container for the progress bar animation...
+  A container for the progress bar animation.
   We'll fill or remove this dynamically in code.
 -->
 <div id="progress-container" style="margin:10px;"></div>
@@ -302,12 +302,216 @@ async function processRows(rows, recursionDepth = 0) {
   }
 }
 
+/* -------------------------------------------------------------------------
+   NEW FUNCTION #1:
+   Detect if the final URL is "bucket.html" on GitHub pages, and if so,
+   replicate the picking logic from your bucket.html. We'll do a simplified
+   approach that tries to replicate "imFeelingLucky()" or "pickRandom()" 
+   from your reference code. This returns a "real" final URL.
+------------------------------------------------------------------------- */
+async function simulateBucketFlowIfNeeded(initialUrl) {
+  const BUCKET_BASE = "https://sktoushi.github.io/stash-utils/bucket.html";
+  if (!initialUrl.startsWith(BUCKET_BASE)) {
+    // Not a bucket URL, so just return the original
+    return initialUrl;
+  }
+
+  // We'll parse out the query string from initialUrl:
+  // e.g. "https://.../bucket.html?target=foo"
+  // or   "https://.../bucket.html?bucket2=someValue"
+  const queryString = initialUrl.substring(initialUrl.indexOf("?") + 1); 
+  // parse them into an object
+  const params = new URLSearchParams(queryString);
+  const targetParam = params.get('target');
+  const bucket2Param = params.get('bucket2');
+
+  // We'll load localStorage-based state as in bucket.html's code:
+  // localStorage key = "randomUrlPickerState_<whatever>"
+  // If none found, we do a trivial fallback.
+
+  let localStorageKey = "";
+  let loadedState = null;
+  let initialFiles = [];
+  
+  if (bucket2Param) {
+    // parse the tilde-based param into "initialFiles"
+    // (like bucket.html does)
+    localStorageKey = "randomUrlPickerState_bucket2Param";
+    const parts = bucket2Param.split('~');
+    parts.forEach((p, idx) => {
+      let cleaned = p.trim().replace(/^"|"$/g, '');
+      // We'll store it as [someID, theUrl, freq]
+      initialFiles.push([100000 + idx, cleaned, null]);
+    });
+  } else if (targetParam) {
+    localStorageKey = "randomUrlPickerState_" + targetParam;
+    // bucket.html normally fetches <target>.json,
+    // but we can do a minimal fallback here
+    // or attempt to parse a localStorage-based approach
+    // If you truly need to fetch that .json, do it here:
+    try {
+      // We'll do a fetch for <targetParam>.json if you want to mimic bucket.html exactly:
+      const res = await fetch(`${targetParam}.json`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.initialFiles) {
+          // "initialFiles" is an array of [id, url, freq]
+          initialFiles = data.initialFiles;
+        }
+      }
+    } catch(e) {
+      console.warn("Failed to fetch JSON for bucket target:", e);
+    }
+  } else {
+    // If neither param is set, just return original
+    return initialUrl;
+  }
+
+  // Now attempt to load state from localStorage:
+  try {
+    const rawState = localStorage.getItem(localStorageKey);
+    if (rawState) {
+      loadedState = JSON.parse(rawState);
+    } 
+  } catch(e) {
+    console.warn("Failed to parse localStorage state for bucket:", e);
+  }
+
+  // If no loaded state, create a minimal fallback
+  // (Bucket.html uses a big structure, we'll simplify)
+  if (!loadedState) {
+    loadedState = {
+      b1: {},
+      b2: {},
+      b1Prob: 0.33, 
+      b2Prob: 0.67,
+      drawHistory: []
+    };
+    // Put initialFiles into b2
+    for (const f of initialFiles) {
+      let freq = f[2];
+      if (freq === null || isNaN(freq)) freq = 1;
+      loadedState.b2[f[0]] = freq;
+    }
+  }
+
+  // Helper to compute total freq
+  function getTotalFreq(bucketObj) {
+    let s = 0;
+    for (let k in bucketObj) {
+      s += bucketObj[k];
+    }
+    return s;
+  }
+
+  // Now replicate the picking logic, e.g. "pickRandom()"
+  // We'll read b1Prob and b2Prob from loadedState
+  // random a bucket, then pick an ID from it, reduce freq, etc.
+  function pickRandomUrlFromState() {
+    const rand = getSecureRandomNumber();
+    const b1Prob = loadedState.b1Prob || 0.33;
+    const selectedBucketName = (rand < b1Prob) ? "b1" : "b2";
+    let bucket = loadedState[selectedBucketName];
+
+    // If that bucket is empty, fallback to the other
+    if (getTotalFreq(bucket) === 0) {
+      bucket = (selectedBucketName === "b1") ? loadedState.b2 : loadedState.b1;
+    }
+    if (getTotalFreq(bucket) === 0) {
+      // both empty, no choice
+      return null;
+    }
+
+    // Build a cumulative table
+    let cumulative = 0;
+    const table = [];
+    for (const id in bucket) {
+      cumulative += bucket[id];
+      table.push([parseInt(id, 10), cumulative]);
+    }
+    const totalFreq = cumulative;
+    const randomPick = Math.floor(getSecureRandomNumber() * totalFreq);
+
+    let chosenId = null;
+    for (const [idVal, cumFreq] of table) {
+      if (randomPick < cumFreq) {
+        chosenId = idVal;
+        break;
+      }
+    }
+    return chosenId;
+  }
+
+  const chosenId = pickRandomUrlFromState();
+  if (chosenId === null) {
+    // No choice
+    return initialUrl; // fallback
+  }
+
+  // We'll look up the actual URL from initialFiles
+  const found = initialFiles.find(item => item[0] === chosenId);
+  if (!found) {
+    return initialUrl; // fallback if something odd
+  }
+
+  // "found" is [id, url, freq]
+  const realUrl = found[1];
+
+  // Minimal “update frequencies” approach: 
+  // Decrement from whichever bucket we took it from, 
+  // increment or create it in b1, etc.  (We mimic bucket.html's logic in short.)
+  // We'll do something minimal here:
+  function moveItemToB1(id) {
+    // If we used b2 or b1, we reduce freq by 1. If it hits 0, remove it.
+    if (loadedState.b2[id]) {
+      loadedState.b2[id] -= 1;
+      if (loadedState.b2[id] <= 0) {
+        delete loadedState.b2[id];
+      }
+    } else if (loadedState.b1[id]) {
+      loadedState.b1[id] -= 1;
+      if (loadedState.b1[id] <= 0) {
+        delete loadedState.b1[id];
+      }
+    }
+    // Then add/increment in b1
+    if (!loadedState.b1[id]) {
+      loadedState.b1[id] = 0;
+    }
+    loadedState.b1[id] += 1;
+  }
+
+  moveItemToB1(chosenId);
+
+  // Append to drawHistory
+  // (We’ll do a simple approach with a max length of 5)
+  loadedState.drawHistory = loadedState.drawHistory || [];
+  loadedState.drawHistory.unshift({
+    id: chosenId,
+    url: realUrl,
+    timestamp: new Date().toISOString()
+  });
+  if (loadedState.drawHistory.length > 5) {
+    loadedState.drawHistory.pop();
+  }
+
+  // Save the updated state back to localStorage
+  try {
+    localStorage.setItem(localStorageKey, JSON.stringify(loadedState));
+  } catch(e) {
+    console.warn("Failed to save updated bucket state:", e);
+  }
+
+  // Return the "real" final URL we got from the bucket
+  return realUrl;
+}
+
 /* 
-  NEW FUNCTION:
-  ---------------------------------------------------------------
-  We need to get the final redirect URL from a single weighted pick 
-  (including potential recursion for 'csv' row types) WITHOUT actually 
-  redirecting. We'll adapt the logic from processRows().
+  NEW FUNCTION #2:
+  ----------------------------------------------------------------------------
+  We adapt the existing logic "getFinalUrlFromRows" so that if the final 
+  picked URL begins with "bucket.html" on GH Pages, we do the pre-emptive 
+  picking from the bucket and return THAT actual URL instead.
 */
 async function getFinalUrlFromRows(rows, recursionDepth = 0) {
   if (recursionDepth > 20) {
@@ -323,7 +527,11 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
 
   if (rowType === 'link') {
     // Format: link,<weight>,<url>
-    const url = selectedRow[2];
+    let url = selectedRow[2];
+
+    // Check if this URL is the "bucket.html" link
+    url = await simulateBucketFlowIfNeeded(url);
+
     return { rowType, url };
   }
   else if (rowType === 'git-specific') {
@@ -337,7 +545,11 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
     const chosenIssue = issueNumbersArr[randIdx];
     const finalUrl = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
 
-    return { rowType, url: finalUrl };
+    // Also check for "bucket.html" scenario in case your CSV is storing that pattern 
+    // under "git-specific" (unlikely, but just to be consistent):
+    const resolvedUrl = await simulateBucketFlowIfNeeded(finalUrl);
+
+    return { rowType, url: resolvedUrl };
   }
   else if (rowType === 'git-range') {
     // Format: git-range,<weight>,username=xxxx,repository=yyyy,issueNumbers=min_max
@@ -355,7 +567,10 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
     const randomVal = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
     const finalUrl = `https://github.com/${username}/${repository}/issues/${randomVal}`;
 
-    return { rowType, url: finalUrl };
+    // Check bucket logic just in case
+    const resolvedUrl = await simulateBucketFlowIfNeeded(finalUrl);
+
+    return { rowType, url: resolvedUrl };
   }
   else if (rowType === 'csv') {
     // Format: csv,<weight>,<another-file.csv>
@@ -366,7 +581,10 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
 
     // Fetch nested CSV and pick from it (recursively)
     const nestedRows = await fetchCSV(nestedCsv);
-    return await getFinalUrlFromRows(nestedRows, recursionDepth + 1);
+    const finalObj = await getFinalUrlFromRows(nestedRows, recursionDepth + 1);
+    // Then also check if finalObj.url starts with bucket
+    finalObj.url = await simulateBucketFlowIfNeeded(finalObj.url);
+    return finalObj;
   }
   else {
     throw new Error('Unknown row type: ' + rowType);
@@ -374,12 +592,10 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
 }
 
 /* 
-  HELPER FUNCTIONS FOR "SIMILAR" URL DETECTION
-  ---------------------------------------------------------------
-  We'll define "similar" based on how many characters match 
-  from the beginning (common prefix). If the ratio of that 
-  common prefix to the shorter URL’s length is at least 0.7 (70%), 
-  we'll call them "similar." Adjust as needed.
+  HELPER FOR "SIMILAR" URL DETECTION
+  (unchanged from prior steps—only relevant if you still want 
+   to reduce consecutive "similar" items. If you prefer exact 
+   or other logic, adjust below.)
 */
 
 /**
@@ -407,29 +623,24 @@ function isSimilar(url1, url2) {
 }
 
 /* 
-  NEW FUNCTION (MODIFIED):
-  ---------------------------------------------------------------
-  Takes the final URLs array (length 100) and tries to space them out
-  so that not only exact duplicates but also "similar" items 
-  (matching on early portion of the URLs) are not adjacent.
+  The function that reorders the 100 URLs to minimize adjacency 
+  of “similar” or identical items. (Unchanged from previous steps.)
 */
 function intersperseUrls(picks) {
   /*
-    picks is an array of objects: [ {rowType, url}, {rowType, url}, ... ]
+    picks is an array: [ {rowType, url}, {rowType, url}, ... ]
 
-    We want to minimize consecutive *exact duplicates* or *similar* items.
-    We'll adapt a naive approach: each time we pick an item 
-    that is not "similar" to the last placed item. 
-    We'll still use a frequency-based approach for overall distribution.
+    We'll still do the naive frequency approach:
+      - Tally how many times each URL occurs
+      - Sort them descending by count
+      - Repeatedly pick from the largest group that isn't "similar" to the last placed item
   */
 
-  // Tally exact frequencies by URL
   const freqMap = {};
   picks.forEach(item => {
     freqMap[item.url] = (freqMap[item.url] || 0) + 1;
   });
 
-  // Create an array of { url, rowType, count }
   const freqArr = [];
   for (const url in freqMap) {
     const rowType = picks.find(x => x.url === url).rowType;
@@ -447,23 +658,15 @@ function intersperseUrls(picks) {
   let prevUrl = null;
 
   while (true) {
-    // Sort again each iteration so the largest count is first
     freqArr.sort((a,b) => b.count - a.count);
-
-    // Remove any that have zero count
     while (freqArr.length > 0 && freqArr[freqArr.length - 1].count <= 0) {
       freqArr.pop();
     }
+    if (freqArr.length === 0) break;
 
-    if (freqArr.length === 0) {
-      break;
-    }
-
-    // Attempt to find the first entry NOT "similar" to prevUrl
     let idxToPick = -1;
     for (let i = 0; i < freqArr.length; i++) {
       const candidate = freqArr[i];
-      // If there's no prevUrl, it's always safe
       if (!prevUrl) {
         idxToPick = i;
         break;
@@ -473,25 +676,22 @@ function intersperseUrls(picks) {
         break;
       }
     }
-
-    // If all are "similar" to prevUrl, pick the first anyway (no choice)
     if (idxToPick === -1) {
+      // all are "similar" or identical, so pick the first anyway
       idxToPick = 0;
     }
 
-    // Decrement count, push to result
     const chosen = freqArr[idxToPick];
     chosen.count -= 1;
     result.push({ rowType: chosen.rowType, url: chosen.url });
     prevUrl = chosen.url;
   }
 
-  // Return the final interspersed array
   return result;
 }
 
 /* 
-  NEW FUNCTIONS: Show/hide progress bar 
+  Show/hide progress bar 
 */
 function showProgressBar(total) {
   const container = document.getElementById('progress-container');
@@ -531,8 +731,6 @@ function hideProgressBar() {
 }
 
 /*
-  NEW FUNCTION:
-  ---------------------------------------------------------------
   Generate 100 final URLs, intersperse them, store them in localStorage
   along with their rowType. We also display a simple progress bar 
   while generating.
@@ -543,7 +741,7 @@ async function generateQueue(rows) {
 
   const picks = [];
   for (let i = 1; i <= total; i++) {
-    // We do what 'processRows' would do, but just store the final URL instead
+    // get the final URL (including any bucket pre-picking)
     const finalObj = await getFinalUrlFromRows(rows, 0);
     picks.push(finalObj);
     updateProgressBar(i, total);
@@ -551,7 +749,7 @@ async function generateQueue(rows) {
 
   hideProgressBar();
 
-  // Interspersing (reduce consecutive duplicates and "similar" items)
+  // Interspersing (reduce consecutive duplicates / similar items)
   const interspersed = intersperseUrls(picks);
 
   // Store in localStorage with timestamp
@@ -565,8 +763,6 @@ async function generateQueue(rows) {
 }
 
 /*
-  NEW FUNCTION:
-  ---------------------------------------------------------------
   Pops the first item from localStorage queue (if it exists)
   and returns it. If the queue is empty or expired, return null.
 */
@@ -608,8 +804,6 @@ function popFromQueue() {
 }
 
 /*
-  NEW FUNCTION:
-  ---------------------------------------------------------------
   We'll do the final redirect with the popped item.
   We'll also store analytics if it exists.
 */
