@@ -3,33 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <title>Random CSV Redirect (Weighted + Nested CSV + Proper Quoted CSV Parsing)</title>
-  <!-- Minimal Bootstrap (for progress bar styling). Feel free to adjust version if needed. -->
+  <!-- 
+    Added Bootstrap CSS for simple progress bar styling. 
+    This is optional if you're already including Bootstrap elsewhere.
+    Remove or modify if you have your own setup.
+  -->
   <link
     rel="stylesheet"
-    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-  />
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  >
 </head>
 <body>
-<div id="progress-container" class="container" style="display: none; margin-top: 50px;">
-  <div class="row">
-    <div class="col-12">
-      <h3>Generating Redirects...</h3>
-      <div class="progress">
-        <div
-          id="progress-bar"
-          class="progress-bar"
-          role="progressbar"
-          style="width: 0%;"
-          aria-valuenow="0"
-          aria-valuemin="0"
-          aria-valuemax="100"
-        >
-          0%
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+
+<!-- 
+  A container for the progress bar animation.
+  We'll fill or remove this dynamically in code.
+-->
+<div id="progress-container" style="margin:10px;"></div>
 
 <script>
 /**
@@ -213,8 +203,9 @@ function storeRedirectAnalytics(rowType, url) {
 }
 
 /**
- * processRows is the original flow that picks a row and immediately redirects or fetches again.
- * We keep it intact because the user specifically asked us not to remove functionalities.
+ * (ORIGINAL) Processes rows by picking one (weighted) and acting according to its type.
+ * This function remains intact, but we'll no longer call it directly from main().
+ * We keep it so existing functionality is not removed.
  *
  * @param {string[][]} rows Parsed CSV rows
  * @param {number} recursionDepth Avoid infinite recursion on nested CSV references
@@ -312,17 +303,16 @@ async function processRows(rows, recursionDepth = 0) {
   }
 }
 
-/**
- * This new function returns a Promise that resolves to the "final URL" we would redirect to,
- * **without** actually redirecting. It uses the same picking logic as processRows.
- *
- * We preserve the nested CSV calls, so that if a csv row is chosen, we do an additional fetch
- * and keep going recursively until we hit a final link or git-like URL.
- */
-async function getFinalUrl(rows, recursionDepth = 0) {
-  // Basic safeguard
+/* 
+  NEW FUNCTION:
+  ---------------------------------------------------------------
+  We need to get the final redirect URL from a single weighted pick 
+  (including potential recursion for 'csv' row types) WITHOUT actually 
+  redirecting. We'll adapt the logic from processRows().
+*/
+async function getFinalUrlFromRows(rows, recursionDepth = 0) {
   if (recursionDepth > 20) {
-    throw new Error('Exceeded maximum CSV nesting depth.');
+    throw new Error('Error: Exceeded maximum CSV nesting depth.');
   }
 
   if (!rows.length) {
@@ -334,7 +324,8 @@ async function getFinalUrl(rows, recursionDepth = 0) {
 
   if (rowType === 'link') {
     // Format: link,<weight>,<url>
-    return selectedRow[2];
+    const url = selectedRow[2];
+    return { rowType, url };
   }
   else if (rowType === 'git-specific') {
     // Format: git-specific,<weight>,username=xxxx,repository=yyyy,issueNumbers=1_2_3
@@ -342,9 +333,12 @@ async function getFinalUrl(rows, recursionDepth = 0) {
     const repository = selectedRow[3].split('=')[1];
     const issueNumbersStr = selectedRow[4].split('=')[1];
     const issueNumbersArr = issueNumbersStr.split('_');
+
     const randIdx = Math.floor(getSecureRandomNumber() * issueNumbersArr.length);
     const chosenIssue = issueNumbersArr[randIdx];
-    return `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
+    const finalUrl = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
+
+    return { rowType, url: finalUrl };
   }
   else if (rowType === 'git-range') {
     // Format: git-range,<weight>,username=xxxx,repository=yyyy,issueNumbers=min_max
@@ -360,183 +354,252 @@ async function getFinalUrl(rows, recursionDepth = 0) {
     }
 
     const randomVal = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
-    return `https://github.com/${username}/${repository}/issues/${randomVal}`;
+    const finalUrl = `https://github.com/${username}/${repository}/issues/${randomVal}`;
+
+    return { rowType, url: finalUrl };
   }
   else if (rowType === 'csv') {
-    // Nested CSV
+    // Format: csv,<weight>,<another-file.csv>
     const nestedCsv = selectedRow[2];
     if (!nestedCsv) {
       throw new Error('CSV type found but no filename specified.');
     }
+
+    // Fetch nested CSV and pick from it (recursively)
     const nestedRows = await fetchCSV(nestedCsv);
-    return getFinalUrl(nestedRows, recursionDepth + 1);
+    return await getFinalUrlFromRows(nestedRows, recursionDepth + 1);
   }
   else {
     throw new Error('Unknown row type: ' + rowType);
   }
 }
 
-/**
- * After generating the 100 URLs, we want to intersperse them so that repeats
- * are spread out as much as possible (the "bias is towards less consecutive invocations").
- * If there are ties, we attempt to space them out evenly.
- *
- * This is a classic "rearrange so no two adjacent duplicates if possible" approach,
- * using a simple repeated pick of the two most frequent URLs at a time.
- */
-function intersperseUrls(urls) {
-  // Count frequencies of each unique URL
+/* 
+  NEW FUNCTION:
+  ---------------------------------------------------------------
+  Takes the final URLs array (length 100) and tries to intersperse them 
+  so consecutive duplicates are minimized. We'll do a simple approach.
+*/
+function intersperseUrls(picks) {
+  /*
+    picks is an array of objects: [ {rowType, url}, {rowType, url}, ... ]
+
+    We'll do a naive approach: 
+      1) Group by (url).
+      2) Sort groups by descending count. 
+      3) Repeatedly pick from the largest group that's not the same as last placed.
+
+    This helps reduce consecutive duplicates.
+  */
+
+  // Tally by url
   const freqMap = {};
-  for (const u of urls) {
-    freqMap[u] = (freqMap[u] || 0) + 1;
+  picks.forEach(item => {
+    freqMap[item.url] = (freqMap[item.url] || 0) + 1;
+  });
+
+  // Create an array of {url, rowType, count}
+  const freqArr = [];
+  for (const url in freqMap) {
+    // We'll store rowType as we first encountered it. 
+    // (If multiple rowTypes share the same url, it shouldn't matter, 
+    //  but if you do care, you'd handle it differently.)
+    const rowType = picks.find(x => x.url === url).rowType;
+    freqArr.push({
+      url,
+      rowType,
+      count: freqMap[url]
+    });
   }
 
-  // Convert to an array of { url, count }
-  const freqArray = Object.keys(freqMap).map(u => ({ url: u, count: freqMap[u] }));
+  // Sort descending by count
+  freqArr.sort((a,b) => b.count - a.count);
 
-  const newArray = [];
+  const result = [];
+  let prevUrl = null;
 
-  // Greedy approach: repeatedly pick the two most frequent distinct URLs at a time
+  // We'll keep picking until freqArr is empty or we can't pick anymore
   while (true) {
-    // Sort descending by count
-    freqArray.sort((a, b) => b.count - a.count);
+    // Sort again each iteration so the largest count is first
+    freqArr.sort((a,b) => b.count - a.count);
 
-    // If the top item has zero count, we're done
-    if (freqArray[0].count === 0) {
-      break;
+    // Filter out any 0 count
+    while (freqArr.length > 0 && freqArr[freqArr.length - 1].count <= 0) {
+      freqArr.pop();
     }
 
-    // Pop the first item
-    const itemA = freqArray.shift();
-    newArray.push(itemA.url);
-    itemA.count--;
+    if (!freqArr.length) break; // done
 
-    // If there's no second item left, but itemA still has a count, we have to place the rest
-    if (freqArray.length === 0) {
-      if (itemA.count > 0) {
-        // Place them all consecutively (can't do anything else at this point)
-        for (let i = 0; i < itemA.count; i++) {
-          newArray.push(itemA.url);
-        }
-      }
-      break;
-    } else {
-      // Pop the second item
-      const itemB = freqArray.shift();
-      if (itemB.count > 0) {
-        newArray.push(itemB.url);
-        itemB.count--;
-      }
-      // Reinsert itemA if it still has a count
-      if (itemA.count > 0) {
-        freqArray.push(itemA);
-      }
-      // Reinsert itemB if it still has a count
-      if (itemB.count > 0) {
-        freqArray.push(itemB);
+    // Attempt to find the first entry not matching prevUrl
+    let idxToPick = -1;
+    for (let i = 0; i < freqArr.length; i++) {
+      if (freqArr[i].url !== prevUrl) {
+        idxToPick = i;
+        break;
       }
     }
+
+    // If all of them match prevUrl, we pick the first anyway (no choice)
+    if (idxToPick === -1) {
+      idxToPick = 0;
+    }
+
+    // Decrement count, push to result
+    const chosen = freqArr[idxToPick];
+    chosen.count -= 1;
+    result.push({rowType: chosen.rowType, url: chosen.url});
+    prevUrl = chosen.url;
   }
 
-  // newArray should have the same total length as the original "urls" array
-  return newArray;
+  // If we haven't placed all 100 somehow, we'd do something else,
+  // but theoretically we should place them all.
+  return result;
 }
 
-/**
- * Fill up an array of 100 final URLs based on the existing randomization logic,
- * including nested CSV resolution. Show a progress bar while doing so,
- * then reorder them to "intersperse" duplicates as much as possible.
- *
- * @param {string[][]} rows The top-level CSV data
- * @returns {Promise<string[]>} A promise resolving to an array of 100 final URLs
- */
-async function generatePrecomputedUrls(rows) {
+/* 
+  NEW FUNCTIONS: Show/hide progress bar 
+*/
+function showProgressBar(total) {
   const container = document.getElementById('progress-container');
-  const bar = document.getElementById('progress-bar');
-  container.style.display = 'block';
+  container.innerHTML = `
+    <div class="progress" style="height: 25px;">
+      <div
+        class="progress-bar progress-bar-striped progress-bar-animated"
+        role="progressbar"
+        style="width: 0%;"
+        aria-valuenow="0"
+        aria-valuemin="0"
+        aria-valuemax="${total}"
+        id="generation-progress-bar"
+      >
+        0%
+      </div>
+    </div>
+    <p id="progress-label" style="margin-top:5px;">Generating 0 of ${total}...</p>
+  `;
+}
 
+function updateProgressBar(current, total) {
+  const bar = document.getElementById('generation-progress-bar');
+  const label = document.getElementById('progress-label');
+  if (!bar || !label) return;
+
+  const percent = Math.floor((current / total) * 100);
+  bar.style.width = percent + '%';
+  bar.setAttribute('aria-valuenow', current);
+  bar.textContent = `${percent}%`;
+  label.textContent = `Generating ${current} of ${total}...`;
+}
+
+function hideProgressBar() {
+  const container = document.getElementById('progress-container');
+  container.innerHTML = '';
+}
+
+/*
+  NEW FUNCTION:
+  ---------------------------------------------------------------
+  Generate 100 final URLs, intersperse them, store them in localStorage
+  along with their rowType. We also display a simple progress bar 
+  while generating.
+*/
+async function generateQueue(rows) {
   const total = 100;
-  let results = [];
+  showProgressBar(total);
 
-  for (let i = 0; i < total; i++) {
-    const url = await getFinalUrl(rows, 0);
-    results.push(url);
-
-    // Update progress bar
-    const percent = Math.floor(((i + 1) / total) * 100);
-    bar.style.width = percent + '%';
-    bar.setAttribute('aria-valuenow', percent);
-    bar.textContent = percent + '%';
+  const picks = [];
+  for (let i = 1; i <= total; i++) {
+    // We do what 'processRows' would do, but just store the final URL instead
+    const finalObj = await getFinalUrlFromRows(rows, 0);
+    picks.push(finalObj);
+    updateProgressBar(i, total);
   }
 
-  // Done generating. Hide progress container
-  container.style.display = 'none';
+  hideProgressBar();
 
-  // Now, reorder "results" to ensure a more interspersed order
-  results = intersperseUrls(results);
+  // Interspersing (reduce duplicates in consecutive order)
+  const interspersed = intersperseUrls(picks);
 
-  return results;
+  // Store in localStorage with timestamp
+  const payload = {
+    createdAt: Date.now(), // ms
+    items: interspersed
+  };
+  localStorage.setItem('redirectQueue', JSON.stringify(payload));
+
+  return interspersed;
 }
 
-/**
- * Check if our stored array is still valid (not older than 1 hour, and not empty).
- *
- * @returns {boolean} true if valid and not empty
- */
-function isPrecomputedValidAndAvailable() {
-  const precomputed = localStorage.getItem('precomputedUrls');
-  const timestampStr = localStorage.getItem('precomputedTimestamp');
+/*
+  NEW FUNCTION:
+  ---------------------------------------------------------------
+  Pops the first item from localStorage queue (if it exists)
+  and returns it. If the queue is empty or expired, return null.
+*/
+function popFromQueue() {
+  const raw = localStorage.getItem('redirectQueue');
+  if (!raw) return null;
 
-  if (!precomputed || !timestampStr) {
-    return false;
-  }
-
+  let payload = null;
   try {
-    const arr = JSON.parse(precomputed);
-    if (!Array.isArray(arr) || arr.length === 0) {
-      return false;
-    }
-    const storedTime = new Date(timestampStr).getTime();
-    const now = Date.now();
-    const diff = now - storedTime;
-    // 1 hour = 3600000 ms
-    if (diff > 3600000) {
-      return false;
-    }
-    return true;
+    payload = JSON.parse(raw);
   } catch (err) {
-    return false;
-  }
-}
-
-/**
- * Pop one URL from our precomputed array in localStorage and store the updated array back.
- * Returns the popped URL or null if none.
- */
-function popPrecomputedUrl() {
-  const precomputed = JSON.parse(localStorage.getItem('precomputedUrls')) || [];
-  if (precomputed.length === 0) {
+    // Corrupted data
     return null;
   }
-  const url = precomputed.shift();
-  localStorage.setItem('precomputedUrls', JSON.stringify(precomputed));
-  return url;
+  if (!payload || !payload.items || !Array.isArray(payload.items)) {
+    return null;
+  }
+
+  const createdAt = payload.createdAt || 0;
+  const now = Date.now();
+  const oneHour = 3600000;
+
+  if (now - createdAt > oneHour) {
+    // Expired
+    return null;
+  }
+
+  if (payload.items.length === 0) {
+    // Already empty
+    return null;
+  }
+
+  // Pop the first item
+  const popped = payload.items.shift();
+  // Store updated array back
+  localStorage.setItem('redirectQueue', JSON.stringify(payload));
+
+  return popped;
+}
+
+/*
+  NEW FUNCTION:
+  ---------------------------------------------------------------
+  We'll do the final redirect with the popped item.
+  We'll also store analytics if it exists.
+*/
+function doRedirect(finalObj) {
+  if (!finalObj) {
+    document.body.textContent = 'Error: No item available for redirect.';
+    return;
+  }
+
+  const { rowType, url } = finalObj;
+  console.log('Redirecting with rowType/url:', rowType, url);
+
+  // Store analytics
+  storeRedirectAnalytics(rowType, url);
+
+  window.location.href = url;
 }
 
 /**
- * Save new array of 100 URLs and a timestamp in localStorage.
- */
-function savePrecomputedUrls(urlArray) {
-  localStorage.setItem('precomputedUrls', JSON.stringify(urlArray));
-  localStorage.setItem('precomputedTimestamp', new Date().toISOString());
-}
-
-/**
- * This is the modified main entry point:
- * 1. Check if we have valid precomputed URLs in localStorage
- * 2. If yes, pop one and redirect
- * 3. If not valid or empty, fetch CSV, fix "null" weights, generate 100 final URLs, store them,
- *    pop one, redirect
+ * Main entry point:
+ * 1. Read "target" param from URL (?target=filename.csv)
+ * 2. Attempt to pop from localStorage queue
+ * 3. If queue is invalid/expired/empty, fetch CSV, parse, generate new queue
+ * 4. Pop from queue, redirect
  */
 async function main() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -547,27 +610,25 @@ async function main() {
     return;
   }
 
-  // If we already have a valid, non-empty set of precomputed URLs,
-  // pop one and redirect.
-  if (isPrecomputedValidAndAvailable()) {
-    const url = popPrecomputedUrl();
-    if (url) {
-      // store analytics & redirect
-      storeRedirectAnalytics('precomputed', url);
-      window.location.href = url;
-      return;
-    }
+  // Try popping from existing queue
+  let poppedItem = popFromQueue();
+  if (poppedItem) {
+    // If we got something, redirect with it
+    doRedirect(poppedItem);
+    return;
   }
 
-  // Otherwise, we need to fetch CSV and regenerate 100 results
+  // If we get here, no valid queue or item is available
+  // => fetch and parse CSV, generate a new queue
   try {
     const rows = await fetchCSV(target);
 
-    // Fix null weights
+    // Find all valid (non-null) second-column integer values
     const nonNullValues = rows
       .map(r => (r[1] !== 'null' ? parseInt(r[1], 10) : NaN))
       .filter(val => !isNaN(val));
 
+    // If we have any valid numbers at all, proceed
     if (nonNullValues.length > 0) {
       const minVal = Math.min(...nonNullValues);
       const maxVal = Math.max(...nonNullValues);
@@ -581,17 +642,18 @@ async function main() {
       }
     }
 
-    // Now generate 100 final URLs
-    const generated = await generatePrecomputedUrls(rows);
-    savePrecomputedUrls(generated);
+    // Now generate a new queue of 100 picks
+    await generateQueue(rows);
+    // Pop from newly generated queue
+    poppedItem = popFromQueue();
 
-    // pop one and redirect
-    const urlToUse = popPrecomputedUrl();
-    if (!urlToUse) {
-      throw new Error('Failed to generate a new URL.');
+    // Redirect
+    if (poppedItem) {
+      doRedirect(poppedItem);
+    } else {
+      document.body.textContent = 'Error: failed to generate queue or pop an item.';
     }
-    storeRedirectAnalytics('precomputed', urlToUse);
-    window.location.href = urlToUse;
+
   } catch (error) {
     document.body.textContent = 'Failed to process CSV: ' + error.message;
   }
@@ -600,9 +662,13 @@ async function main() {
 window.onload = main;
 </script>
 
-<!-- Minimal JS needed by Bootstrap 4 progress (Popper + jQuery) -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<!-- 
+  Optionally include Bootstrap JS if you need it for other components. 
+  (For the progress bar animations, it's not strictly required.)
+-->
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+></script>
+
 </body>
 </html>
