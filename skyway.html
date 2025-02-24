@@ -215,8 +215,6 @@ function storeRedirectAnalytics(rowType, url) {
 /**
  * processRows is the original flow that picks a row and immediately redirects or fetches again.
  * We keep it intact because the user specifically asked us not to remove functionalities.
- * NOTE: We won't normally call it anymore if we have precomputed URLs in localStorage,
- * but we keep it for fallback or reference.
  *
  * @param {string[][]} rows Parsed CSV rows
  * @param {number} recursionDepth Avoid infinite recursion on nested CSV references
@@ -379,8 +377,75 @@ async function getFinalUrl(rows, recursionDepth = 0) {
 }
 
 /**
+ * After generating the 100 URLs, we want to intersperse them so that repeats
+ * are spread out as much as possible (the "bias is towards less consecutive invocations").
+ * If there are ties, we attempt to space them out evenly.
+ *
+ * This is a classic "rearrange so no two adjacent duplicates if possible" approach,
+ * using a simple repeated pick of the two most frequent URLs at a time.
+ */
+function intersperseUrls(urls) {
+  // Count frequencies of each unique URL
+  const freqMap = {};
+  for (const u of urls) {
+    freqMap[u] = (freqMap[u] || 0) + 1;
+  }
+
+  // Convert to an array of { url, count }
+  const freqArray = Object.keys(freqMap).map(u => ({ url: u, count: freqMap[u] }));
+
+  const newArray = [];
+
+  // Greedy approach: repeatedly pick the two most frequent distinct URLs at a time
+  while (true) {
+    // Sort descending by count
+    freqArray.sort((a, b) => b.count - a.count);
+
+    // If the top item has zero count, we're done
+    if (freqArray[0].count === 0) {
+      break;
+    }
+
+    // Pop the first item
+    const itemA = freqArray.shift();
+    newArray.push(itemA.url);
+    itemA.count--;
+
+    // If there's no second item left, but itemA still has a count, we have to place the rest
+    if (freqArray.length === 0) {
+      if (itemA.count > 0) {
+        // Place them all consecutively (can't do anything else at this point)
+        for (let i = 0; i < itemA.count; i++) {
+          newArray.push(itemA.url);
+        }
+      }
+      break;
+    } else {
+      // Pop the second item
+      const itemB = freqArray.shift();
+      if (itemB.count > 0) {
+        newArray.push(itemB.url);
+        itemB.count--;
+      }
+      // Reinsert itemA if it still has a count
+      if (itemA.count > 0) {
+        freqArray.push(itemA);
+      }
+      // Reinsert itemB if it still has a count
+      if (itemB.count > 0) {
+        freqArray.push(itemB);
+      }
+    }
+  }
+
+  // newArray should have the same total length as the original "urls" array
+  return newArray;
+}
+
+/**
  * Fill up an array of 100 final URLs based on the existing randomization logic,
- * including nested CSV resolution. Show a progress bar while doing so.
+ * including nested CSV resolution. Show a progress bar while doing so,
+ * then reorder them to "intersperse" duplicates as much as possible.
  *
  * @param {string[][]} rows The top-level CSV data
  * @returns {Promise<string[]>} A promise resolving to an array of 100 final URLs
@@ -391,7 +456,7 @@ async function generatePrecomputedUrls(rows) {
   container.style.display = 'block';
 
   const total = 100;
-  const results = [];
+  let results = [];
 
   for (let i = 0; i < total; i++) {
     const url = await getFinalUrl(rows, 0);
@@ -404,8 +469,12 @@ async function generatePrecomputedUrls(rows) {
     bar.textContent = percent + '%';
   }
 
-  // Hide progress after done
+  // Done generating. Hide progress container
   container.style.display = 'none';
+
+  // Now, reorder "results" to ensure a more interspersed order
+  results = intersperseUrls(results);
+
   return results;
 }
 
