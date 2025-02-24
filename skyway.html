@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <title>Random CSV Redirect (Weighted + Nested CSV + Proper Quoted CSV Parsing)</title>
   <!-- 
-    Added Bootstrap CSS for simple progress bar styling. 
-    This is optional if you're already including Bootstrap elsewhere.
-    Remove or modify if you have your own setup.
+    Added Bootstrap CSS for a simple progress bar styling. 
+    Remove/adjust if you already have your own setup.
   -->
   <link
     rel="stylesheet"
@@ -375,35 +374,64 @@ async function getFinalUrlFromRows(rows, recursionDepth = 0) {
 }
 
 /* 
-  NEW FUNCTION:
+  HELPER FUNCTIONS FOR "SIMILAR" URL DETECTION
   ---------------------------------------------------------------
-  Takes the final URLs array (length 100) and tries to intersperse them 
-  so consecutive duplicates are minimized. We'll do a simple approach.
+  We'll define "similar" based on how many characters match 
+  from the beginning (common prefix). If the ratio of that 
+  common prefix to the shorter URL’s length is at least 0.7 (70%), 
+  we'll call them "similar." Adjust as needed.
+*/
+
+/**
+ * Returns the length of the common prefix between str1 and str2.
+ */
+function getCommonPrefixLength(str1, str2) {
+  const len = Math.min(str1.length, str2.length);
+  let i = 0;
+  while (i < len && str1[i] === str2[i]) {
+    i++;
+  }
+  return i;
+}
+
+/**
+ * Decides if two URLs are "similar" if their common prefix
+ * ratio is >= 70% of the shorter string’s length.
+ */
+function isSimilar(url1, url2) {
+  if (url1 === url2) return true; // exact match is automatically "similar"
+  const prefixLen = getCommonPrefixLength(url1, url2);
+  const minLen = Math.min(url1.length, url2.length);
+  const ratio = prefixLen / minLen; 
+  return ratio >= 0.7;
+}
+
+/* 
+  NEW FUNCTION (MODIFIED):
+  ---------------------------------------------------------------
+  Takes the final URLs array (length 100) and tries to space them out
+  so that not only exact duplicates but also "similar" items 
+  (matching on early portion of the URLs) are not adjacent.
 */
 function intersperseUrls(picks) {
   /*
     picks is an array of objects: [ {rowType, url}, {rowType, url}, ... ]
 
-    We'll do a naive approach: 
-      1) Group by (url).
-      2) Sort groups by descending count. 
-      3) Repeatedly pick from the largest group that's not the same as last placed.
-
-    This helps reduce consecutive duplicates.
+    We want to minimize consecutive *exact duplicates* or *similar* items.
+    We'll adapt a naive approach: each time we pick an item 
+    that is not "similar" to the last placed item. 
+    We'll still use a frequency-based approach for overall distribution.
   */
 
-  // Tally by url
+  // Tally exact frequencies by URL
   const freqMap = {};
   picks.forEach(item => {
     freqMap[item.url] = (freqMap[item.url] || 0) + 1;
   });
 
-  // Create an array of {url, rowType, count}
+  // Create an array of { url, rowType, count }
   const freqArr = [];
   for (const url in freqMap) {
-    // We'll store rowType as we first encountered it. 
-    // (If multiple rowTypes share the same url, it shouldn't matter, 
-    //  but if you do care, you'd handle it differently.)
     const rowType = picks.find(x => x.url === url).rowType;
     freqArr.push({
       url,
@@ -418,28 +446,35 @@ function intersperseUrls(picks) {
   const result = [];
   let prevUrl = null;
 
-  // We'll keep picking until freqArr is empty or we can't pick anymore
   while (true) {
     // Sort again each iteration so the largest count is first
     freqArr.sort((a,b) => b.count - a.count);
 
-    // Filter out any 0 count
+    // Remove any that have zero count
     while (freqArr.length > 0 && freqArr[freqArr.length - 1].count <= 0) {
       freqArr.pop();
     }
 
-    if (!freqArr.length) break; // done
+    if (freqArr.length === 0) {
+      break;
+    }
 
-    // Attempt to find the first entry not matching prevUrl
+    // Attempt to find the first entry NOT "similar" to prevUrl
     let idxToPick = -1;
     for (let i = 0; i < freqArr.length; i++) {
-      if (freqArr[i].url !== prevUrl) {
+      const candidate = freqArr[i];
+      // If there's no prevUrl, it's always safe
+      if (!prevUrl) {
+        idxToPick = i;
+        break;
+      }
+      if (!isSimilar(candidate.url, prevUrl)) {
         idxToPick = i;
         break;
       }
     }
 
-    // If all of them match prevUrl, we pick the first anyway (no choice)
+    // If all are "similar" to prevUrl, pick the first anyway (no choice)
     if (idxToPick === -1) {
       idxToPick = 0;
     }
@@ -447,12 +482,11 @@ function intersperseUrls(picks) {
     // Decrement count, push to result
     const chosen = freqArr[idxToPick];
     chosen.count -= 1;
-    result.push({rowType: chosen.rowType, url: chosen.url});
+    result.push({ rowType: chosen.rowType, url: chosen.url });
     prevUrl = chosen.url;
   }
 
-  // If we haven't placed all 100 somehow, we'd do something else,
-  // but theoretically we should place them all.
+  // Return the final interspersed array
   return result;
 }
 
@@ -517,7 +551,7 @@ async function generateQueue(rows) {
 
   hideProgressBar();
 
-  // Interspersing (reduce duplicates in consecutive order)
+  // Interspersing (reduce consecutive duplicates and "similar" items)
   const interspersed = intersperseUrls(picks);
 
   // Store in localStorage with timestamp
