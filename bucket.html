@@ -583,14 +583,13 @@
             toastEl.setAttribute('aria-live', 'assertive');
             toastEl.setAttribute('aria-atomic', 'true');
 
-            toastEl.innerHTML = `
-                <div class="d-flex">
+            toastEl.innerHTML = 
+                `<div class="d-flex">
                     <div class="toast-body">
                         ${message}
                     </div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            `;
+                </div>`;
 
             toastContainer.appendChild(toastEl);
             const bsToast = new bootstrap.Toast(toastEl);
@@ -1147,6 +1146,9 @@
             const hideRadio = document.getElementById('hideBucket3Radio');
             hideRadio.checked = true;
             toggleBucket3Visibility();
+
+            // AUTOMATICALLY PERFORM THE FIRST "I'M FEELING LUCKY" BUTTON PRESS
+            imFeelingLucky();
         }
 
         window.onload = main;
