@@ -3,8 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <title>Random CSV Redirect (Weighted + Nested CSV + Proper Quoted CSV Parsing)</title>
+  <!-- Minimal Bootstrap (for progress bar styling). Feel free to adjust version if needed. -->
+  <link
+    rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+  />
 </head>
 <body>
+<div id="progress-container" class="container" style="display: none; margin-top: 50px;">
+  <div class="row">
+    <div class="col-12">
+      <h3>Generating Redirects...</h3>
+      <div class="progress">
+        <div
+          id="progress-bar"
+          class="progress-bar"
+          role="progressbar"
+          style="width: 0%;"
+          aria-valuenow="0"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          0%
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 /**
  * Returns a cryptographically secure random number between 0 (inclusive) and 1 (exclusive).
@@ -187,7 +213,10 @@ function storeRedirectAnalytics(rowType, url) {
 }
 
 /**
- * Processes rows by picking one (weighted) and acting according to its type.
+ * processRows is the original flow that picks a row and immediately redirects or fetches again.
+ * We keep it intact because the user specifically asked us not to remove functionalities.
+ * NOTE: We won't normally call it anymore if we have precomputed URLs in localStorage,
+ * but we keep it for fallback or reference.
  *
  * @param {string[][]} rows Parsed CSV rows
  * @param {number} recursionDepth Avoid infinite recursion on nested CSV references
@@ -286,11 +315,159 @@ async function processRows(rows, recursionDepth = 0) {
 }
 
 /**
- * Main entry point:
- * 1. Read "target" param from URL (?target=filename.csv)
- * 2. Fetch/parse CSV
- * 3. Handle any "null" values in the second column by assigning random integers from the min/max of valid second-column values
- * 4. Process rows
+ * This new function returns a Promise that resolves to the "final URL" we would redirect to,
+ * **without** actually redirecting. It uses the same picking logic as processRows.
+ *
+ * We preserve the nested CSV calls, so that if a csv row is chosen, we do an additional fetch
+ * and keep going recursively until we hit a final link or git-like URL.
+ */
+async function getFinalUrl(rows, recursionDepth = 0) {
+  // Basic safeguard
+  if (recursionDepth > 20) {
+    throw new Error('Exceeded maximum CSV nesting depth.');
+  }
+
+  if (!rows.length) {
+    throw new Error('CSV is empty or could not be parsed.');
+  }
+
+  const selectedRow = pickRowByWeight(rows);
+  const rowType = selectedRow[0].trim();
+
+  if (rowType === 'link') {
+    // Format: link,<weight>,<url>
+    return selectedRow[2];
+  }
+  else if (rowType === 'git-specific') {
+    // Format: git-specific,<weight>,username=xxxx,repository=yyyy,issueNumbers=1_2_3
+    const username = selectedRow[2].split('=')[1];
+    const repository = selectedRow[3].split('=')[1];
+    const issueNumbersStr = selectedRow[4].split('=')[1];
+    const issueNumbersArr = issueNumbersStr.split('_');
+    const randIdx = Math.floor(getSecureRandomNumber() * issueNumbersArr.length);
+    const chosenIssue = issueNumbersArr[randIdx];
+    return `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
+  }
+  else if (rowType === 'git-range') {
+    // Format: git-range,<weight>,username=xxxx,repository=yyyy,issueNumbers=min_max
+    const username = selectedRow[2].split('=')[1];
+    const repository = selectedRow[3].split('=')[1];
+    const rangeStr = selectedRow[4].split('=')[1];
+    const [minStr, maxStr] = rangeStr.split('_');
+    const min = parseInt(minStr, 10);
+    const max = parseInt(maxStr, 10);
+
+    if (isNaN(min) || isNaN(max)) {
+      throw new Error('Invalid range in "git-range" row.');
+    }
+
+    const randomVal = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
+    return `https://github.com/${username}/${repository}/issues/${randomVal}`;
+  }
+  else if (rowType === 'csv') {
+    // Nested CSV
+    const nestedCsv = selectedRow[2];
+    if (!nestedCsv) {
+      throw new Error('CSV type found but no filename specified.');
+    }
+    const nestedRows = await fetchCSV(nestedCsv);
+    return getFinalUrl(nestedRows, recursionDepth + 1);
+  }
+  else {
+    throw new Error('Unknown row type: ' + rowType);
+  }
+}
+
+/**
+ * Fill up an array of 100 final URLs based on the existing randomization logic,
+ * including nested CSV resolution. Show a progress bar while doing so.
+ *
+ * @param {string[][]} rows The top-level CSV data
+ * @returns {Promise<string[]>} A promise resolving to an array of 100 final URLs
+ */
+async function generatePrecomputedUrls(rows) {
+  const container = document.getElementById('progress-container');
+  const bar = document.getElementById('progress-bar');
+  container.style.display = 'block';
+
+  const total = 100;
+  const results = [];
+
+  for (let i = 0; i < total; i++) {
+    const url = await getFinalUrl(rows, 0);
+    results.push(url);
+
+    // Update progress bar
+    const percent = Math.floor(((i + 1) / total) * 100);
+    bar.style.width = percent + '%';
+    bar.setAttribute('aria-valuenow', percent);
+    bar.textContent = percent + '%';
+  }
+
+  // Hide progress after done
+  container.style.display = 'none';
+  return results;
+}
+
+/**
+ * Check if our stored array is still valid (not older than 1 hour, and not empty).
+ *
+ * @returns {boolean} true if valid and not empty
+ */
+function isPrecomputedValidAndAvailable() {
+  const precomputed = localStorage.getItem('precomputedUrls');
+  const timestampStr = localStorage.getItem('precomputedTimestamp');
+
+  if (!precomputed || !timestampStr) {
+    return false;
+  }
+
+  try {
+    const arr = JSON.parse(precomputed);
+    if (!Array.isArray(arr) || arr.length === 0) {
+      return false;
+    }
+    const storedTime = new Date(timestampStr).getTime();
+    const now = Date.now();
+    const diff = now - storedTime;
+    // 1 hour = 3600000 ms
+    if (diff > 3600000) {
+      return false;
+    }
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Pop one URL from our precomputed array in localStorage and store the updated array back.
+ * Returns the popped URL or null if none.
+ */
+function popPrecomputedUrl() {
+  const precomputed = JSON.parse(localStorage.getItem('precomputedUrls')) || [];
+  if (precomputed.length === 0) {
+    return null;
+  }
+  const url = precomputed.shift();
+  localStorage.setItem('precomputedUrls', JSON.stringify(precomputed));
+  return url;
+}
+
+/**
+ * Save new array of 100 URLs and a timestamp in localStorage.
+ */
+function savePrecomputedUrls(urlArray) {
+  localStorage.setItem('precomputedUrls', JSON.stringify(urlArray));
+  localStorage.setItem('precomputedTimestamp', new Date().toISOString());
+}
+
+/**
+ * This is the modified main entry point:
+ * 1. Check if we have valid precomputed URLs in localStorage
+ * 2. If yes, pop one and redirect
+ * 3. If not valid or empty, fetch CSV, fix "null" weights, generate 100 final URLs, store them,
+ *    pop one, redirect
  */
 async function main() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -301,15 +478,27 @@ async function main() {
     return;
   }
 
+  // If we already have a valid, non-empty set of precomputed URLs,
+  // pop one and redirect.
+  if (isPrecomputedValidAndAvailable()) {
+    const url = popPrecomputedUrl();
+    if (url) {
+      // store analytics & redirect
+      storeRedirectAnalytics('precomputed', url);
+      window.location.href = url;
+      return;
+    }
+  }
+
+  // Otherwise, we need to fetch CSV and regenerate 100 results
   try {
     const rows = await fetchCSV(target);
 
-    // Find all valid (non-null) second-column integer values
+    // Fix null weights
     const nonNullValues = rows
       .map(r => (r[1] !== 'null' ? parseInt(r[1], 10) : NaN))
       .filter(val => !isNaN(val));
 
-    // If we have any valid numbers at all, proceed
     if (nonNullValues.length > 0) {
       const minVal = Math.min(...nonNullValues);
       const maxVal = Math.max(...nonNullValues);
@@ -323,7 +512,17 @@ async function main() {
       }
     }
 
-    await processRows(rows, 0);
+    // Now generate 100 final URLs
+    const generated = await generatePrecomputedUrls(rows);
+    savePrecomputedUrls(generated);
+
+    // pop one and redirect
+    const urlToUse = popPrecomputedUrl();
+    if (!urlToUse) {
+      throw new Error('Failed to generate a new URL.');
+    }
+    storeRedirectAnalytics('precomputed', urlToUse);
+    window.location.href = urlToUse;
   } catch (error) {
     document.body.textContent = 'Failed to process CSV: ' + error.message;
   }
@@ -331,5 +530,10 @@ async function main() {
 
 window.onload = main;
 </script>
+
+<!-- Minimal JS needed by Bootstrap 4 progress (Popper + jQuery) -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>
