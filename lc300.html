@@ -94,7 +94,7 @@
   <div class="container">
     <h1 class="text-center" id="pageTitle">IndexedDB CSV + Flashcards</h1>
 
-    <!-- Help (no dark mode button now) -->
+    <!-- Help (no dark mode) -->
     <div class="text-end mb-3">
       <button class="btn btn-info btn-lg" data-bs-toggle="modal" data-bs-target="#helpModal" title="Help">
         <i class="fas fa-question-circle"></i> Help
@@ -106,7 +106,10 @@
       <div class="col-md-6 mb-3">
         <label class="form-label">Upload CSV(s):</label>
         <input type="file" id="csvFileInput" multiple accept=".csv" class="form-control" />
-        <div class="form-text">Each CSV line is assumed "front,back". Duplicates are removed. Newly inserted records go into Bucket2 automatically.</div>
+        <div class="form-text">
+          Each CSV line is assumed "front,back". Duplicates are removed.
+          Newly inserted records go into Bucket2 automatically.
+        </div>
         <button class="btn btn-primary btn-lg mt-2" onclick="handleFiles()">Import to IndexedDB</button>
 
         <!-- Progress bar for CSV uploading -->
@@ -119,7 +122,9 @@
       <div class="col-md-6">
         <label class="form-label">Add Text Post:</label>
         <textarea id="textPostInput" class="form-control" rows="3" placeholder="Type your text, like a GitHub Issue..."></textarea>
-        <div class="form-text">We'll replace all commas with underscores and store as: "YYMMDD hh:mm:ss, text" (then added to Bucket2).</div>
+        <div class="form-text">
+          We'll replace all commas with underscores and store as: "YYMMDD hh:mm:ss, text" (then added to Bucket2).
+        </div>
         <button class="btn btn-success btn-lg mt-2" onclick="addTextPost()">Add Text to DB</button>
 
         <!-- Progress bar for text upload -->
@@ -266,35 +271,27 @@
           <div class="modal-body">
             <h6>Overview</h6>
             <p>
-              This page lets you upload CSV files or add text as CSV-like rows, storing them in IndexedDB.
-              Each record gets a unique integer <code>id</code>. We automatically place new records into “Bucket2” for flashcard reviewing.
+              This page can optionally read a <code>?target=someFile.csv</code> param to pick a specific CSV from your GitHub Pages folder.
+              If found, we store everything in a separate DB for that file so it doesn’t mix with others.
             </p>
             <p>
               When building flashcards, each record (e.g. "front,back") is turned into <em>two</em> flashcards:
-              front→back and back→front. Their internal IDs are <code>2*id</code> and <code>2*id + 1</code> 
-              (so the same DB record yields two directions).
+              front→back and back→front. Their internal IDs are <code>2*id</code> and <code>2*id + 1</code>. 
             </p>
             <h6>Usage Steps</h6>
             <ol>
-              <li><strong>Upload CSV(s)</strong> or <strong>Add Text Post</strong>. 
-                  After progress completes, the file input/textbox is cleared. 
-                  All new lines go into Bucket2, so they can be drawn as flashcards.</li>
-              <li><strong>Download All as CSV</strong>: merges everything in the DB into a single CSV, removing duplicates. 
-                  Filename is <code>indexedDb-YYMMDD_hhmm-minID-maxID.csv</code>.</li>
-              <li><strong>Clear IndexedDB</strong>: <em>removes</em> all records permanently. 
-                  Be careful if you want to keep your data!</li>
-              <li>The <strong>Flashcard</strong> area uses two buckets (reviewed vs. not-reviewed). 
-                  Use <strong>Draw Card</strong>, <strong>Reveal</strong>, <strong>Undo</strong>, etc.</li>
-              <li>You can <strong>Copy</strong> or <strong>Open as Link</strong> the front/back content. 
-                  Also, the <strong>Search Google/ChatGPT/Jisho</strong> buttons appear once you reveal the card.</li>
-              <li><strong>Reset Buckets</strong>: clears your flashcard progress (but not the underlying DB!). 
-                  Useful if you want to start reviewing from scratch.</li>
+              <li>If you provide <code>?target=someFile.csv</code>, the script tries to open or create a <em>separate</em> IndexedDB named for that file. 
+                  Then if that DB is empty, it automatically fetches <code>someFile.csv</code> from the server and loads it.</li>
+              <li><strong>Upload CSV(s)</strong> or <strong>Add Text Post</strong> to add more data. All new lines go into Bucket2, so they can be drawn as flashcards.</li>
+              <li><strong>Download All as CSV</strong>: merges everything in the DB into one CSV, removing duplicates.</li>
+              <li><strong>Clear IndexedDB</strong> or <strong>Reset Buckets</strong> as needed.</li>
+              <li>Flashcards: Draw, Reveal, Undo. You can also Copy or Open front/back as a link, or search via Google/ChatGPT/Jisho after revealing.</li>
             </ol>
             <h6>Notes</h6>
             <ul>
               <li>DB size is displayed in kB (approximate, based on sum of text lengths / 1024).</li>
               <li>If your CSV line is single-column or if you <em>only</em> have "front" text, 
-                  the “back” will be empty for that row. This still yields two directions: <code>front → ""</code> and <code>"" → front</code>.</li>
+                  the “back” will be empty for that row (still yields two directions).</li>
               <li>The random Pantone background colors come from an optional <code>pantone-colors.json</code> file. 
                   If missing, background defaults to white.</li>
             </ul>
@@ -315,11 +312,38 @@
 
   <script>
     /****************************************************
-     *         INDEXEDDB + CSV/TEXT UPLOAD LOGIC
+     *   URL Param helper
      ****************************************************/
-    const DB_NAME = 'myCsvDb';
+    function getUrlParameter(name) {
+      name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+      const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+      const results = regex.exec(location.search);
+      return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    /****************************************************
+     *  Determine DB name from "target" param
+     ****************************************************/
+    let rawTargetParam = getUrlParameter('target').trim();
+    let DB_NAME = '';
+    // If user provided ?target=someFile.csv, then use "myCsvDb_someFile_csv" as DB name.
+    // Otherwise, default to "myCsvDb_default".
+    if (rawTargetParam) {
+      // sanitize file name to avoid special chars
+      let sanitized = rawTargetParam.replace(/[^a-zA-Z0-9_\-]/g, '_');
+      DB_NAME = 'myCsvDb_' + sanitized;
+    } else {
+      DB_NAME = 'myCsvDb_default';
+    }
+
     const DB_VERSION = 1;
     const STORE_NAME = 'records';
+
+    // localBucketsKey should also be unique for each target
+    let localBucketsKey = rawTargetParam
+      ? 'flashcardBuckets_' + rawTargetParam.replace(/[^a-zA-Z0-9_\-]/g, '_')
+      : 'flashcardBuckets_default';
+
     let db = null;
 
     // In-memory array of all DB records -> {id, text}
@@ -336,20 +360,38 @@
     };
     const historyLimit = 5;
     let lastDrawnId = null;
-    let localBucketsKey = "flashcardBuckets_v1";
 
+    /****************************************************
+     *  On window load, open DB, possibly fetch the target CSV
+     ****************************************************/
     window.addEventListener('load', async () => {
       await openDatabase();
+
+      // load records to see if DB is empty
       await loadAllRecordsToMemory();
       updateDbSizeDisplay();
-      loadBucketState(); // load existing bucket arrangement
+
+      // If we have a "target" param AND the DB is empty, attempt fetching that CSV
+      if (rawTargetParam && allRecords.length === 0) {
+        console.log(`DB is empty. Attempting to fetch CSV: ${rawTargetParam}`);
+        let success = await autoFetchTargetCsv(rawTargetParam);
+        if (success > 0) {
+          console.log(`Fetched and inserted ${success} lines from ${rawTargetParam}`);
+          await loadAllRecordsToMemory();
+          updateDbSizeDisplay();
+        } else {
+          console.log(`No lines inserted or fetch failed for target: ${rawTargetParam}`);
+        }
+      }
+
+      loadBucketState();
       updateProbabilities();
       populateBucketLists();
       populateHistoryList();
       updateDisplay();
       getRandomColor();
 
-      // Make all buttons also trigger a new random color, for fun
+      // Make all buttons also trigger a new random color
       const allButtons = document.querySelectorAll('button');
       allButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -358,6 +400,9 @@
       });
     });
 
+    /****************************************************
+     *  openDatabase
+     ****************************************************/
     async function openDatabase() {
       return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -382,6 +427,31 @@
       });
     }
 
+    /****************************************************
+     *  autoFetchTargetCsv
+     *  Fetch the file from GitHub Pages if it exists, parse lines, store.
+     *  Returns # of lines successfully inserted.
+     ****************************************************/
+    async function autoFetchTargetCsv(fileName) {
+      try {
+        // We assume it's in the same directory or root
+        const response = await fetch(fileName);
+        if (!response.ok) throw new Error(`Cannot fetch ${fileName}`);
+        const text = await response.text();
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        if (lines.length === 0) return 0;
+        // Insert them
+        const insertedCount = await addLinesToDb(lines, false, lines.length);
+        return insertedCount;
+      } catch (err) {
+        console.error(`autoFetchTargetCsv error for ${fileName}:`, err);
+        return 0;
+      }
+    }
+
+    /****************************************************
+     *  Load all records to memory
+     ****************************************************/
     async function loadAllRecordsToMemory() {
       allRecords = [];
       return new Promise((resolve, reject) => {
@@ -411,7 +481,9 @@
       document.getElementById("dbSizeSpan").textContent = `${kB} kB`;
     }
 
-    // CSV upload
+    /****************************************************
+     * CSV upload / handleFiles
+     ****************************************************/
     async function handleFiles() {
       const fileInput = document.getElementById('csvFileInput');
       const files = fileInput.files;
@@ -440,9 +512,10 @@
       await refreshData();
     }
 
-    // Common function to add lines to DB, removing duplicates
+    /****************************************************
+     * Add lines to DB with dedup
+     ****************************************************/
     async function addLinesToDb(lines, useProgressBar=false, totalCount=0) {
-      // We'll insert them in a single transaction. We also track progress if needed.
       return new Promise((resolve, reject) => {
         let addedCount = 0;
         const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -514,13 +587,7 @@
       });
     }
 
-    async function refreshData() {
-      await loadAllRecordsToMemory();
-      updateDbSizeDisplay();
-    }
-
     function addRecordToBucket2(dbId) {
-      // We'll store "2*dbId" and "2*dbId+1" with freq=1 in Bucket2 if not exist
       const frontId = 2 * dbId;
       const backId = 2 * dbId + 1;
       if (!state.b1[frontId] && !state.b2[frontId]) {
@@ -531,7 +598,14 @@
       }
     }
 
-    // Show/hide & update progress bar for CSV
+    async function refreshData() {
+      await loadAllRecordsToMemory();
+      updateDbSizeDisplay();
+    }
+
+    /****************************************************
+     * Show/hide & update progress bars
+     ****************************************************/
     function showCsvUploadProgress(show) {
       const container = document.getElementById("csvUploadProgressContainer");
       if (show) {
@@ -553,7 +627,29 @@
       bar.textContent = pct + "%";
     }
 
-    // Text Post
+    function showTextUploadProgress(show) {
+      const container = document.getElementById("textUploadProgressContainer");
+      if (show) {
+        container.style.display = "block";
+      } else {
+        container.style.display = "none";
+      }
+    }
+    function updateTextUploadProgress(current, total) {
+      const bar = document.getElementById("textUploadProgressBar");
+      if (total === 0) {
+        bar.style.width = "0%";
+        bar.textContent = "0%";
+        return;
+      }
+      const pct = Math.floor((current / total) * 100);
+      bar.style.width = pct + "%";
+      bar.textContent = pct + "%";
+    }
+
+    /****************************************************
+     *  Add Text Post
+     ****************************************************/
     async function addTextPost() {
       const textArea = document.getElementById('textPostInput');
       let rawText = textArea.value.trim();
@@ -595,33 +691,14 @@
       setTimeout(() => showTextUploadProgress(false), 500);
     }
 
-    function showTextUploadProgress(show) {
-      const container = document.getElementById("textUploadProgressContainer");
-      if (show) {
-        container.style.display = "block";
-      } else {
-        container.style.display = "none";
-      }
-    }
-    function updateTextUploadProgress(current, total) {
-      const bar = document.getElementById("textUploadProgressBar");
-      if (total === 0) {
-        bar.style.width = "0%";
-        bar.textContent = "0%";
-        return;
-      }
-      const pct = Math.floor((current / total) * 100);
-      bar.style.width = pct + "%";
-      bar.textContent = pct + "%";
-    }
-
-    // Download all DB records as CSV
+    /****************************************************
+     *  Download all DB records as CSV
+     ****************************************************/
     async function downloadAllRecords() {
       if (allRecords.length === 0) {
         alert("No records in DB to download.");
         return;
       }
-      // Sort by ID ascending
       const sorted = [...allRecords].sort((a, b) => a.id - b.id);
       const minId = sorted[0].id;
       const maxId = sorted[sorted.length - 1].id;
@@ -646,7 +723,9 @@
       link.click();
     }
 
-    // Clear entire DB
+    /****************************************************
+     *  Clear entire DB
+     ****************************************************/
     async function clearDatabase() {
       if (!confirm("Are you sure you want to clear ALL data in IndexedDB? This is irreversible.")) {
         return;
@@ -666,10 +745,7 @@
     }
 
     /****************************************************
-     *                FLASHCARD LOGIC
-     *   We assign two "virtual IDs" for each DB record:
-     *    - front->back = 2 * recordId
-     *    - back->front = (2 * recordId) + 1
+     *  FLASHCARD LOGIC
      ****************************************************/
     function buildAllCards() {
       const cards = [];
@@ -788,7 +864,9 @@
       showToast("Last draw undone.");
     }
 
-    // Copy Buttons
+    /****************************************************
+     * Copy / Open as Link
+     ****************************************************/
     function copyFrontText() {
       if (!currentFront) return;
       navigator.clipboard.writeText(currentFront)
@@ -801,8 +879,6 @@
         .then(() => showToast("Back card copied!"))
         .catch(() => alert("Unable to copy back text."));
     }
-
-    // Open as Link
     function openFrontAsLink() {
       if (!currentFront) return;
       window.open(currentFront, "_blank");
@@ -812,7 +888,9 @@
       window.open(currentBack, "_blank");
     }
 
-    // Searching
+    /****************************************************
+     * Searching
+     ****************************************************/
     function googleSearchFront() {
       if (!currentFront) return;
       window.open("https://www.google.com/search?q=" + encodeURIComponent(currentFront), "_blank");
@@ -838,6 +916,9 @@
       window.open("https://jisho.org/search/" + encodeURIComponent(currentBack), "_blank");
     }
 
+    /****************************************************
+     * Font size logic
+     ****************************************************/
     function adjustFontSize(element, text) {
       const length = text.length;
       if (length <= 3) {
@@ -851,7 +932,9 @@
       }
     }
 
-    // History
+    /****************************************************
+     * History
+     ****************************************************/
     function addToHistory(cardId) {
       const ts = new Date().toLocaleString();
       const card = allCards.find(c => c.id === cardId);
@@ -878,7 +961,9 @@
       }
     }
 
-    // Bucket lists
+    /****************************************************
+     * Bucket lists
+     ****************************************************/
     function populateBucketLists() {
       allCards = buildAllCards();
       const b1List = document.getElementById("bucket1List");
@@ -909,7 +994,9 @@
       document.getElementById("bucket2Freq").innerText = getTotalFreq(state.b2);
     }
 
-    // Gauges
+    /****************************************************
+     * Gauges & display
+     ****************************************************/
     function updateDisplay() {
       allCards = buildAllCards();
       const totalCards = allCards.length;
@@ -927,7 +1014,9 @@
       r2Text.innerText = fraction2.toFixed(2) + "%";
     }
 
-    // Probability slider
+    /****************************************************
+     * Probability slider
+     ****************************************************/
     function updateProbabilities() {
       const sliderVal = parseInt(document.getElementById("probSlider").value);
       state.b1Prob = sliderVal / 100;
@@ -959,7 +1048,9 @@
       return arr[0] / (0xffffffff + 1);
     }
 
-    // Export/Import/Reset bucket arrangement
+    /****************************************************
+     *  Export/Import/Reset Bucket arrangement
+     ****************************************************/
     function exportState() {
       const str = JSON.stringify(state, null, 2);
       const blob = new Blob([str], { type: "application/json" });
@@ -1040,7 +1131,7 @@
     }
 
     /****************************************************
-     *                MISC / UI HELPERS
+     *   MISC / UI HELPERS
      ****************************************************/
     function showToast(msg) {
       const toastContainer = document.getElementById("toastContainer");
