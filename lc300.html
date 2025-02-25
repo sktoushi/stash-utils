@@ -272,7 +272,8 @@
             <h6>Overview</h6>
             <p>
               This page can optionally read a <code>?target=someFile.csv</code> param to pick a specific CSV from your GitHub Pages folder.
-              If found, we store everything in a separate DB for that file so it doesn’t mix with others.
+              If found, it will store everything in a separate DB for that file so it doesn’t mix with others.
+              If that DB is empty, we’ll automatically fetch the CSV. 
             </p>
             <p>
               When building flashcards, each record (e.g. "front,back") is turned into <em>two</em> flashcards:
@@ -384,7 +385,13 @@
         }
       }
 
+      // Load bucket arrangement from localStorage
       loadBucketState();
+
+      // --- Auto-populate Bucket2 if DB has data but buckets are empty ---
+      autoPopulateBucketIfEmpty();
+
+      // Now do normal UI updates
       updateProbabilities();
       populateBucketLists();
       populateHistoryList();
@@ -429,8 +436,6 @@
 
     /****************************************************
      *  autoFetchTargetCsv
-     *  Fetch the file from GitHub Pages if it exists, parse lines, store.
-     *  Returns # of lines successfully inserted.
      ****************************************************/
     async function autoFetchTargetCsv(fileName) {
       try {
@@ -450,7 +455,7 @@
     }
 
     /****************************************************
-     *  Load all records to memory
+     *  loadAllRecordsToMemory
      ****************************************************/
     async function loadAllRecordsToMemory() {
       allRecords = [];
@@ -482,7 +487,29 @@
     }
 
     /****************************************************
-     * CSV upload / handleFiles
+     * autoPopulateBucketIfEmpty
+     * If the DB has records but our b1/b2 are empty, we
+     * automatically put all possible card IDs into b2.
+     ****************************************************/
+    function autoPopulateBucketIfEmpty() {
+      const totalBucketFreq = getTotalFreq(state.b1) + getTotalFreq(state.b2);
+      if (allRecords.length > 0 && totalBucketFreq === 0) {
+        console.log("No existing bucket data; auto-populating Bucket2 with existing DB lines.");
+        populateAllInBucket2();
+        saveBucketState();
+      }
+    }
+
+    function populateAllInBucket2() {
+      const cards = buildAllCards();
+      for (const c of cards) {
+        state.b2[c.id] = 1;
+      }
+      console.log(`Auto-populated ${cards.length} card IDs into bucket2.`);
+    }
+
+    /****************************************************
+     * handleFiles (CSV upload)
      ****************************************************/
     async function handleFiles() {
       const fileInput = document.getElementById('csvFileInput');
@@ -513,7 +540,7 @@
     }
 
     /****************************************************
-     * Add lines to DB with dedup
+     * addLinesToDb
      ****************************************************/
     async function addLinesToDb(lines, useProgressBar=false, totalCount=0) {
       return new Promise((resolve, reject) => {
@@ -598,9 +625,15 @@
       }
     }
 
+    /****************************************************
+     * refreshData
+     ****************************************************/
     async function refreshData() {
       await loadAllRecordsToMemory();
       updateDbSizeDisplay();
+      // In case the user just inserted new data but had no bucket arrangement,
+      // we ensure the new data is in b2. If buckets are empty, auto-populate:
+      autoPopulateBucketIfEmpty();
     }
 
     /****************************************************
@@ -648,7 +681,7 @@
     }
 
     /****************************************************
-     *  Add Text Post
+     * Add Text Post
      ****************************************************/
     async function addTextPost() {
       const textArea = document.getElementById('textPostInput');
@@ -692,7 +725,7 @@
     }
 
     /****************************************************
-     *  Download all DB records as CSV
+     * Download all DB records as CSV
      ****************************************************/
     async function downloadAllRecords() {
       if (allRecords.length === 0) {
@@ -724,7 +757,7 @@
     }
 
     /****************************************************
-     *  Clear entire DB
+     * Clear entire DB
      ****************************************************/
     async function clearDatabase() {
       if (!confirm("Are you sure you want to clear ALL data in IndexedDB? This is irreversible.")) {
@@ -745,7 +778,7 @@
     }
 
     /****************************************************
-     *  FLASHCARD LOGIC
+     * FLASHCARD LOGIC
      ****************************************************/
     function buildAllCards() {
       const cards = [];
