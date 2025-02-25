@@ -11,14 +11,17 @@
     body {
       background-color: #f8f9fa;
     }
-    body.dark-mode {
-      background-color: #343a40;
-      color: #f8f9fa;
-    }
     .container {
-      max-width: 1000px;
+      /* Widen the max width for the cards */
+      max-width: 1200px;
       margin-top: 30px;
       margin-bottom: 100px;
+    }
+    /* Larger button sizing for thumb presses */
+    .btn {
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      font-size: 1rem;
     }
     .btn-draw, .btn-reveal {
       width: 100%;
@@ -45,35 +48,6 @@
       max-height: 200px;
       overflow-y: auto;
     }
-    .dark-mode .card {
-      background-color: #495057;
-      color: #f8f9fa;
-    }
-    .dark-mode .form-control, .dark-mode .form-select, .dark-mode .list-group-item {
-      background-color: #6c757d;
-      color: #f8f9fa;
-      border: 1px solid #ced4da;
-    }
-    .dark-mode .btn-primary {
-      background-color: #0d6efd;
-      border-color: #0d6efd;
-    }
-    .dark-mode .btn-secondary {
-      background-color: #6c757d;
-      border-color: #6c757d;
-    }
-    /* Custom scrollbar for dark mode */
-    body.dark-mode ::-webkit-scrollbar {
-      width: 8px;
-    }
-    body.dark-mode ::-webkit-scrollbar-track {
-      background: #343a40;
-    }
-    body.dark-mode ::-webkit-scrollbar-thumb {
-      background: #6c757d;
-      border-radius: 4px;
-    }
-    /* Flashcard styling */
     .flashcard {
       border: 2px dashed #aaa;
       border-radius: 10px;
@@ -87,10 +61,8 @@
       font-size: 1.5rem;
       margin-bottom: 20px;
       background-color: #ffffff;
-    }
-    body.dark-mode .flashcard {
-      background-color: #444;
-      border-color: #666;
+      /* Make it wider with some min-width or overall responsiveness */
+      width: 100%;
     }
     .reveal-section {
       display: none; /* Hidden until "Reveal Answer" is clicked */
@@ -101,16 +73,16 @@
     .toast-container {
       z-index: 9999;
     }
-    /* A small area for displaying DB size, etc. */
     .info-box {
       background-color: #e9ecef;
       border-radius: 5px;
       padding: 10px;
       margin-top: 10px;
     }
-    .dark-mode .info-box {
-      background-color: #495057;
-      color: #f8f9fa;
+    /* Progress bar container for CSV/Text uploads */
+    .upload-progress-container {
+      display: none; /* hidden by default */
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -122,12 +94,9 @@
   <div class="container">
     <h1 class="text-center" id="pageTitle">IndexedDB CSV + Flashcards</h1>
 
-    <!-- Theme Toggle & Help -->
+    <!-- Help (no dark mode button now) -->
     <div class="text-end mb-3">
-      <button class="btn btn-secondary" onclick="toggleDarkMode()" title="Toggle Dark Mode">
-        <i class="fas fa-moon"></i> Dark Mode
-      </button>
-      <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#helpModal" title="Help">
+      <button class="btn btn-info btn-lg" data-bs-toggle="modal" data-bs-target="#helpModal" title="Help">
         <i class="fas fa-question-circle"></i> Help
       </button>
     </div>
@@ -137,25 +106,39 @@
       <div class="col-md-6 mb-3">
         <label class="form-label">Upload CSV(s):</label>
         <input type="file" id="csvFileInput" multiple accept=".csv" class="form-control" />
-        <div class="form-text">Each CSV line is assumed "front,back". Duplicates are removed.</div>
-        <button class="btn btn-primary mt-2" onclick="handleFiles()">Import to IndexedDB</button>
+        <div class="form-text">Each CSV line is assumed "front,back". Duplicates are removed. Newly inserted records go into Bucket2 automatically.</div>
+        <button class="btn btn-primary btn-lg mt-2" onclick="handleFiles()">Import to IndexedDB</button>
+
+        <!-- Progress bar for CSV uploading -->
+        <div id="csvUploadProgressContainer" class="upload-progress-container">
+          <div class="progress">
+            <div id="csvUploadProgressBar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
       </div>
       <div class="col-md-6">
         <label class="form-label">Add Text Post:</label>
         <textarea id="textPostInput" class="form-control" rows="3" placeholder="Type your text, like a GitHub Issue..."></textarea>
-        <div class="form-text">We'll replace all commas with underscores and store as a single CSV row: "YYMMDD hh:mm:ss, text".</div>
-        <button class="btn btn-success mt-2" onclick="addTextPost()">Add Text to DB</button>
+        <div class="form-text">We'll replace all commas with underscores and store as: "YYMMDD hh:mm:ss, text" (then added to Bucket2).</div>
+        <button class="btn btn-success btn-lg mt-2" onclick="addTextPost()">Add Text to DB</button>
+
+        <!-- Progress bar for text upload -->
+        <div id="textUploadProgressContainer" class="upload-progress-container">
+          <div class="progress">
+            <div id="textUploadProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Download + DB Size Info -->
     <div class="row mb-4">
       <div class="col-md-6 mb-3">
-        <button class="btn btn-dark" onclick="downloadAllRecords()">Download All as CSV</button>
-        <button class="btn btn-danger ms-2" onclick="clearDatabase()">Clear IndexedDB</button>
+        <button class="btn btn-dark btn-lg" onclick="downloadAllRecords()">Download All as CSV</button>
+        <button class="btn btn-danger btn-lg ms-2" onclick="clearDatabase()">Clear IndexedDB</button>
         <div class="info-box mt-2">
           <strong>DB Size:</strong>
-          <span id="dbSizeSpan">0 bytes</span>
+          <span id="dbSizeSpan">0 kB</span>
         </div>
       </div>
       <div class="col-md-6">
@@ -165,7 +148,7 @@
 
     <hr/>
 
-    <!-- Probability Slider for Flashcard Buckets (from original snippet) -->
+    <!-- Probability Slider for Flashcard Buckets -->
     <div class="slider-container">
       <label for="probSlider" class="form-label">Adjust Probabilities (Bucket1 vs Bucket2):</label>
       <input type="range" class="form-range" id="probSlider" min="0" max="100" value="33"
@@ -177,13 +160,13 @@
     </div>
 
     <!-- Draw, Reveal, Undo Buttons -->
-    <button class="btn btn-primary btn-draw" onclick="drawCard()" title="Draw a card to review">
+    <button class="btn btn-primary btn-lg btn-draw" onclick="drawCard()" title="Draw a card to review">
       <i class="fas fa-random"></i> Draw Card
     </button>
-    <button class="btn btn-secondary btn-reveal" onclick="revealAnswer()" title="Reveal the back of the card">
+    <button class="btn btn-secondary btn-lg btn-reveal" onclick="revealAnswer()" title="Reveal the back of the card">
       <i class="fas fa-eye"></i> Reveal Answer
     </button>
-    <button class="btn btn-warning btn-draw" onclick="undoLastDraw()" title="Undo the last drawn card">
+    <button class="btn btn-warning btn-lg btn-draw" onclick="undoLastDraw()" title="Undo the last drawn card">
       <i class="fas fa-undo"></i> Undo Last Draw
     </button>
 
@@ -199,15 +182,22 @@
       </div>
     </div>
 
+    <!-- Action Buttons for the Flashcard (Copy & Open as Link) -->
+    <div id="additionalFlashcardButtons" style="text-align:center; margin-bottom:20px;">
+      <button class="btn btn-success btn-lg" onclick="copyFrontText()">Copy Front</button>
+      <button class="btn btn-success btn-lg" onclick="copyBackText()">Copy Back</button>
+      <button class="btn btn-info btn-lg" onclick="openFrontAsLink()">Open Front as Link</button>
+      <button class="btn btn-info btn-lg" onclick="openBackAsLink()">Open Back as Link</button>
+    </div>
+
     <!-- Search Buttons (Google & ChatGPT); hidden until reveal -->
     <div id="googleSearchButtons" style="display: none; text-align:center; margin-bottom:20px;">
-      <button class="btn btn-outline-primary" onclick="googleSearchFront()">Search Google (Front)</button>
-      <button class="btn btn-outline-primary" onclick="googleSearchBack()">Search Google (Back)</button>
-      <button class="btn btn-outline-success" onclick="chatGPTSearchFront()">Search ChatGPT (Front)</button>
-      <button class="btn btn-outline-success" onclick="chatGPTSearchBack()">Search ChatGPT (Back)</button>
-      <!-- Added Jisho.org search buttons -->
-      <button class="btn btn-outline-info" onclick="jishoSearchFront()">Search Jisho (Front)</button>
-      <button class="btn btn-outline-info" onclick="jishoSearchBack()">Search Jisho (Back)</button>
+      <button class="btn btn-outline-primary btn-lg" onclick="googleSearchFront()">Search Google (Front)</button>
+      <button class="btn btn-outline-primary btn-lg" onclick="googleSearchBack()">Search Google (Back)</button>
+      <button class="btn btn-outline-success btn-lg" onclick="chatGPTSearchFront()">Search ChatGPT (Front)</button>
+      <button class="btn btn-outline-success btn-lg" onclick="chatGPTSearchBack()">Search ChatGPT (Back)</button>
+      <button class="btn btn-outline-info btn-lg" onclick="jishoSearchFront()">Search Jisho (Front)</button>
+      <button class="btn btn-outline-info btn-lg" onclick="jishoSearchBack()">Search Jisho (Back)</button>
     </div>
 
     <!-- Review Gauges -->
@@ -245,15 +235,15 @@
       <ul class="list-group history-list" id="historyList" aria-label="Draw History"></ul>
     </div>
 
-    <!-- Action Buttons (Export/Import/Reset) from snippet's approach -->
+    <!-- Action Buttons (Export/Import/Reset) -->
     <div class="text-center mt-4">
-      <button class="btn btn-secondary btn-export" onclick="exportState()" title="Export current review state as JSON">
+      <button class="btn btn-secondary btn-lg btn-export" onclick="exportState()" title="Export current review state as JSON">
         <i class="fas fa-file-export"></i> Export Buckets
       </button>
-      <button class="btn btn-secondary btn-export" onclick="importState()" title="Import an existing state from a JSON file">
+      <button class="btn btn-secondary btn-lg btn-export" onclick="importState()" title="Import an existing state from a JSON file">
         <i class="fas fa-file-import"></i> Import Buckets
       </button>
-      <button class="btn btn-danger btn-export" onclick="resetBuckets()" title="Reset just the Bucket1/Bucket2 arrangement">
+      <button class="btn btn-danger btn-lg btn-export" onclick="resetBuckets()" title="Reset just the Bucket1/Bucket2 arrangement">
         <i class="fas fa-trash-alt"></i> Reset Buckets
       </button>
     </div>
@@ -276,30 +266,41 @@
           <div class="modal-body">
             <h6>Overview</h6>
             <p>
-              This page lets you upload CSV files or add text as CSV-like rows, storing them in IndexedDB.  
-              You can then download a combined CSV with duplicates removed. Each record is assigned a unique integer <code>id</code> in ascending order.
+              This page lets you upload CSV files or add text as CSV-like rows, storing them in IndexedDB.
+              Each record gets a unique integer <code>id</code>. We automatically place new records into “Bucket2” for flashcard reviewing.
             </p>
             <p>
-              The bottom portion of the page (Flashcard Reviewer) picks random entries from two “buckets” (review vs. not-reviewed)
-              according to adjustable probabilities. You can reveal answers, search them on Google/ChatGPT/Jisho, and keep track of your progress.
+              When building flashcards, each record (e.g. "front,back") is turned into <em>two</em> flashcards:
+              front→back and back→front. Their internal IDs are <code>2*id</code> and <code>2*id + 1</code> 
+              (so the same DB record yields two directions).
             </p>
             <h6>Usage Steps</h6>
             <ol>
-              <li><strong>Upload CSV(s)</strong> or <strong>Add Text Post</strong>. Data is stored in IndexedDB with duplicates removed.</li>
-              <li><strong>Download All as CSV</strong> to get a single combined CSV. Filenames are <code>indexedDb-YYMMDD_hhmm-minID-maxID.csv</code>.</li>
-              <li>The <strong>Flashcard Reviewer</strong> draws from an internal representation of the data. You can reset/ export/ import the “bucket arrangement” as needed.</li>
-              <li><strong>Clear IndexedDB</strong> if you want to remove all data entirely (be careful!).</li>
-              <li>Toggle <strong>Dark Mode</strong> from the top-right button.</li>
+              <li><strong>Upload CSV(s)</strong> or <strong>Add Text Post</strong>. 
+                  After progress completes, the file input/textbox is cleared. 
+                  All new lines go into Bucket2, so they can be drawn as flashcards.</li>
+              <li><strong>Download All as CSV</strong>: merges everything in the DB into a single CSV, removing duplicates. 
+                  Filename is <code>indexedDb-YYMMDD_hhmm-minID-maxID.csv</code>.</li>
+              <li><strong>Clear IndexedDB</strong>: <em>removes</em> all records permanently. 
+                  Be careful if you want to keep your data!</li>
+              <li>The <strong>Flashcard</strong> area uses two buckets (reviewed vs. not-reviewed). 
+                  Use <strong>Draw Card</strong>, <strong>Reveal</strong>, <strong>Undo</strong>, etc.</li>
+              <li>You can <strong>Copy</strong> or <strong>Open as Link</strong> the front/back content. 
+                  Also, the <strong>Search Google/ChatGPT/Jisho</strong> buttons appear once you reveal the card.</li>
+              <li><strong>Reset Buckets</strong>: clears your flashcard progress (but not the underlying DB!). 
+                  Useful if you want to start reviewing from scratch.</li>
             </ol>
             <h6>Notes</h6>
             <ul>
-              <li>If you add single-column text posts, they will appear as “front = entire line, back = ''” (an empty string) if drawn in forward direction. The reversed direction is “'' → entire line.”</li>
-              <li>We always remove exact duplicate lines from being stored (case-sensitive). The line includes everything up to the newline.</li>
-              <li>The “DB Size” is an approximate summation of all stored lines in IndexedDB. It’s not an exact measure of on-disk usage, but it’s close enough for reference.</li>
+              <li>DB size is displayed in kB (approximate, based on sum of text lengths / 1024).</li>
+              <li>If your CSV line is single-column or if you <em>only</em> have "front" text, 
+                  the “back” will be empty for that row. This still yields two directions: <code>front → ""</code> and <code>"" → front</code>.</li>
+              <li>The random Pantone background colors come from an optional <code>pantone-colors.json</code> file. 
+                  If missing, background defaults to white.</li>
             </ul>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
@@ -314,44 +315,41 @@
 
   <script>
     /****************************************************
-     *            INDEXEDDB + CSV UPLOAD LOGIC
+     *         INDEXEDDB + CSV/TEXT UPLOAD LOGIC
      ****************************************************/
     const DB_NAME = 'myCsvDb';
     const DB_VERSION = 1;
     const STORE_NAME = 'records';
     let db = null;
 
-    // We also keep local memory of allRecords for quick usage in the flashcard snippet
-    // (so we don’t have to re-query IDB every time).
-    let allRecords = []; // Each record = {id, text}
+    // In-memory array of all DB records -> {id, text}
+    let allRecords = [];
 
-    // For the snippet’s Bucket logic:
+    // Flashcard bucket state
     let state = {
-      b1: {}, // { recordId: frequency }
-      b2: {}, // { recordId: frequency }
+      b1: {}, // { virtualId: frequency }
+      b2: {}, // { virtualId: frequency }
       uniqueBucket1Count: 0,
       b1Prob: 0.33,
       b2Prob: 0.67,
-      drawHistory: [] // last 5 draws
+      drawHistory: []
     };
     const historyLimit = 5;
     let lastDrawnId = null;
-    let localBucketsKey = "flashcardBuckets_v1"; // localStorage key for bucket arrangement
+    let localBucketsKey = "flashcardBuckets_v1";
 
-    // On window load, open the DB and load any existing records into memory
     window.addEventListener('load', async () => {
       await openDatabase();
       await loadAllRecordsToMemory();
       updateDbSizeDisplay();
-      loadDarkMode();
+      loadBucketState(); // load existing bucket arrangement
       updateProbabilities();
       populateBucketLists();
       populateHistoryList();
       updateDisplay();
-      // get random Pantone color
       getRandomColor();
 
-      // Also attach click to all buttons to change background color, just like the snippet
+      // Make all buttons also trigger a new random color, for fun
       const allButtons = document.querySelectorAll('button');
       allButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -370,7 +368,6 @@
               keyPath: 'id',
               autoIncrement: true
             });
-            // Create an index on the text field to quickly check duplicates
             store.createIndex('textIndex', 'text', { unique: true });
           }
         };
@@ -404,51 +401,17 @@
       });
     }
 
-    // Called after adding new records or clearing DB, etc.
-    async function refreshData() {
-      await loadAllRecordsToMemory();
-      updateDbSizeDisplay();
-      // The snippet’s “b2” ideally holds everything at first usage. If you want fresh
-      // re-population, call resetBuckets() to force re-bucketing.
-    }
-
-    // Add lines to DB (removing duplicates). Returns count of inserted items.
-    async function addLinesToDb(lines) {
-      let addedCount = 0;
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const textIndex = store.index('textIndex');
-
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        // Check if this exact line already exists
-        try {
-          await new Promise((res, rej) => {
-            const checkReq = textIndex.get(line);
-            checkReq.onsuccess = (evt) => {
-              if (checkReq.result) {
-                // duplicate; skip
-                res(null);
-              } else {
-                // insert
-                const addReq = store.add({ text: line });
-                addReq.onsuccess = () => {
-                  addedCount++;
-                  res(null);
-                };
-                addReq.onerror = (e) => rej(e);
-              }
-            };
-            checkReq.onerror = (e) => rej(e);
-          });
-        } catch (e) {
-          console.error(e);
-        }
+    function updateDbSizeDisplay() {
+      // Sum text lengths, approximate in kB
+      let totalChars = 0;
+      for (const rec of allRecords) {
+        totalChars += rec.text.length;
       }
-      return addedCount;
+      const kB = (totalChars / 1024).toFixed(2);
+      document.getElementById("dbSizeSpan").textContent = `${kB} kB`;
     }
 
-    // Handle "Upload CSV(s)" button
+    // CSV upload
     async function handleFiles() {
       const fileInput = document.getElementById('csvFileInput');
       const files = fileInput.files;
@@ -456,24 +419,141 @@
         alert("No CSV file selected.");
         return;
       }
+      showCsvUploadProgress(true);
       let totalInserted = 0;
+      let totalLines = 0;
 
       for (const file of files) {
         const text = await file.text();
         const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-        // We assume each line is "some_front, some_back". We'll just store that full line as a text string.
-        // We'll remove duplicates in IDB. 
-        const inserted = await addLinesToDb(lines);
+        totalLines += lines.length;
+        // Insert lines
+        const inserted = await addLinesToDb(lines, /*useProgressBar=*/true, lines.length);
         totalInserted += inserted;
       }
 
-      showToast(`Imported! ${totalInserted} new line(s) added to DB.`);
+      // Clear the file input after success
+      fileInput.value = "";
+      showCsvUploadProgress(false);
+
+      showToast(`Imported ${totalInserted} new line(s) out of ${totalLines} total lines read.`);
       await refreshData();
-      // If you want to reset the snippet’s buckets each time you import, call resetBuckets() here. 
-      // But we'll let you do it manually.
     }
 
-    // Handle "Add Text Post" button
+    // Common function to add lines to DB, removing duplicates
+    async function addLinesToDb(lines, useProgressBar=false, totalCount=0) {
+      // We'll insert them in a single transaction. We also track progress if needed.
+      return new Promise((resolve, reject) => {
+        let addedCount = 0;
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const textIndex = store.index('textIndex');
+
+        let processedCount = 0;
+
+        function processNextLine(i) {
+          if (i >= lines.length) {
+            resolve(addedCount);
+            return;
+          }
+          const line = lines[i];
+          if (!line.trim()) {
+            processedCount++;
+            if (useProgressBar) updateCsvUploadProgress(processedCount, totalCount);
+            processNextLine(i + 1);
+            return;
+          }
+          // Check for duplicate
+          const checkReq = textIndex.get(line);
+          checkReq.onsuccess = () => {
+            if (checkReq.result) {
+              // Already exists, skip
+              processedCount++;
+              if (useProgressBar) updateCsvUploadProgress(processedCount, totalCount);
+              processNextLine(i + 1);
+            } else {
+              const addReq = store.add({ text: line });
+              addReq.onsuccess = (evt) => {
+                addedCount++;
+                processedCount++;
+                if (useProgressBar) updateCsvUploadProgress(processedCount, totalCount);
+
+                // The newly inserted record ID
+                const newId = evt.target.result;
+                // Put them in bucket2 automatically (both directions)
+                addRecordToBucket2(newId);
+
+                processNextLine(i + 1);
+              };
+              addReq.onerror = (err) => {
+                console.error(err);
+                processedCount++;
+                if (useProgressBar) updateCsvUploadProgress(processedCount, totalCount);
+                processNextLine(i + 1);
+              };
+            }
+          };
+          checkReq.onerror = (err) => {
+            console.error(err);
+            processedCount++;
+            if (useProgressBar) updateCsvUploadProgress(processedCount, totalCount);
+            processNextLine(i + 1);
+          };
+        }
+
+        tx.oncomplete = () => {
+          // Save bucket changes
+          saveBucketState();
+        };
+        tx.onerror = (err) => {
+          console.error('Transaction error:', err);
+          reject(err);
+        };
+
+        processNextLine(0);
+      });
+    }
+
+    async function refreshData() {
+      await loadAllRecordsToMemory();
+      updateDbSizeDisplay();
+    }
+
+    function addRecordToBucket2(dbId) {
+      // We'll store "2*dbId" and "2*dbId+1" with freq=1 in Bucket2 if not exist
+      const frontId = 2 * dbId;
+      const backId = 2 * dbId + 1;
+      if (!state.b1[frontId] && !state.b2[frontId]) {
+        state.b2[frontId] = 1;
+      }
+      if (!state.b1[backId] && !state.b2[backId]) {
+        state.b2[backId] = 1;
+      }
+    }
+
+    // Show/hide & update progress bar for CSV
+    function showCsvUploadProgress(show) {
+      const container = document.getElementById("csvUploadProgressContainer");
+      if (show) {
+        container.style.display = "block";
+        updateCsvUploadProgress(0, 1); // Reset
+      } else {
+        container.style.display = "none";
+      }
+    }
+    function updateCsvUploadProgress(current, total) {
+      const bar = document.getElementById("csvUploadProgressBar");
+      if (total === 0) {
+        bar.style.width = "0%";
+        bar.textContent = "0%";
+        return;
+      }
+      const pct = Math.floor((current / total) * 100);
+      bar.style.width = pct + "%";
+      bar.textContent = pct + "%";
+    }
+
+    // Text Post
     async function addTextPost() {
       const textArea = document.getElementById('textPostInput');
       let rawText = textArea.value.trim();
@@ -481,9 +561,14 @@
         alert("No text entered.");
         return;
       }
+
+      // Show text progress
+      showTextUploadProgress(true);
+      updateTextUploadProgress(0, 1);
+
       // Replace commas with underscores
       rawText = rawText.replace(/,/g, "_");
-      // Format: "YYMMDD hh:mm:ss, text"
+      // "YYMMDD hh:mm:ss, text"
       const now = new Date();
       const yy = String(now.getFullYear()).slice(-2);
       const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -491,21 +576,46 @@
       const hh = String(now.getHours()).padStart(2, '0');
       const min = String(now.getMinutes()).padStart(2, '0');
       const ss = String(now.getSeconds()).padStart(2, '0');
-
       const datePrefix = `${yy}${mm}${dd} ${hh}:${min}:${ss}`;
       const fullLine = `${datePrefix}, ${rawText}`;
 
-      const added = await addLinesToDb([fullLine]);
-      if (added > 0) {
+      const inserted = await addLinesToDb([fullLine], false, 1);
+      if (inserted > 0) {
         showToast("Text post added to DB!");
       } else {
         showToast("That exact line already exists in DB; skipping.");
       }
-      textArea.value = "";
       await refreshData();
+
+      // Clear the text field
+      textArea.value = "";
+
+      // Hide text progress
+      updateTextUploadProgress(1,1);
+      setTimeout(() => showTextUploadProgress(false), 500);
     }
 
-    // Handle "Download All as CSV" button
+    function showTextUploadProgress(show) {
+      const container = document.getElementById("textUploadProgressContainer");
+      if (show) {
+        container.style.display = "block";
+      } else {
+        container.style.display = "none";
+      }
+    }
+    function updateTextUploadProgress(current, total) {
+      const bar = document.getElementById("textUploadProgressBar");
+      if (total === 0) {
+        bar.style.width = "0%";
+        bar.textContent = "0%";
+        return;
+      }
+      const pct = Math.floor((current / total) * 100);
+      bar.style.width = pct + "%";
+      bar.textContent = pct + "%";
+    }
+
+    // Download all DB records as CSV
     async function downloadAllRecords() {
       if (allRecords.length === 0) {
         alert("No records in DB to download.");
@@ -516,16 +626,11 @@
       const minId = sorted[0].id;
       const maxId = sorted[sorted.length - 1].id;
 
-      // Build CSV text
-      // Each record's .text is a single line, containing the front/back or custom text
-      // We'll just output that line exactly. 
-      // If you need to ensure CSV escaping, do it here. For simplicity we assume no newlines.
       let csvOutput = "";
       for (const rec of sorted) {
         csvOutput += rec.text + "\n";
       }
 
-      // Generate filename
       const now = new Date();
       const yy = String(now.getFullYear()).slice(-2);
       const mo = String(now.getMonth() + 1).padStart(2, '0');
@@ -534,8 +639,6 @@
       const mi = String(now.getMinutes()).padStart(2, '0');
 
       const fileName = `indexedDb-${yy}${mo}${dd}_${hh}${mi}-${minId}-${maxId}.csv`;
-
-      // Download
       const blob = new Blob([csvOutput], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
@@ -543,7 +646,7 @@
       link.click();
     }
 
-    // Handle "Clear IndexedDB" button
+    // Clear entire DB
     async function clearDatabase() {
       if (!confirm("Are you sure you want to clear ALL data in IndexedDB? This is irreversible.")) {
         return;
@@ -554,88 +657,72 @@
       clearReq.onsuccess = async () => {
         showToast("Database cleared!");
         await refreshData();
+        // Also clear buckets, because those references won't be valid anymore
+        resetBuckets(true); // pass "fully" = true if we want a total reset
       };
       clearReq.onerror = (err) => {
         console.error(err);
       };
     }
 
-    // Display approximate total size
-    function updateDbSizeDisplay() {
-      let totalBytes = 0;
-      for (const rec of allRecords) {
-        totalBytes += rec.text.length;
-      }
-      const span = document.getElementById("dbSizeSpan");
-      span.textContent = `${totalBytes} bytes`;
-    }
-
     /****************************************************
-     *       FLASHCARD SNIPPET (ADAPTED)
-     *  We'll repurpose the previously loaded "allRecords"
-     *  as the data source. Because the original snippet
-     *  doubled each line (front->back and back->front),
-     *  we’ll do it on-the-fly in memory.
+     *                FLASHCARD LOGIC
+     *   We assign two "virtual IDs" for each DB record:
+     *    - front->back = 2 * recordId
+     *    - back->front = (2 * recordId) + 1
      ****************************************************/
-
-    // We'll generate a separate array: allCards = [ { id, front, back }, ... ].
-    // Because each DB record might have 1 or 2 columns. We'll parse them once.
-
     function buildAllCards() {
       const cards = [];
-      let cardIdCounter = 0;
       for (const r of allRecords) {
         const parts = r.text.split(",");
-        // minimal parse: we’ll take the first two elements as front/back
         const front = (parts[0] || "").trim();
         const back = (parts[1] || "").trim();
-        // create front->back
-        cards.push({ id: cardIdCounter++, origId: r.id, front, back });
-        // create back->front
-        cards.push({ id: cardIdCounter++, origId: r.id, front: back, back: front });
+        const frontId = 2 * r.id;
+        const backId = 2 * r.id + 1;
+        // front->back
+        cards.push({ id: frontId, front, back });
+        // back->front
+        cards.push({ id: backId, front: back, back: front });
       }
       return cards;
     }
 
-    // We’ll keep this in a variable for quick reference:
     let allCards = [];
+    let currentFront = "";
+    let currentBack = "";
 
     function drawCard() {
       if (allRecords.length === 0) {
         alert("No data in DB to draw from. Upload CSV or add text first.");
         return;
       }
-      // Rebuild allCards so it’s up to date
+      // Rebuild allCards
       allCards = buildAllCards();
 
-      // Hide the card's back if it was previously revealed
+      // Hide back & search buttons
       document.getElementById("backTextContainer").style.display = "none";
-      // Hide the Google/ChatGPT search buttons
       document.getElementById("googleSearchButtons").style.display = "none";
 
-      // Weighted pick: b1 vs b2
+      // Weighted pick
       const rand = cryptoRand();
       let chosenBucket = (rand < state.b1Prob) ? "b1" : "b2";
       if (getTotalFreq(state[chosenBucket]) === 0) {
-        // pick the other
         chosenBucket = (chosenBucket === "b1") ? "b2" : "b1";
       }
       if (getTotalFreq(state[chosenBucket]) === 0) {
-        alert("No cards to draw from either bucket. Possibly you haven't assigned them yet or you already used them all.");
+        alert("No cards to draw from either bucket.");
         return;
       }
 
       const selectedId = weightedPick(state[chosenBucket]);
       lastDrawnId = selectedId;
 
-      // Add or increment to b1
       if (!(selectedId in state.b1)) {
         state.b1[selectedId] = 1;
         state.uniqueBucket1Count++;
       } else {
         state.b1[selectedId]++;
       }
-      // Decrement in b2
       if (selectedId in state.b2) {
         state.b2[selectedId] = Math.max(0, state.b2[selectedId] - 1);
         if (state.b2[selectedId] === 0) {
@@ -643,12 +730,10 @@
         }
       }
 
-      // Update UI
       saveBucketState();
       updateDisplay();
       populateBucketLists();
 
-      // Display the chosen card
       const card = allCards.find(c => c.id === selectedId);
       if (!card) {
         alert("Something went wrong: card not found.");
@@ -670,7 +755,6 @@
 
     function revealAnswer() {
       document.getElementById("backTextContainer").style.display = "block";
-      // Show the Google/ChatGPT search buttons
       document.getElementById("googleSearchButtons").style.display = "block";
     }
 
@@ -693,8 +777,7 @@
       } else {
         state.b2[lastDrawnId] = 1;
       }
-
-      // Remove from drawHistory’s front
+      // Remove from history
       state.drawHistory.shift();
 
       lastDrawnId = null;
@@ -705,10 +788,31 @@
       showToast("Last draw undone.");
     }
 
-    // Searching
-    let currentFront = "";
-    let currentBack = "";
+    // Copy Buttons
+    function copyFrontText() {
+      if (!currentFront) return;
+      navigator.clipboard.writeText(currentFront)
+        .then(() => showToast("Front card copied!"))
+        .catch(() => alert("Unable to copy front text."));
+    }
+    function copyBackText() {
+      if (!currentBack) return;
+      navigator.clipboard.writeText(currentBack)
+        .then(() => showToast("Back card copied!"))
+        .catch(() => alert("Unable to copy back text."));
+    }
 
+    // Open as Link
+    function openFrontAsLink() {
+      if (!currentFront) return;
+      window.open(currentFront, "_blank");
+    }
+    function openBackAsLink() {
+      if (!currentBack) return;
+      window.open(currentBack, "_blank");
+    }
+
+    // Searching
     function googleSearchFront() {
       if (!currentFront) return;
       window.open("https://www.google.com/search?q=" + encodeURIComponent(currentFront), "_blank");
@@ -734,7 +838,6 @@
       window.open("https://jisho.org/search/" + encodeURIComponent(currentBack), "_blank");
     }
 
-    // Font size
     function adjustFontSize(element, text) {
       const length = text.length;
       if (length <= 3) {
@@ -751,7 +854,6 @@
     // History
     function addToHistory(cardId) {
       const ts = new Date().toLocaleString();
-      // find the card
       const card = allCards.find(c => c.id === cardId);
       if (!card) return;
       const entry = {
@@ -778,6 +880,7 @@
 
     // Bucket lists
     function populateBucketLists() {
+      allCards = buildAllCards();
       const b1List = document.getElementById("bucket1List");
       const b2List = document.getElementById("bucket2List");
       b1List.innerHTML = "";
@@ -785,7 +888,6 @@
 
       for (let cardId in state.b1) {
         const freq = state.b1[cardId];
-        // find the card
         const card = allCards.find(c => c.id === Number(cardId));
         if (!card) continue;
         const li = document.createElement("li");
@@ -807,12 +909,10 @@
       document.getElementById("bucket2Freq").innerText = getTotalFreq(state.b2);
     }
 
-    // Gauges & display
+    // Gauges
     function updateDisplay() {
-      // the “totalCards” means total of the doubled allCards
-      // but let's interpret “uniqueBucket1Count” vs. the entire 2x set:
       allCards = buildAllCards();
-      const totalCards = allCards.length; // 2x real records
+      const totalCards = allCards.length;
       const fraction = (state.uniqueBucket1Count / totalCards) * 100;
       const fraction2 = 100 - fraction;
 
@@ -837,7 +937,9 @@
       saveBucketState();
     }
 
-    // Weighted pick
+    function getTotalFreq(bucket) {
+      return Object.values(bucket).reduce((acc, val) => acc + val, 0);
+    }
     function weightedPick(bucketObj) {
       const entries = Object.entries(bucketObj);
       const total = entries.reduce((acc, [_, freq]) => acc + freq, 0);
@@ -850,9 +952,6 @@
         }
       }
       return Number(entries[entries.length - 1][0]);
-    }
-    function getTotalFreq(bucket) {
-      return Object.values(bucket).reduce((acc, val) => acc + val, 0);
     }
     function cryptoRand() {
       const arr = new Uint32Array(1);
@@ -900,8 +999,8 @@
       };
       fileInput.click();
     }
-    function resetBuckets() {
-      if (!confirm("Reset bucket arrangement? This won’t erase your data in IndexedDB, just the review progress.")) return;
+    function resetBuckets(fully = false) {
+      if (!fully && !confirm("Reset bucket arrangement? (This will not delete your IndexedDB data, only the 'review progress')")) return;
       state = {
         b1: {},
         b2: {},
@@ -910,16 +1009,19 @@
         b2Prob: state.b2Prob,
         drawHistory: []
       };
-      // By default, place all card IDs into b2 with freq=1:
+      // Rebuild allCards from allRecords
       allCards = buildAllCards();
-      for (let c of allCards) {
-        state.b2[c.id] = 1;
+      // Put everything in b2 with freq=1
+      for (let card of allCards) {
+        state.b2[card.id] = 1;
       }
       saveBucketState();
       updateDisplay();
       populateBucketLists();
       populateHistoryList();
-      showToast("Buckets reset. All items are back in Bucket2.");
+      if (!fully) {
+        showToast("Buckets reset. All items are back in Bucket2.");
+      }
     }
 
     function saveBucketState() {
@@ -936,11 +1038,9 @@
         }
       }
     }
-    // Call load once at script load
-    loadBucketState();
 
     /****************************************************
-     *                UTIL / MISC
+     *                MISC / UI HELPERS
      ****************************************************/
     function showToast(msg) {
       const toastContainer = document.getElementById("toastContainer");
@@ -966,19 +1066,6 @@
       });
     }
 
-    function toggleDarkMode() {
-      document.body.classList.toggle("dark-mode");
-      localStorage.setItem("flashcardsDarkMode", document.body.classList.contains("dark-mode"));
-    }
-
-    function loadDarkMode() {
-      const isDark = localStorage.getItem("flashcardsDarkMode") === "true";
-      if (isDark) {
-        document.body.classList.add("dark-mode");
-      }
-    }
-
-    // random Pantone color usage
     async function getRandomColor() {
       try {
         const response = await fetch("pantone-colors.json");
@@ -998,7 +1085,6 @@
           colorDisplay.textContent = `${names[randomIndex]} (${values[randomIndex]})`;
         }
       } catch (error) {
-        // fallback
         document.body.style.backgroundColor = "#ffffff";
       }
     }
