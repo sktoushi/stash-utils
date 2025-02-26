@@ -90,14 +90,6 @@
       display: none;
       margin-bottom: 20px;
     }
-    /* Reading Mode Modal specific */
-    #readingModeBody {
-      background-color: #A1A1A1;
-      color: #000000;
-      padding: 20px;
-      overflow-y: auto;
-      max-height: 70vh;
-    }
   </style>
 </head>
 <body>
@@ -173,8 +165,6 @@
       <button class="btn btn-success btn-lg" onclick="copyBackText()">Copy Back</button>
       <button class="btn btn-info btn-lg" onclick="openFrontAsLink()">Open Front as Link</button>
       <button class="btn btn-info btn-lg" onclick="openBackAsLink()">Open Back as Link</button>
-      <!-- NEW: Activate Reading Mode button -->
-      <button class="btn btn-warning btn-lg" onclick="activateReadingMode()">Activate Reading Mode</button>
     </div>
 
     <!-- Search Buttons (Google & ChatGPT); hidden until reveal -->
@@ -274,21 +264,6 @@
       </div>
     </div>
 
-    <!-- Reading Mode Modal -->
-    <div class="modal fade" id="readingModeModal" tabindex="-1" aria-labelledby="readingModeModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="readingModeModalLabel">Reading Mode</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body" id="readingModeBody">
-            <!-- We'll dynamically fill in the card text for reading here -->
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Help Modal -->
     <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
@@ -316,12 +291,11 @@
               <li><strong>Clear IndexedDB</strong> or <strong>Reset Buckets</strong> as needed.</li>
               <li>Flashcards: Draw, Reveal, Undo. You can also Copy or Open front/back as a link, or search via Google/ChatGPT/Jisho after revealing.</li>
               <li>After drawing a card, you can add more attributes to that underlying record. New attribute permutations will appear in Bucket2.</li>
-              <li>Use the "Activate Reading Mode" button to see a simplified reading view for the current card's content.</li>
             </ol>
             <h6>Notes</h6>
             <ul>
               <li>DB size is displayed in kB (approximate, based on sum of text lengths / 1024).</li>
-              <li>If your CSV line has fewer than 2 attributes, we still generate permutations for whatever is there. E.g. a single attribute won't produce a front/back pair unless there's more text.</li>
+              <li>If your CSV line has fewer than 2 attributes, we still generate permutations for whatever is there. E.g. a single attribute has no pairs, so it won't appear as a flashcard.</li>
               <li>The random Pantone background colors come from an optional <code>pantone-colors.json</code> file. 
                   If missing, background defaults to white.</li>
             </ul>
@@ -390,12 +364,9 @@
     };
     const historyLimit = 5;
     let lastDrawnId = null;
-    let currentlyDrawnRecordId = null;  // The underlying record ID for the card
 
-    // We'll store the current front/back so we can show them in reading mode
-    let allCards = [];
-    let currentFront = "";
-    let currentBack = "";
+    // We'll keep track if a card is currently drawn (so we can show/hide the attribute section).
+    let currentlyDrawnRecordId = null;  // The underlying record ID for the card
 
     /****************************************************
      *  On window load, open DB, possibly fetch the target CSV
@@ -523,6 +494,8 @@
 
     /****************************************************
      * autoPopulateBucketIfEmpty
+     * If the DB has records but our b1/b2 are empty, we
+     * automatically put all possible card IDs into b2.
      ****************************************************/
     function autoPopulateBucketIfEmpty() {
       const totalBucketFreq = getTotalFreq(state.b1) + getTotalFreq(state.b2);
@@ -536,6 +509,7 @@
     function populateAllInBucket2() {
       const cards = buildAllCards();
       for (const c of cards) {
+        // If that card ID not in b1 or b2, put it in b2
         if (state.b1[c.id] == null && state.b2[c.id] == null) {
           state.b2[c.id] = 1;
         }
@@ -576,6 +550,7 @@
 
     /****************************************************
      * addLinesToDb
+     *   lines can have multiple attributes: front, back, maybe more
      ****************************************************/
     async function addLinesToDb(lines, useProgressBar=false, totalCount=0) {
       return new Promise((resolve, reject) => {
@@ -598,7 +573,7 @@
             processNextLine(i + 1);
             return;
           }
-          // Check for duplicate
+          // Check for duplicate (exact text match)
           const checkReq = textIndex.get(line);
           checkReq.onsuccess = () => {
             if (checkReq.result) {
@@ -649,6 +624,11 @@
       });
     }
 
+    /****************************************************
+     * addRecordPermutationsToBucket2
+     *   Given a newly inserted record, generate all new card IDs
+     *   for its permutations, add them to b2 if not already present
+     ****************************************************/
     function addRecordPermutationsToBucket2(recordId, recordText) {
       const perms = generatePermutationsForRecord(recordId, recordText);
       for (let p of perms) {
@@ -658,12 +638,20 @@
       }
     }
 
+    /****************************************************
+     * refreshData
+     ****************************************************/
     async function refreshData() {
       await loadAllRecordsToMemory();
       updateDbSizeDisplay();
+      // In case the user just inserted new data but had no bucket arrangement,
+      // we ensure new data permutations are in b2. If buckets are empty, auto-populate:
       autoPopulateBucketIfEmpty();
     }
 
+    /****************************************************
+     * Show/hide & update progress bars (CSV only)
+     ****************************************************/
     function showCsvUploadProgress(show) {
       const container = document.getElementById("csvUploadProgressContainer");
       if (show) {
@@ -721,6 +709,9 @@
       textArea.value = "";
     }
 
+    /****************************************************
+     * Clear Text Post
+     ****************************************************/
     function clearTextPost() {
       const textArea = document.getElementById('textPostInput');
       textArea.value = "";
@@ -771,8 +762,8 @@
       clearReq.onsuccess = async () => {
         showToast("Database cleared!");
         await refreshData();
-        // Also clear buckets
-        resetBuckets(true);
+        // Also clear buckets, because those references won't be valid anymore
+        resetBuckets(true); // pass "fully" = true for total reset
       };
       clearReq.onerror = (err) => {
         console.error(err);
@@ -781,10 +772,18 @@
 
     /****************************************************
      * FLASHCARD LOGIC
+     * - We create permutations for each record's text
      ****************************************************/
+
+    /**
+     * Generates an array of { id, front, back } for a given record's text.
+     * We parse the text into multiple attributes, then each distinct pair (A,B) of attributes
+     * becomes one "card" with front=A and back=B. We assign a stable ID using:
+     *    cardId = (recordId << 16) + pairIndex
+     */
     function generatePermutationsForRecord(recordId, recordText) {
       let attributes = recordText.split(",").map(a => a.trim()).filter(a => a.length > 0);
-      // produce permutations of length=2
+      // Produce all permutations of length=2
       const results = [];
       let pairIndex = 0;
       for (let i = 0; i < attributes.length; i++) {
@@ -801,6 +800,9 @@
       return results;
     }
 
+    /**
+     * Rebuild a big array of all "cards" from allRecords
+     */
     function buildAllCards() {
       const allCardsOut = [];
       for (const r of allRecords) {
@@ -810,20 +812,33 @@
       return allCardsOut;
     }
 
+    /**
+     * Given a cardId, extract the recordId by shifting right 16 bits.
+     */
     function getRecordIdFromCardId(cardId) {
       return (cardId >>> 16);
     }
+
+    /**
+     * Draw a card
+     */
+    let allCards = [];
+    let currentFront = "";
+    let currentBack = "";
 
     function drawCard() {
       if (allRecords.length === 0) {
         alert("No data in DB to draw from. Upload CSV or add text first.");
         return;
       }
+      // Rebuild allCards
       allCards = buildAllCards();
 
+      // Hide back & search buttons
       document.getElementById("backTextContainer").style.display = "none";
       document.getElementById("googleSearchButtons").style.display = "none";
 
+      // Weighted pick
       const rand = cryptoRand();
       let chosenBucket = (rand < state.b1Prob) ? "b1" : "b2";
       if (getTotalFreq(state[chosenBucket]) === 0) {
@@ -836,8 +851,11 @@
 
       const selectedId = weightedPick(state[chosenBucket]);
       lastDrawnId = selectedId;
+
+      // Figure out which record this card belongs to
       currentlyDrawnRecordId = getRecordIdFromCardId(selectedId);
 
+      // Move from bucket2 => bucket1, or increment bucket1 freq, etc.
       if (!(selectedId in state.b1)) {
         state.b1[selectedId] = 1;
         state.uniqueBucket1Count++;
@@ -855,6 +873,7 @@
       updateDisplay();
       populateBucketLists();
 
+      // Find the card
       const card = allCards.find(c => c.id === selectedId);
       if (!card) {
         alert("Something went wrong: card not found.");
@@ -873,6 +892,7 @@
       addToHistory(selectedId);
       populateHistoryList();
 
+      // Show the attribute section (since a card is drawn)
       document.getElementById("attributeSection").style.display = "block";
     }
 
@@ -900,10 +920,12 @@
       } else {
         state.b2[lastDrawnId] = 1;
       }
+      // Remove from history
       state.drawHistory.shift();
 
       lastDrawnId = null;
       currentlyDrawnRecordId = null;
+      // Hide the attribute section if no card is currently displayed
       document.getElementById("attributeSection").style.display = "none";
 
       saveBucketState();
@@ -914,7 +936,7 @@
     }
 
     /****************************************************
-     * Add Attribute
+     * Add Attribute to the currently drawn card's record
      ****************************************************/
     async function addAttributeToCard() {
       if (lastDrawnId == null || currentlyDrawnRecordId == null) {
@@ -927,35 +949,50 @@
         alert("No attribute text entered.");
         return;
       }
-      // sanitize
+      // sanitize: turn all commas, single quotes, double quotes into underscores
       rawText = rawText.replace(/,/g, "_").replace(/'/g, "_").replace(/"/g, "_");
 
+      // Now we append this attribute to the underlying record's text
+      // 1) find the record from allRecords
       const rec = allRecords.find(r => r.id === currentlyDrawnRecordId);
       if (!rec) {
         alert("Failed to find the underlying record for this card!");
         return;
       }
+
+      // 2) update the text in memory
+      //    if rec.text is "front,back", we do "front,back,newAttribute"
+      //    if rec.text is "front,back,xyz", we do "front,back,xyz,newAttribute"
       let updatedText = rec.text.trim();
       if (updatedText.endsWith(",")) {
-        updatedText += rawText;
+        updatedText += rawText; // just append
       } else {
         updatedText += "," + rawText;
       }
 
+      // 3) update the DB for that record
       await updateRecordInDb(rec.id, updatedText);
-      await refreshData();
 
+      // 4) re-load and update everything
+      await refreshData();
+      // Because the underlying record changed, the old permutations are invalid. We remove them from b1/b2, then re-add the new permutations.
       rebuildBucketsForRecord(rec.id, updatedText);
 
+      // Save, update display
       saveBucketState();
       updateDisplay();
       populateBucketLists();
       populateHistoryList();
 
       showToast("New attribute added successfully!");
+      // 5) clear the text area
       textArea.value = "";
     }
 
+    /**
+     * updateRecordInDb(recordId, newText)
+     *  We do a transaction to update the store's 'text' for that record.
+     */
     function updateRecordInDb(recordId, newText) {
       return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -967,7 +1004,7 @@
             reject("Record not found in DB");
             return;
           }
-          data.text = newText;
+          data.text = newText; // update text
           const putReq = store.put(data);
           putReq.onsuccess = () => {
             resolve(true);
@@ -978,7 +1015,15 @@
       });
     }
 
+    /**
+     * rebuildBucketsForRecord:
+     *   Because the record's text changed, all old permutations for that record are now invalid.
+     *   We remove them from b1/b2, then re-generate permutations and add them to b2.
+     */
     function rebuildBucketsForRecord(recordId, newText) {
+      // 1) find all old permutations in b1/b2
+      //    any cardId that belongs to this record: (cardId >> 16) == recordId
+      //    remove them from b1/b2, adjust uniqueBucket1Count if needed
       const oldCardIds = [];
       for (const cid of Object.keys(state.b1)) {
         const cNum = parseInt(cid, 10);
@@ -994,10 +1039,15 @@
           oldCardIds.push(cNum);
         }
       }
+      // remove duplicates
       const uniqueOldCardIds = [...new Set(oldCardIds)];
 
+      // remove from b1/b2
       for (const ocid of uniqueOldCardIds) {
         if (ocid in state.b1) {
+          // decrease uniqueBucket1Count by however many times it was counted
+          // We only count each card once in the unique count, not by frequency. So if it was in b1 at all, we reduce the count by 1.
+          // but if it had freq>0, we do it once. We'll do a simple approach: if b1 has freq>0, we reduce uniqueBucket1Count by 1
           if (state.b1[ocid] > 0) {
             state.uniqueBucket1Count--;
           }
@@ -1007,11 +1057,13 @@
           delete state.b2[ocid];
         }
       }
+
+      // 2) generate new permutations, add them to b2
       addRecordPermutationsToBucket2(recordId, newText);
     }
 
     /****************************************************
-     * Probability, Weighted picks
+     * Probability, Weighted picks, etc.
      ****************************************************/
     function getTotalFreq(bucket) {
       return Object.values(bucket).reduce((acc, val) => acc + val, 0);
@@ -1096,7 +1148,9 @@
         b2Prob: state.b2Prob,
         drawHistory: []
       };
+      // Rebuild allCards from allRecords
       allCards = buildAllCards();
+      // Put everything in b2 with freq=1
       for (let card of allCards) {
         state.b2[card.id] = 1;
       }
@@ -1105,6 +1159,7 @@
       populateBucketLists();
       populateHistoryList();
 
+      // Hide the attribute section
       document.getElementById("attributeSection").style.display = "none";
 
       if (!fully) {
@@ -1149,32 +1204,6 @@
     function openBackAsLink() {
       if (!currentBack) return;
       window.open(currentBack, "_blank");
-    }
-
-    /****************************************************
-     * Reading Mode
-     ****************************************************/
-    function activateReadingMode() {
-      // We'll show a modal that has the front and back text
-      const readingBody = document.getElementById("readingModeBody");
-      if (!currentFront && !currentBack) {
-        readingBody.innerHTML = "<p>No card content available.</p>";
-      } else {
-        let content = `<h4>Front:</h4><p>${escapeHtml(currentFront)}</p><hr/><h4>Back:</h4><p>${escapeHtml(currentBack)}</p>`;
-        readingBody.innerHTML = content;
-      }
-      let readingModal = new bootstrap.Modal(document.getElementById("readingModeModal"), {});
-      readingModal.show();
-    }
-
-    function escapeHtml(str) {
-      if (!str) return "";
-      return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
     }
 
     /****************************************************
@@ -1260,6 +1289,7 @@
       b1List.innerHTML = "";
       b2List.innerHTML = "";
 
+      // For a stable listing, let's build a map from cardId -> {front, back}
       const cardMap = {};
       for (let c of allCards) {
         cardMap[c.id] = c;
@@ -1295,6 +1325,7 @@
       allCards = buildAllCards();
       const totalCards = allCards.length;
       if (totalCards === 0) {
+        // no flashcards possible
         document.getElementById("review1Gauge").value = 0;
         document.getElementById("review1Text").innerText = "0%";
         document.getElementById("review2Gauge").value = 100;
