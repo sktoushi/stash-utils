@@ -48,6 +48,7 @@
       max-height: 200px;
       overflow-y: auto;
     }
+    /* Change flashcard background and text color */
     .flashcard {
       border: 2px dashed #aaa;
       border-radius: 10px;
@@ -60,8 +61,8 @@
       justify-content: center;
       font-size: 1.5rem;
       margin-bottom: 20px;
-      background-color: #ffffff;
-      /* Make it wider with some min-width or overall responsiveness */
+      background-color: #424242;
+      color: #ffffff;
       width: 100%;
     }
     .reveal-section {
@@ -79,9 +80,9 @@
       padding: 10px;
       margin-top: 10px;
     }
-    /* Progress bar container for CSV/Text uploads */
+    /* Progress bar container for CSV/Text uploads (CSV only retained, text removed) */
     .upload-progress-container {
-      display: none; /* hidden by default */
+      display: none; /* hidden by default until CSV upload triggers it */
       margin-bottom: 10px;
     }
   </style>
@@ -101,59 +102,18 @@
       </button>
     </div>
 
-    <!-- Upload + Text Input Row -->
-    <div class="row mb-4">
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Upload CSV(s):</label>
-        <input type="file" id="csvFileInput" multiple accept=".csv" class="form-control" />
-        <div class="form-text">
-          Each CSV line is assumed "front,back". Duplicates are removed.
-          Newly inserted records go into Bucket2 automatically.
-        </div>
-        <button class="btn btn-primary btn-lg mt-2" onclick="handleFiles()">Import to IndexedDB</button>
-
-        <!-- Progress bar for CSV uploading -->
-        <div id="csvUploadProgressContainer" class="upload-progress-container">
-          <div class="progress">
-            <div id="csvUploadProgressBar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
-          </div>
-        </div>
+    <!-- (1) Text Input Area at the Top -->
+    <div class="mb-4">
+      <label class="form-label">Add Text Post:</label>
+      <textarea id="textPostInput" class="form-control" rows="3" placeholder="Type your text, like a GitHub Issue..."></textarea>
+      <div class="form-text">
+        We'll replace all commas with underscores and store as: "YYMMDD hh:mm:ss, text" (then added to Bucket2).
       </div>
-      <div class="col-md-6">
-        <label class="form-label">Add Text Post:</label>
-        <textarea id="textPostInput" class="form-control" rows="3" placeholder="Type your text, like a GitHub Issue..."></textarea>
-        <div class="form-text">
-          We'll replace all commas with underscores and store as: "YYMMDD hh:mm:ss, text" (then added to Bucket2).
-        </div>
-        <button class="btn btn-success btn-lg mt-2" onclick="addTextPost()">Add Text to DB</button>
-
-        <!-- Progress bar for text upload -->
-        <div id="textUploadProgressContainer" class="upload-progress-container">
-          <div class="progress">
-            <div id="textUploadProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%">0%</div>
-          </div>
-        </div>
-      </div>
+      <button class="btn btn-success btn-lg mt-2" onclick="addTextPost()">Add Text to DB</button>
+      <button class="btn btn-secondary btn-lg mt-2 ms-2" onclick="clearTextPost()">Clear Text</button>
     </div>
 
-    <!-- Download + DB Size Info -->
-    <div class="row mb-4">
-      <div class="col-md-6 mb-3">
-        <button class="btn btn-dark btn-lg" onclick="downloadAllRecords()">Download All as CSV</button>
-        <button class="btn btn-danger btn-lg ms-2" onclick="clearDatabase()">Clear IndexedDB</button>
-        <div class="info-box mt-2">
-          <strong>DB Size:</strong>
-          <span id="dbSizeSpan">0 kB</span>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <!-- Just a placeholder area if needed -->
-      </div>
-    </div>
-
-    <hr/>
-
-    <!-- Probability Slider for Flashcard Buckets -->
+    <!-- (2) Probability Slider & Flashcard Region -->
     <div class="slider-container">
       <label for="probSlider" class="form-label">Adjust Probabilities (Bucket1 vs Bucket2):</label>
       <input type="range" class="form-range" id="probSlider" min="0" max="100" value="33"
@@ -205,7 +165,39 @@
       <button class="btn btn-outline-info btn-lg" onclick="jishoSearchBack()">Search Jisho (Back)</button>
     </div>
 
-    <!-- Review Gauges -->
+    <hr />
+
+    <!-- (3) Upload CSVs, DB Info, Download, Clear DB -->
+    <div class="row mb-4">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Upload CSV(s):</label>
+        <input type="file" id="csvFileInput" multiple accept=".csv" class="form-control" />
+        <div class="form-text">
+          Each CSV line is assumed "front,back". Duplicates are removed.
+          Newly inserted records go into Bucket2 automatically.
+        </div>
+        <button class="btn btn-primary btn-lg mt-2" onclick="handleFiles()">Import to IndexedDB</button>
+
+        <!-- Progress bar for CSV uploading -->
+        <div id="csvUploadProgressContainer" class="upload-progress-container">
+          <div class="progress">
+            <div id="csvUploadProgressBar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <button class="btn btn-dark btn-lg mt-4" onclick="downloadAllRecords()">Download All as CSV</button>
+        <button class="btn btn-danger btn-lg mt-4 ms-2" onclick="clearDatabase()">Clear IndexedDB</button>
+        <div class="info-box mt-3">
+          <strong>DB Size:</strong>
+          <span id="dbSizeSpan">0 kB</span>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+
+    <!-- (4) Review Gauges, Buckets, History, Export/Import/Reset -->
     <div class="gauge-container">
       <label for="review1Gauge" class="form-label">Review1 (Unique Bucket1 Items / Total Cards):</label>
       <progress id="review1Gauge" class="form-range w-100" value="0" max="100" aria-label="Review1 Gauge"></progress>
@@ -527,7 +519,7 @@
         const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         totalLines += lines.length;
         // Insert lines
-        const inserted = await addLinesToDb(lines, /*useProgressBar=*/true, lines.length);
+        const inserted = await addLinesToDb(lines, true, lines.length);
         totalInserted += inserted;
       }
 
@@ -637,39 +629,19 @@
     }
 
     /****************************************************
-     * Show/hide & update progress bars
+     * Show/hide & update progress bars (CSV only)
      ****************************************************/
     function showCsvUploadProgress(show) {
       const container = document.getElementById("csvUploadProgressContainer");
       if (show) {
         container.style.display = "block";
-        updateCsvUploadProgress(0, 1); // Reset
+        updateCsvUploadProgress(0, 1); // reset
       } else {
         container.style.display = "none";
       }
     }
     function updateCsvUploadProgress(current, total) {
       const bar = document.getElementById("csvUploadProgressBar");
-      if (total === 0) {
-        bar.style.width = "0%";
-        bar.textContent = "0%";
-        return;
-      }
-      const pct = Math.floor((current / total) * 100);
-      bar.style.width = pct + "%";
-      bar.textContent = pct + "%";
-    }
-
-    function showTextUploadProgress(show) {
-      const container = document.getElementById("textUploadProgressContainer");
-      if (show) {
-        container.style.display = "block";
-      } else {
-        container.style.display = "none";
-      }
-    }
-    function updateTextUploadProgress(current, total) {
-      const bar = document.getElementById("textUploadProgressBar");
       if (total === 0) {
         bar.style.width = "0%";
         bar.textContent = "0%";
@@ -690,10 +662,6 @@
         alert("No text entered.");
         return;
       }
-
-      // Show text progress
-      showTextUploadProgress(true);
-      updateTextUploadProgress(0, 1);
 
       // Replace commas with underscores
       rawText = rawText.replace(/,/g, "_");
@@ -718,10 +686,14 @@
 
       // Clear the text field
       textArea.value = "";
+    }
 
-      // Hide text progress
-      updateTextUploadProgress(1,1);
-      setTimeout(() => showTextUploadProgress(false), 500);
+    /****************************************************
+     * Clear Text Post
+     ****************************************************/
+    function clearTextPost() {
+      const textArea = document.getElementById('textPostInput');
+      textArea.value = "";
     }
 
     /****************************************************
@@ -770,7 +742,7 @@
         showToast("Database cleared!");
         await refreshData();
         // Also clear buckets, because those references won't be valid anymore
-        resetBuckets(true); // pass "fully" = true if we want a total reset
+        resetBuckets(true); // pass "fully" = true for total reset
       };
       clearReq.onerror = (err) => {
         console.error(err);
