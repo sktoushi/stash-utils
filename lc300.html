@@ -145,6 +145,8 @@
       <label class="form-label">New Attribute Textarea:</label>
       <textarea id="newAttributeTextarea" class="form-control" rows="2" placeholder="Add a new attribute for this card..."></textarea>
       <button class="btn btn-info btn-lg mt-2" onclick="addAttributeToCard()">Add Attribute</button>
+      <!-- NEW DELETE RECORD BUTTON -->
+      <button class="btn btn-danger btn-lg mt-2" onclick="deleteCurrentRecord()">Delete Record</button>
     </div>
 
     <!-- Flashcard Display -->
@@ -277,14 +279,14 @@
             <p>
               This page can optionally read a <code>?target=someFile.csv</code> param to pick a specific CSV from your GitHub Pages folder.
               If found, it will store everything in a separate DB for that file so it doesn’t mix with others.
-              If that DB is empty, we’ll automatically fetch the CSV. 
+              If that DB is empty, we’ll automatically fetch the CSV.
             </p>
             <p>
-              Each record in the DB can contain multiple attributes (e.g. "front,back,attr3,..."). We treat every pair of distinct attributes as a possible flashcard direction. 
+              Each record in the DB can contain multiple attributes (e.g. "front,back,attr3,..."). We treat every pair of distinct attributes as a possible flashcard direction.
             </p>
             <h6>Usage Steps</h6>
             <ol>
-              <li>If you provide <code>?target=someFile.csv</code>, the script tries to open or create a <em>separate</em> IndexedDB named for that file. 
+              <li>If you provide <code>?target=someFile.csv</code>, the script tries to open or create a <em>separate</em> IndexedDB named for that file.
                   Then if that DB is empty, it automatically fetches <code>someFile.csv</code> from the server and loads it.</li>
               <li><strong>Upload CSV(s)</strong> or <strong>Add Text Post</strong> to add more data. All new lines go into Bucket2, so they can be drawn as flashcards.</li>
               <li><strong>Download All as CSV</strong>: merges everything in the DB into one CSV, removing duplicates.</li>
@@ -296,7 +298,7 @@
             <ul>
               <li>DB size is displayed in kB (approximate, based on sum of text lengths / 1024).</li>
               <li>If your CSV line has fewer than 2 attributes, we still generate permutations for whatever is there. E.g. a single attribute has no pairs, so it won't appear as a flashcard.</li>
-              <li>The random Pantone background colors come from an optional <code>pantone-colors.json</code> file. 
+              <li>The random Pantone background colors come from an optional <code>pantone-colors.json</code> file.
                   If missing, background defaults to white.</li>
             </ul>
           </div>
@@ -961,8 +963,6 @@
       }
 
       // 2) update the text in memory
-      //    if rec.text is "front,back", we do "front,back,newAttribute"
-      //    if rec.text is "front,back,xyz", we do "front,back,xyz,newAttribute"
       let updatedText = rec.text.trim();
       if (updatedText.endsWith(",")) {
         updatedText += rawText; // just append
@@ -989,10 +989,6 @@
       textArea.value = "";
     }
 
-    /**
-     * updateRecordInDb(recordId, newText)
-     *  We do a transaction to update the store's 'text' for that record.
-     */
     function updateRecordInDb(recordId, newText) {
       return new Promise((resolve, reject) => {
         const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -1015,15 +1011,8 @@
       });
     }
 
-    /**
-     * rebuildBucketsForRecord:
-     *   Because the record's text changed, all old permutations for that record are now invalid.
-     *   We remove them from b1/b2, then re-generate permutations and add them to b2.
-     */
     function rebuildBucketsForRecord(recordId, newText) {
       // 1) find all old permutations in b1/b2
-      //    any cardId that belongs to this record: (cardId >> 16) == recordId
-      //    remove them from b1/b2, adjust uniqueBucket1Count if needed
       const oldCardIds = [];
       for (const cid of Object.keys(state.b1)) {
         const cNum = parseInt(cid, 10);
@@ -1039,15 +1028,12 @@
           oldCardIds.push(cNum);
         }
       }
-      // remove duplicates
       const uniqueOldCardIds = [...new Set(oldCardIds)];
 
       // remove from b1/b2
       for (const ocid of uniqueOldCardIds) {
         if (ocid in state.b1) {
-          // decrease uniqueBucket1Count by however many times it was counted
-          // We only count each card once in the unique count, not by frequency. So if it was in b1 at all, we reduce the count by 1.
-          // but if it had freq>0, we do it once. We'll do a simple approach: if b1 has freq>0, we reduce uniqueBucket1Count by 1
+          // if freq>0, we reduce uniqueBucket1Count by 1
           if (state.b1[ocid] > 0) {
             state.uniqueBucket1Count--;
           }
@@ -1060,6 +1046,97 @@
 
       // 2) generate new permutations, add them to b2
       addRecordPermutationsToBucket2(recordId, newText);
+    }
+
+    /****************************************************
+     * DELETE CURRENT RECORD (NEW)
+     *  - Removes from DB
+     *  - Removes permutations from b1/b2
+     ****************************************************/
+    async function deleteCurrentRecord() {
+      if (!currentlyDrawnRecordId) {
+        alert("No card is currently drawn!");
+        return;
+      }
+      if (!confirm("Are you sure you want to delete this record from the DB? This is irreversible.")) {
+        return;
+      }
+
+      const recordId = currentlyDrawnRecordId;
+      // 1) Remove from DB
+      await removeRecordFromDb(recordId);
+
+      // 2) Remove permutations from b1/b2
+      removePermutationsForRecord(recordId);
+
+      // 3) Refresh data
+      await refreshData();
+
+      // Hide attribute section
+      document.getElementById("attributeSection").style.display = "none";
+
+      // Reset the flashcard display
+      lastDrawnId = null;
+      currentlyDrawnRecordId = null;
+      document.getElementById("frontText").innerText = "";
+      document.getElementById("backText").innerText = "";
+      document.getElementById("backTextContainer").style.display = "none";
+      document.getElementById("googleSearchButtons").style.display = "none";
+
+      // Save & update
+      saveBucketState();
+      updateDisplay();
+      populateBucketLists();
+      populateHistoryList();
+
+      showToast("Record deleted successfully.");
+    }
+
+    function removeRecordFromDb(recordId) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        const deleteReq = store.delete(recordId);
+        deleteReq.onsuccess = () => {
+          resolve(true);
+        };
+        deleteReq.onerror = (err) => {
+          reject(err);
+        };
+      });
+    }
+
+    function removePermutationsForRecord(recordId) {
+      // find all permutations (card IDs) for that record in b1,b2
+      const oldCardIds = [];
+      for (const cid of Object.keys(state.b1)) {
+        const cNum = parseInt(cid, 10);
+        const rId = getRecordIdFromCardId(cNum);
+        if (rId === recordId) {
+          oldCardIds.push(cNum);
+        }
+      }
+      for (const cid of Object.keys(state.b2)) {
+        const cNum = parseInt(cid, 10);
+        const rId = getRecordIdFromCardId(cNum);
+        if (rId === recordId) {
+          oldCardIds.push(cNum);
+        }
+      }
+      const uniqueOldCardIds = [...new Set(oldCardIds)];
+
+      for (const ocid of uniqueOldCardIds) {
+        if (ocid in state.b1) {
+          // if freq>0, we reduce uniqueBucket1Count by 1 (once per card)
+          if (state.b1[ocid] > 0) {
+            state.uniqueBucket1Count--;
+          }
+          delete state.b1[ocid];
+        }
+        if (ocid in state.b2) {
+          delete state.b2[ocid];
+        }
+      }
     }
 
     /****************************************************
