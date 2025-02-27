@@ -822,6 +822,46 @@
     }
 
     /**
+     * Check if string is a valid URL
+     */
+    function isValidURL(str) {
+      try {
+        new URL(str);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    /**
+     * Check if string matches a "YYMMDD hh:mm:ss" style
+     * We'll be a bit lenient: exactly 6 digits, space, then hh:mm:ss (each 2 digits).
+     */
+    function isDateTimeFormat(str) {
+      // e.g. "230227 12:34:56"
+      // pattern: ^\d{6} \d{2}:\d{2}:\d{2}$
+      const regex = /^\d{6} \d{2}:\d{2}:\d{2}$/;
+      return regex.test(str);
+    }
+
+    /**
+     * If exactly one side is date/time format and the other is URL, open the URL side
+     */
+    function autoOpenUrlIfDateOnOtherSide(front, back) {
+      const frontIsDate = isDateTimeFormat(front);
+      const backIsDate  = isDateTimeFormat(back);
+      const frontIsUrl  = isValidURL(front);
+      const backIsUrl   = isValidURL(back);
+
+      // If exactly one side is date and the other is URL, open that URL automatically
+      if (frontIsDate && backIsUrl) {
+        openBackAsLink();
+      } else if (backIsDate && frontIsUrl) {
+        openFrontAsLink();
+      }
+    }
+
+    /**
      * Draw a card
      */
     let allCards = [];
@@ -896,11 +936,23 @@
 
       // Show the attribute section (since a card is drawn)
       document.getElementById("attributeSection").style.display = "block";
+
+      // If front is valid URL, open it
+      if (isValidURL(currentFront)) {
+        openFrontAsLink();
+      }
+
+      // If exactly one side is date/time format & the other is URL, open the URL side
+      autoOpenUrlIfDateOnOtherSide(currentFront, currentBack);
     }
 
     function revealAnswer() {
       document.getElementById("backTextContainer").style.display = "block";
       document.getElementById("googleSearchButtons").style.display = "block";
+
+      // Also apply the new logic on "Reveal Answer" press:
+      // If exactly one side is date/time format & the other is URL, open the URL side
+      autoOpenUrlIfDateOnOtherSide(currentFront, currentBack);
     }
 
     function undoLastDraw() {
