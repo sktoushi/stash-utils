@@ -880,6 +880,10 @@
       document.getElementById("backTextContainer").style.display = "none";
       document.getElementById("googleSearchButtons").style.display = "none";
 
+      // Re-enable the Reveal button by default each time "Draw Card" is clicked
+      const revealBtn = document.querySelector('.btn-reveal');
+      revealBtn.disabled = false;
+
       // Weighted pick
       const rand = cryptoRand();
       let chosenBucket = (rand < state.b1Prob) ? "b1" : "b2";
@@ -937,13 +941,23 @@
       // Show the attribute section (since a card is drawn)
       document.getElementById("attributeSection").style.display = "block";
 
-      // If front is valid URL, open it
+      // Existing behavior: If front is valid URL, open it
       if (isValidURL(currentFront)) {
         openFrontAsLink();
       }
 
-      // If exactly one side is date/time format & the other is URL, open the URL side
+      // Check the "date & URL" auto-redirect case
       autoOpenUrlIfDateOnOtherSide(currentFront, currentBack);
+
+      /**
+       * NEW LOGIC: If the BACK is a valid URL, we immediately redirect
+       * AND disable the Reveal button so the user must draw a new card
+       * or refresh the page to re-enable reveal.
+       */
+      if (isValidURL(currentBack)) {
+        openBackAsLink();
+        revealBtn.disabled = true;
+      }
     }
 
     function revealAnswer() {
