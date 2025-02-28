@@ -368,7 +368,11 @@
     let lastDrawnId = null;
 
     // We'll keep track if a card is currently drawn (so we can show/hide the attribute section).
-    let currentlyDrawnRecordId = null;  // The underlying record ID for the card
+    let currentlyDrawnRecordId = null;
+
+    // Prevent consecutive or infinite date-based auto-draws:
+    // This becomes "true" once an auto-draw is triggered, so it won't happen again until the user manually draws again.
+    let autoDrawExecuted = false;
 
     /****************************************************
      *  On window load, open DB, possibly fetch the target CSV
@@ -496,8 +500,6 @@
 
     /****************************************************
      * autoPopulateBucketIfEmpty
-     * If the DB has records but our b1/b2 are empty, we
-     * automatically put all possible card IDs into b2.
      ****************************************************/
     function autoPopulateBucketIfEmpty() {
       const totalBucketFreq = getTotalFreq(state.b1) + getTotalFreq(state.b2);
@@ -552,7 +554,6 @@
 
     /****************************************************
      * addLinesToDb
-     *   lines can have multiple attributes: front, back, maybe more
      ****************************************************/
     async function addLinesToDb(lines, useProgressBar=false, totalCount=0) {
       return new Promise((resolve, reject) => {
@@ -575,7 +576,7 @@
             processNextLine(i + 1);
             return;
           }
-          // Check for duplicate (exact text match)
+          // Check for duplicate
           const checkReq = textIndex.get(line);
           checkReq.onsuccess = () => {
             if (checkReq.result) {
@@ -626,11 +627,6 @@
       });
     }
 
-    /****************************************************
-     * addRecordPermutationsToBucket2
-     *   Given a newly inserted record, generate all new card IDs
-     *   for its permutations, add them to b2 if not already present
-     ****************************************************/
     function addRecordPermutationsToBucket2(recordId, recordText) {
       const perms = generatePermutationsForRecord(recordId, recordText);
       for (let p of perms) {
@@ -640,20 +636,12 @@
       }
     }
 
-    /****************************************************
-     * refreshData
-     ****************************************************/
     async function refreshData() {
       await loadAllRecordsToMemory();
       updateDbSizeDisplay();
-      // In case the user just inserted new data but had no bucket arrangement,
-      // we ensure new data permutations are in b2. If buckets are empty, auto-populate:
       autoPopulateBucketIfEmpty();
     }
 
-    /****************************************************
-     * Show/hide & update progress bars (CSV only)
-     ****************************************************/
     function showCsvUploadProgress(show) {
       const container = document.getElementById("csvUploadProgressContainer");
       if (show) {
@@ -711,16 +699,13 @@
       textArea.value = "";
     }
 
-    /****************************************************
-     * Clear Text Post
-     ****************************************************/
     function clearTextPost() {
       const textArea = document.getElementById('textPostInput');
       textArea.value = "";
     }
 
     /****************************************************
-     * Download all DB records as CSV
+     * Download / Clear DB
      ****************************************************/
     async function downloadAllRecords() {
       if (allRecords.length === 0) {
@@ -751,9 +736,6 @@
       link.click();
     }
 
-    /****************************************************
-     * Clear entire DB
-     ****************************************************/
     async function clearDatabase() {
       if (!confirm("Are you sure you want to clear ALL data in IndexedDB? This is irreversible.")) {
         return;
@@ -764,8 +746,7 @@
       clearReq.onsuccess = async () => {
         showToast("Database cleared!");
         await refreshData();
-        // Also clear buckets, because those references won't be valid anymore
-        resetBuckets(true); // pass "fully" = true for total reset
+        resetBuckets(true);
       };
       clearReq.onerror = (err) => {
         console.error(err);
@@ -774,18 +755,9 @@
 
     /****************************************************
      * FLASHCARD LOGIC
-     * - We create permutations for each record's text
      ****************************************************/
-
-    /**
-     * Generates an array of { id, front, back } for a given record's text.
-     * We parse the text into multiple attributes, then each distinct pair (A,B) of attributes
-     * becomes one "card" with front=A and back=B. We assign a stable ID using:
-     *    cardId = (recordId << 16) + pairIndex
-     */
     function generatePermutationsForRecord(recordId, recordText) {
       let attributes = recordText.split(",").map(a => a.trim()).filter(a => a.length > 0);
-      // Produce all permutations of length=2
       const results = [];
       let pairIndex = 0;
       for (let i = 0; i < attributes.length; i++) {
@@ -802,9 +774,6 @@
       return results;
     }
 
-    /**
-     * Rebuild a big array of all "cards" from allRecords
-     */
     function buildAllCards() {
       const allCardsOut = [];
       for (const r of allRecords) {
@@ -814,16 +783,10 @@
       return allCardsOut;
     }
 
-    /**
-     * Given a cardId, extract the recordId by shifting right 16 bits.
-     */
     function getRecordIdFromCardId(cardId) {
       return (cardId >>> 16);
     }
 
-    /**
-     * Check if string is a valid URL
-     */
     function isValidURL(str) {
       try {
         new URL(str);
@@ -833,10 +796,6 @@
       }
     }
 
-    /**
-     * Check if string matches a "YYMMDD hh:mm:ss" style
-     * We'll be a bit lenient: exactly 6 digits, space, then hh:mm:ss (each 2 digits).
-     */
     function isDateTimeFormat(str) {
       // e.g. "230227 12:34:56"
       // pattern: ^\d{6} \d{2}:\d{2}:\d{2}$
@@ -844,16 +803,12 @@
       return regex.test(str);
     }
 
-    /**
-     * If exactly one side is date/time format and the other is URL, open the URL side
-     */
     function autoOpenUrlIfDateOnOtherSide(front, back) {
       const frontIsDate = isDateTimeFormat(front);
       const backIsDate  = isDateTimeFormat(back);
       const frontIsUrl  = isValidURL(front);
       const backIsUrl   = isValidURL(back);
 
-      // If exactly one side is date and the other is URL, open that URL automatically
       if (frontIsDate && backIsUrl) {
         openBackAsLink();
       } else if (backIsDate && frontIsUrl) {
@@ -861,9 +816,6 @@
       }
     }
 
-    /**
-     * Draw a card
-     */
     let allCards = [];
     let currentFront = "";
     let currentBack = "";
@@ -881,10 +833,11 @@
       document.getElementById("googleSearchButtons").style.display = "none";
 
       // Re-enable the Reveal button by default each time "Draw Card" is clicked
+      // and reset the autoDrawExecuted flag to allow one possible auto-draw if needed.
       const revealBtn = document.querySelector('.btn-reveal');
       revealBtn.disabled = false;
+      autoDrawExecuted = false;
 
-      // Weighted pick
       const rand = cryptoRand();
       let chosenBucket = (rand < state.b1Prob) ? "b1" : "b2";
       if (getTotalFreq(state[chosenBucket]) === 0) {
@@ -897,11 +850,9 @@
 
       const selectedId = weightedPick(state[chosenBucket]);
       lastDrawnId = selectedId;
-
-      // Figure out which record this card belongs to
       currentlyDrawnRecordId = getRecordIdFromCardId(selectedId);
 
-      // Move from bucket2 => bucket1, or increment bucket1 freq, etc.
+      // Move from bucket2 => bucket1, or increment bucket1 freq
       if (!(selectedId in state.b1)) {
         state.b1[selectedId] = 1;
         state.uniqueBucket1Count++;
@@ -919,7 +870,6 @@
       updateDisplay();
       populateBucketLists();
 
-      // Find the card
       const card = allCards.find(c => c.id === selectedId);
       if (!card) {
         alert("Something went wrong: card not found.");
@@ -938,22 +888,18 @@
       addToHistory(selectedId);
       populateHistoryList();
 
-      // Show the attribute section (since a card is drawn)
+      // Show the attribute section
       document.getElementById("attributeSection").style.display = "block";
 
-      // Existing behavior: If front is valid URL, open it
+      // If front is valid URL, open automatically
       if (isValidURL(currentFront)) {
         openFrontAsLink();
       }
 
-      // Check the "date & URL" auto-redirect case
+      // If exactly one side is date and the other is URL, open the URL side
       autoOpenUrlIfDateOnOtherSide(currentFront, currentBack);
 
-      /**
-       * NEW LOGIC: If the BACK is a valid URL, we immediately redirect
-       * AND disable the Reveal button so the user must draw a new card
-       * or refresh the page to re-enable reveal.
-       */
+      // If the back side is a valid URL, auto-redirect & disable reveal
       if (isValidURL(currentBack)) {
         openBackAsLink();
         revealBtn.disabled = true;
@@ -964,9 +910,15 @@
       document.getElementById("backTextContainer").style.display = "block";
       document.getElementById("googleSearchButtons").style.display = "block";
 
-      // Also apply the new logic on "Reveal Answer" press:
       // If exactly one side is date/time format & the other is URL, open the URL side
       autoOpenUrlIfDateOnOtherSide(currentFront, currentBack);
+
+      // If the back card is date/time, draw a new card automatically
+      // BUT only if we haven't already done an auto-draw.
+      if (isDateTimeFormat(currentBack) && !autoDrawExecuted) {
+        autoDrawExecuted = true;
+        drawCard();
+      }
     }
 
     function undoLastDraw() {
@@ -1004,7 +956,7 @@
     }
 
     /****************************************************
-     * Add Attribute to the currently drawn card's record
+     * Add Attribute
      ****************************************************/
     async function addAttributeToCard() {
       if (lastDrawnId == null || currentlyDrawnRecordId == null) {
@@ -1017,41 +969,31 @@
         alert("No attribute text entered.");
         return;
       }
-      // sanitize: turn all commas, single quotes, double quotes into underscores
       rawText = rawText.replace(/,/g, "_").replace(/'/g, "_").replace(/"/g, "_");
 
-      // Now we append this attribute to the underlying record's text
-      // 1) find the record from allRecords
       const rec = allRecords.find(r => r.id === currentlyDrawnRecordId);
       if (!rec) {
         alert("Failed to find the underlying record for this card!");
         return;
       }
 
-      // 2) update the text in memory
       let updatedText = rec.text.trim();
       if (updatedText.endsWith(",")) {
-        updatedText += rawText; // just append
+        updatedText += rawText;
       } else {
         updatedText += "," + rawText;
       }
 
-      // 3) update the DB for that record
       await updateRecordInDb(rec.id, updatedText);
-
-      // 4) re-load and update everything
       await refreshData();
-      // Because the underlying record changed, the old permutations are invalid. We remove them from b1/b2, then re-add the new permutations.
       rebuildBucketsForRecord(rec.id, updatedText);
 
-      // Save, update display
       saveBucketState();
       updateDisplay();
       populateBucketLists();
       populateHistoryList();
 
       showToast("New attribute added successfully!");
-      // 5) clear the text area
       textArea.value = "";
     }
 
@@ -1066,7 +1008,7 @@
             reject("Record not found in DB");
             return;
           }
-          data.text = newText; // update text
+          data.text = newText;
           const putReq = store.put(data);
           putReq.onsuccess = () => {
             resolve(true);
@@ -1078,7 +1020,6 @@
     }
 
     function rebuildBucketsForRecord(recordId, newText) {
-      // 1) find all old permutations in b1/b2
       const oldCardIds = [];
       for (const cid of Object.keys(state.b1)) {
         const cNum = parseInt(cid, 10);
@@ -1096,10 +1037,8 @@
       }
       const uniqueOldCardIds = [...new Set(oldCardIds)];
 
-      // remove from b1/b2
       for (const ocid of uniqueOldCardIds) {
         if (ocid in state.b1) {
-          // if freq>0, we reduce uniqueBucket1Count by 1
           if (state.b1[ocid] > 0) {
             state.uniqueBucket1Count--;
           }
@@ -1110,14 +1049,12 @@
         }
       }
 
-      // 2) generate new permutations, add them to b2
+      // Add new permutations to b2
       addRecordPermutationsToBucket2(recordId, newText);
     }
 
     /****************************************************
-     * DELETE CURRENT RECORD (NEW)
-     *  - Removes from DB
-     *  - Removes permutations from b1/b2
+     * DELETE CURRENT RECORD
      ****************************************************/
     async function deleteCurrentRecord() {
       if (!currentlyDrawnRecordId) {
@@ -1129,19 +1066,12 @@
       }
 
       const recordId = currentlyDrawnRecordId;
-      // 1) Remove from DB
       await removeRecordFromDb(recordId);
-
-      // 2) Remove permutations from b1/b2
       removePermutationsForRecord(recordId);
 
-      // 3) Refresh data
       await refreshData();
-
-      // Hide attribute section
       document.getElementById("attributeSection").style.display = "none";
 
-      // Reset the flashcard display
       lastDrawnId = null;
       currentlyDrawnRecordId = null;
       document.getElementById("frontText").innerText = "";
@@ -1149,7 +1079,6 @@
       document.getElementById("backTextContainer").style.display = "none";
       document.getElementById("googleSearchButtons").style.display = "none";
 
-      // Save & update
       saveBucketState();
       updateDisplay();
       populateBucketLists();
@@ -1173,7 +1102,6 @@
     }
 
     function removePermutationsForRecord(recordId) {
-      // find all permutations (card IDs) for that record in b1,b2
       const oldCardIds = [];
       for (const cid of Object.keys(state.b1)) {
         const cNum = parseInt(cid, 10);
@@ -1193,7 +1121,6 @@
 
       for (const ocid of uniqueOldCardIds) {
         if (ocid in state.b1) {
-          // if freq>0, we reduce uniqueBucket1Count by 1 (once per card)
           if (state.b1[ocid] > 0) {
             state.uniqueBucket1Count--;
           }
@@ -1206,7 +1133,7 @@
     }
 
     /****************************************************
-     * Probability, Weighted picks, etc.
+     * Probability
      ****************************************************/
     function getTotalFreq(bucket) {
       return Object.values(bucket).reduce((acc, val) => acc + val, 0);
@@ -1240,7 +1167,7 @@
     }
 
     /****************************************************
-     *  Export/Import/Reset Bucket arrangement
+     * Export/Import/Reset
      ****************************************************/
     function exportState() {
       const str = JSON.stringify(state, null, 2);
@@ -1255,6 +1182,7 @@
 
       showToast("Bucket state exported successfully.");
     }
+
     function importState() {
       const fileInput = document.createElement("input");
       fileInput.type = "file";
@@ -1281,6 +1209,7 @@
       };
       fileInput.click();
     }
+
     function resetBuckets(fully = false) {
       if (!fully && !confirm("Reset bucket arrangement? (This will not delete your IndexedDB data, only the 'review progress')")) return;
       state = {
@@ -1291,9 +1220,7 @@
         b2Prob: state.b2Prob,
         drawHistory: []
       };
-      // Rebuild allCards from allRecords
       allCards = buildAllCards();
-      // Put everything in b2 with freq=1
       for (let card of allCards) {
         state.b2[card.id] = 1;
       }
@@ -1326,7 +1253,7 @@
     }
 
     /****************************************************
-     * Copy / Open as Link
+     * Copy / Open
      ****************************************************/
     function copyFrontText() {
       if (!currentFront) return;
@@ -1423,7 +1350,7 @@
     }
 
     /****************************************************
-     * Bucket lists
+     * Bucket Lists
      ****************************************************/
     function populateBucketLists() {
       allCards = buildAllCards();
@@ -1432,7 +1359,6 @@
       b1List.innerHTML = "";
       b2List.innerHTML = "";
 
-      // For a stable listing, let's build a map from cardId -> {front, back}
       const cardMap = {};
       for (let c of allCards) {
         cardMap[c.id] = c;
@@ -1468,7 +1394,6 @@
       allCards = buildAllCards();
       const totalCards = allCards.length;
       if (totalCards === 0) {
-        // no flashcards possible
         document.getElementById("review1Gauge").value = 0;
         document.getElementById("review1Text").innerText = "0%";
         document.getElementById("review2Gauge").value = 100;
