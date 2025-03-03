@@ -147,6 +147,8 @@
       <button class="btn btn-info btn-lg mt-2" onclick="addAttributeToCard()">Add Attribute</button>
       <!-- NEW DELETE RECORD BUTTON -->
       <button class="btn btn-danger btn-lg mt-2" onclick="deleteCurrentRecord()">Delete Record</button>
+      <!-- CLEAR ATTRIBUTE TEXTAREA BUTTON -->
+      <button class="btn btn-secondary btn-lg mt-2 ms-2" onclick="clearNewAttributeTextarea()">Clear Attribute Textarea</button>
     </div>
 
     <!-- Flashcard Display -->
@@ -198,7 +200,50 @@
             <div id="csvUploadProgressBar" class="progress-bar" role="progressbar" style="width: 0%">0%</div>
           </div>
         </div>
+
+        <!-- NEW GITHUB FIELDS BELOW "Import to IndexedDB" BUTTON -->
+        <div class="mt-3">
+          <label>Username:</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="githubUsername" disabled>
+            <button class="btn btn-secondary" onclick="editField('githubUsername')">Edit</button>
+            <button class="btn btn-secondary" onclick="saveField('githubUsername')">Save</button>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label>Repository:</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="githubRepository" disabled>
+            <button class="btn btn-secondary" onclick="editField('githubRepository')">Edit</button>
+            <button class="btn btn-secondary" onclick="saveField('githubRepository')">Save</button>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label>Issue Range Start:</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="issueRangeStart" disabled>
+            <button class="btn btn-secondary" onclick="editField('issueRangeStart')">Edit</button>
+            <button class="btn btn-secondary" onclick="saveField('issueRangeStart')">Save</button>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label>Issue Range End:</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="issueRangeEnd" disabled>
+            <button class="btn btn-secondary" onclick="editField('issueRangeEnd')">Edit</button>
+            <button class="btn btn-secondary" onclick="saveField('issueRangeEnd')">Save</button>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <button class="btn btn-primary btn-lg" onclick="importGitHubIssueLinks()">Import GitHub Issue Links</button>
+          <button class="btn btn-warning btn-lg ms-2" onclick="resetFields()">Reset Fields</button>
+        </div>
       </div>
+
       <div class="col-md-6">
         <button class="btn btn-dark btn-lg mt-4" onclick="downloadAllRecords()">Download All as CSV</button>
         <button class="btn btn-danger btn-lg mt-4 ms-2" onclick="clearDatabase()">Clear IndexedDB</button>
@@ -371,12 +416,14 @@
     let currentlyDrawnRecordId = null;
 
     // Prevent consecutive or infinite date-based auto-draws:
-    // This becomes "true" once an auto-draw is triggered, so it won't happen again until the user manually draws again.
     let autoDrawExecuted = false;
 
-    /****************************************************
-     *  On window load, open DB, possibly fetch the target CSV
-     ****************************************************/
+    // Default values for GitHub fields
+    const DEFAULT_USERNAME = "sktoushi";
+    const DEFAULT_REPOSITORY = "stash2";
+    const DEFAULT_ISSUE_RANGE_START = "";
+    const DEFAULT_ISSUE_RANGE_END = "";
+
     window.addEventListener('load', async () => {
       await openDatabase();
 
@@ -400,7 +447,7 @@
       // Load bucket arrangement from localStorage
       loadBucketState();
 
-      // --- Auto-populate Bucket2 if DB has data but buckets are empty ---
+      // Auto-populate Bucket2 if DB has data but buckets are empty
       autoPopulateBucketIfEmpty();
 
       // Now do normal UI updates
@@ -417,6 +464,9 @@
           getRandomColor();
         });
       });
+
+      // Initialize GitHub fields from localStorage or defaults
+      initializeGitHubFields();
     });
 
     /****************************************************
@@ -451,13 +501,11 @@
      ****************************************************/
     async function autoFetchTargetCsv(fileName) {
       try {
-        // We assume it's in the same directory or root
         const response = await fetch(fileName);
         if (!response.ok) throw new Error(`Cannot fetch ${fileName}`);
         const text = await response.text();
         const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         if (lines.length === 0) return 0;
-        // Insert them
         const insertedCount = await addLinesToDb(lines, false, lines.length);
         return insertedCount;
       } catch (err) {
@@ -489,7 +537,6 @@
     }
 
     function updateDbSizeDisplay() {
-      // Sum text lengths, approximate in kB
       let totalChars = 0;
       for (const rec of allRecords) {
         totalChars += rec.text.length;
@@ -513,7 +560,6 @@
     function populateAllInBucket2() {
       const cards = buildAllCards();
       for (const c of cards) {
-        // If that card ID not in b1 or b2, put it in b2
         if (state.b1[c.id] == null && state.b2[c.id] == null) {
           state.b2[c.id] = 1;
         }
@@ -539,12 +585,10 @@
         const text = await file.text();
         const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
         totalLines += lines.length;
-        // Insert lines
         const inserted = await addLinesToDb(lines, true, lines.length);
         totalInserted += inserted;
       }
 
-      // Clear the file input after success
       fileInput.value = "";
       showCsvUploadProgress(false);
 
@@ -576,11 +620,9 @@
             processNextLine(i + 1);
             return;
           }
-          // Check for duplicate
           const checkReq = textIndex.get(line);
           checkReq.onsuccess = () => {
             if (checkReq.result) {
-              // Already exists, skip
               processedCount++;
               if (useProgressBar) updateCsvUploadProgress(processedCount, totalCount);
               processNextLine(i + 1);
@@ -591,9 +633,7 @@
                 processedCount++;
                 if (useProgressBar) updateCsvUploadProgress(processedCount, totalCount);
 
-                // The newly inserted record ID
                 const newId = evt.target.result;
-                // Put permutations for that record in bucket2
                 addRecordPermutationsToBucket2(newId, line);
 
                 processNextLine(i + 1);
@@ -615,7 +655,6 @@
         }
 
         tx.oncomplete = () => {
-          // Save bucket changes
           saveBucketState();
         };
         tx.onerror = (err) => {
@@ -646,11 +685,12 @@
       const container = document.getElementById("csvUploadProgressContainer");
       if (show) {
         container.style.display = "block";
-        updateCsvUploadProgress(0, 1); // reset
+        updateCsvUploadProgress(0, 1);
       } else {
         container.style.display = "none";
       }
     }
+
     function updateCsvUploadProgress(current, total) {
       const bar = document.getElementById("csvUploadProgressBar");
       if (total === 0) {
@@ -674,9 +714,7 @@
         return;
       }
 
-      // Replace commas with underscores
       rawText = rawText.replace(/,/g, "_");
-      // "YYMMDD hh:mm:ss, text"
       const now = new Date();
       const yy = String(now.getFullYear()).slice(-2);
       const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -695,12 +733,11 @@
       }
       await refreshData();
 
-      // Clear the text field
       textArea.value = "";
     }
 
     function clearTextPost() {
-      const textArea = document.getElementById('textPostInput');
+      const textArea = document.getElementById("textPostInput");
       textArea.value = "";
     }
 
@@ -797,8 +834,6 @@
     }
 
     function isDateTimeFormat(str) {
-      // e.g. "230227 12:34:56"
-      // pattern: ^\d{6} \d{2}:\d{2}:\d{2}$
       const regex = /^\d{6} \d{2}:\d{2}:\d{2}$/;
       return regex.test(str);
     }
@@ -825,15 +860,11 @@
         alert("No data in DB to draw from. Upload CSV or add text first.");
         return;
       }
-      // Rebuild allCards
       allCards = buildAllCards();
 
-      // Hide back & search buttons
       document.getElementById("backTextContainer").style.display = "none";
       document.getElementById("googleSearchButtons").style.display = "none";
 
-      // Re-enable the Reveal button by default each time "Draw Card" is clicked
-      // and reset the autoDrawExecuted flag to allow one possible auto-draw if needed.
       const revealBtn = document.querySelector('.btn-reveal');
       revealBtn.disabled = false;
       autoDrawExecuted = false;
@@ -891,15 +922,15 @@
       // Show the attribute section
       document.getElementById("attributeSection").style.display = "block";
 
-      // If front is valid URL, open automatically
+      // Auto-open if front is URL
       if (isValidURL(currentFront)) {
         openFrontAsLink();
       }
 
-      // If exactly one side is date and the other is URL, open the URL side
+      // If exactly one side is date and the other is URL, open
       autoOpenUrlIfDateOnOtherSide(currentFront, currentBack);
 
-      // If the back side is a valid URL, auto-redirect & disable reveal
+      // If back side is URL, open it and disable reveal
       if (isValidURL(currentBack)) {
         openBackAsLink();
         revealBtn.disabled = true;
@@ -910,11 +941,8 @@
       document.getElementById("backTextContainer").style.display = "block";
       document.getElementById("googleSearchButtons").style.display = "block";
 
-      // If exactly one side is date/time format & the other is URL, open the URL side
       autoOpenUrlIfDateOnOtherSide(currentFront, currentBack);
 
-      // If the back card is date/time, draw a new card automatically
-      // BUT only if we haven't already done an auto-draw.
       if (isDateTimeFormat(currentBack) && !autoDrawExecuted) {
         autoDrawExecuted = true;
         drawCard();
@@ -940,12 +968,10 @@
       } else {
         state.b2[lastDrawnId] = 1;
       }
-      // Remove from history
       state.drawHistory.shift();
 
       lastDrawnId = null;
       currentlyDrawnRecordId = null;
-      // Hide the attribute section if no card is currently displayed
       document.getElementById("attributeSection").style.display = "none";
 
       saveBucketState();
@@ -995,6 +1021,10 @@
 
       showToast("New attribute added successfully!");
       textArea.value = "";
+    }
+
+    function clearNewAttributeTextarea() {
+      document.getElementById("newAttributeTextarea").value = "";
     }
 
     function updateRecordInDb(recordId, newText) {
@@ -1048,8 +1078,6 @@
           delete state.b2[ocid];
         }
       }
-
-      // Add new permutations to b2
       addRecordPermutationsToBucket2(recordId, newText);
     }
 
@@ -1138,6 +1166,7 @@
     function getTotalFreq(bucket) {
       return Object.values(bucket).reduce((acc, val) => acc + val, 0);
     }
+
     function weightedPick(bucketObj) {
       const entries = Object.entries(bucketObj);
       const total = entries.reduce((acc, [_, freq]) => acc + freq, 0);
@@ -1151,6 +1180,7 @@
       }
       return Number(entries[entries.length - 1][0]);
     }
+
     function cryptoRand() {
       const arr = new Uint32Array(1);
       window.crypto.getRandomValues(arr);
@@ -1229,7 +1259,6 @@
       populateBucketLists();
       populateHistoryList();
 
-      // Hide the attribute section
       document.getElementById("attributeSection").style.display = "none";
 
       if (!fully) {
@@ -1240,6 +1269,7 @@
     function saveBucketState() {
       localStorage.setItem(localBucketsKey, JSON.stringify(state));
     }
+
     function loadBucketState() {
       const raw = localStorage.getItem(localBucketsKey);
       if (raw) {
@@ -1261,16 +1291,19 @@
         .then(() => showToast("Front card copied!"))
         .catch(() => alert("Unable to copy front text."));
     }
+
     function copyBackText() {
       if (!currentBack) return;
       navigator.clipboard.writeText(currentBack)
         .then(() => showToast("Back card copied!"))
         .catch(() => alert("Unable to copy back text."));
     }
+
     function openFrontAsLink() {
       if (!currentFront) return;
       window.open(currentFront, "_blank");
     }
+
     function openBackAsLink() {
       if (!currentBack) return;
       window.open(currentBack, "_blank");
@@ -1283,22 +1316,27 @@
       if (!currentFront) return;
       window.open("https://www.google.com/search?q=" + encodeURIComponent(currentFront), "_blank");
     }
+
     function googleSearchBack() {
       if (!currentBack) return;
       window.open("https://www.google.com/search?q=" + encodeURIComponent(currentBack), "_blank");
     }
+
     function chatGPTSearchFront() {
       if (!currentFront) return;
       window.open("https://chat.openai.com/?q=" + encodeURIComponent(currentFront), "_blank");
     }
+
     function chatGPTSearchBack() {
       if (!currentBack) return;
       window.open("https://chat.openai.com/?q=" + encodeURIComponent(currentBack), "_blank");
     }
+
     function jishoSearchFront() {
       if (!currentFront) return;
       window.open("https://jisho.org/search/" + encodeURIComponent(currentFront), "_blank");
     }
+
     function jishoSearchBack() {
       if (!currentBack) return;
       window.open("https://jisho.org/search/" + encodeURIComponent(currentBack), "_blank");
@@ -1338,6 +1376,7 @@
         state.drawHistory.pop();
       }
     }
+
     function populateHistoryList() {
       const historyList = document.getElementById("historyList");
       historyList.innerHTML = "";
@@ -1373,6 +1412,7 @@
         li.textContent = `${cInfo.front} → ${cInfo.back} (Freq: ${freq})`;
         b1List.appendChild(li);
       }
+
       for (let cardId in state.b2) {
         const freq = state.b2[cardId];
         const cInfo = cardMap[cardId];
@@ -1461,6 +1501,116 @@
         }
       } catch (error) {
         document.body.style.backgroundColor = "#ffffff";
+      }
+    }
+
+    /****************************************************
+     *  GitHub Fields: Edit/Save/Reset, plus Import Logic
+     ****************************************************/
+    function initializeGitHubFields() {
+      // If localStorage has saved fields, load them; otherwise set defaults
+      const savedUsername = localStorage.getItem("githubUsername");
+      const savedRepository = localStorage.getItem("githubRepository");
+      const savedIssueRangeStart = localStorage.getItem("issueRangeStart");
+      const savedIssueRangeEnd = localStorage.getItem("issueRangeEnd");
+
+      document.getElementById("githubUsername").value =
+        savedUsername !== null ? savedUsername : DEFAULT_USERNAME;
+      document.getElementById("githubRepository").value =
+        savedRepository !== null ? savedRepository : DEFAULT_REPOSITORY;
+      document.getElementById("issueRangeStart").value =
+        savedIssueRangeStart !== null ? savedIssueRangeStart : DEFAULT_ISSUE_RANGE_START;
+      document.getElementById("issueRangeEnd").value =
+        savedIssueRangeEnd !== null ? savedIssueRangeEnd : DEFAULT_ISSUE_RANGE_END;
+    }
+
+    function editField(fieldId) {
+      const field = document.getElementById(fieldId);
+      field.disabled = false;
+      field.focus();
+    }
+
+    function saveField(fieldId) {
+      const field = document.getElementById(fieldId);
+      field.disabled = true;
+      localStorage.setItem(fieldId, field.value.trim());
+      showToast(`${fieldId} saved!`);
+    }
+
+    function resetFields() {
+      if (!confirm("Reset GitHub fields to their default values?")) return;
+
+      document.getElementById("githubUsername").value = DEFAULT_USERNAME;
+      document.getElementById("githubRepository").value = DEFAULT_REPOSITORY;
+      document.getElementById("issueRangeStart").value = DEFAULT_ISSUE_RANGE_START;
+      document.getElementById("issueRangeEnd").value = DEFAULT_ISSUE_RANGE_END;
+
+      localStorage.setItem("githubUsername", DEFAULT_USERNAME);
+      localStorage.setItem("githubRepository", DEFAULT_REPOSITORY);
+      localStorage.setItem("issueRangeStart", DEFAULT_ISSUE_RANGE_START);
+      localStorage.setItem("issueRangeEnd", DEFAULT_ISSUE_RANGE_END);
+
+      // Disable them again
+      document.getElementById("githubUsername").disabled = true;
+      document.getElementById("githubRepository").disabled = true;
+      document.getElementById("issueRangeStart").disabled = true;
+      document.getElementById("issueRangeEnd").disabled = true;
+
+      showToast("Fields reset to default!");
+    }
+
+    async function importGitHubIssueLinks() {
+      const username = document.getElementById("githubUsername").value.trim();
+      const repository = document.getElementById("githubRepository").value.trim();
+      const rangeStartVal = document.getElementById("issueRangeStart").value.trim();
+      const rangeEndVal = document.getElementById("issueRangeEnd").value.trim();
+
+      if (!username || !repository) {
+        alert("Username or Repository is empty!");
+        return;
+      }
+
+      // For date prefix
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const datePrefix = `${yy}${mm}${dd} ${hh}:${min}:${ss}`;
+
+      // If rangeEnd is empty, but rangeStart is not, do one link
+      if (!rangeEndVal && rangeStartVal) {
+        // single link
+        const url = `https://github.com/${username}/${repository}/issues/${rangeStartVal}`;
+        const line = `${url}, ${datePrefix}`;
+        const inserted = await addLinesToDb([line], false, 1);
+        if (inserted > 0) {
+          showToast("Imported 1 GitHub link!");
+        } else {
+          showToast("That exact link already exists in DB; skipping.");
+        }
+        await refreshData();
+        return;
+      }
+
+      // If rangeStart and rangeEnd are valid, do multiple
+      if (rangeStartVal && rangeEndVal) {
+        const startNum = parseInt(rangeStartVal, 10);
+        const endNum = parseInt(rangeEndVal, 10);
+        if (isNaN(startNum) || isNaN(endNum) || startNum <= 0 || endNum < startNum) {
+          alert("Invalid range numbers.");
+          return;
+        }
+
+        const lines = [];
+        for (let i = startNum; i <= endNum; i++) {
+          lines.push(`https://github.com/${username}/${repository}/issues/${i}, ${datePrefix}`);
+        }
+        const inserted = await addLinesToDb(lines, false, lines.length);
+        showToast(`Imported ${inserted} link(s) out of ${lines.length} attempted.`);
+        await refreshData();
       }
     }
   </script>
