@@ -74,6 +74,29 @@ function parseCsvLine(line) {
 }
 
 /**
+ * Fisher-Yates shuffle (using the same secure RNG).
+ * This shuffles an array in-place.
+ */
+function shuffle(array) {
+  let currentIndex = array.length;
+  let randomIndex;
+
+  // While there remain elements to shuffle...
+  while (currentIndex !== 0) {
+    // Pick a remaining element.
+    randomIndex = Math.floor(getSecureRandomNumber() * currentIndex);
+    currentIndex--;
+
+    // Swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex], array[currentIndex]
+    ];
+  }
+
+  return array;
+}
+
+/**
  * Fetch and parse a CSV file, returning an array of rows.
  * Each row is an array of "cleaned" cells, respecting quoted fields.
  *
@@ -105,6 +128,11 @@ async function fetchCSV(csvFilename) {
     });
 
     console.log('Parsed rows (with cleaned cells):', rows);
+
+    // Jumble the rows each time (maintaining frequency weights is unaffected, 
+    // since weighting is still handled inside pickRowByWeight).
+    shuffle(rows);
+
     return rows;
   } catch (error) {
     throw new Error('Error fetching CSV: ' + error.message);
