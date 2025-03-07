@@ -49,7 +49,7 @@
   <!-- Game View (Hidden by Default) -->
   <div id="gameView" class="d-none">
     <p class="fw-bold" id="progressText">
-      Reconstructing your text (lowercased) ...
+      Reconstructing your text ...
     </p>
     <div class="mb-3">
       <!-- This is where the reconstructed text (plus choices inline) will appear -->
@@ -92,11 +92,11 @@
   const restartBtn = document.getElementById('restartBtn');
   const clearBtn2 = document.getElementById('clearBtn2');
 
-  // Some example 'skip' words/punctuation. Expand as needed.
+  // Skip words (articles, short words, etc.) that should be auto-guessed
+  // You can add/remove from here as needed.
   const skipWordsSet = new Set([
     'a', 'an', 'the', 'is', 'are', 'and', 'or', 'but', 'nor', 'yet', 'so', 'for',
-    'of', 'in', 'to', 'by', 'with', 'from', '&', ',', '.', '?', '!', ':', ';',
-    '"', '\'', '(', ')', '-', '_'
+    'of', 'in', 'to', 'by', 'with', 'from'
   ]);
 
   // We'll store metadata for each token in the input.
@@ -109,15 +109,53 @@
   // The current index within guessableTokens that the user is trying to guess
   let currentGuessIndex = 0;
 
-  // We store the lowercased text so we can re-init if needed
-  let originalText = '';
+  // We'll store the sanitized-lowercased text so we can re-init if needed
+  let sanitizedText = '';
 
-  // HELPER to remove leading/trailing punctuation but keep apostrophes if in middle
+  /**
+   * Sanitize the text:
+   * - Replace double quotes -> " __ "
+   * - Replace question marks -> " _q "
+   * - Replace exclamation -> " _x "
+   * - Replace all other punctuation/special chars -> " _ "
+   * - Then convert to lowercase
+   * - Replace multiple spaces with single space
+   * - Trim
+   */
+  function sanitizeText(input) {
+    let text = input;
+
+    // Replace double quotes with " __ " 
+    text = text.replace(/"/g, ' __ ');
+
+    // Replace question marks with " _q "
+    text = text.replace(/\?/g, ' _q ');
+
+    // Replace exclamation marks with " _x "
+    text = text.replace(/!/g, ' _x ');
+
+    // Replace everything else that's not alphanumeric or whitespace or underscores
+    // or our special placeholders (_q, _x, __) with " _ "
+    // We'll do a broad pattern, but skip letters, digits, whitespace, underscore
+    // plus skip any leftover of the above sequences
+    // We'll do multiple passes: first, any leftover punctuation is turned into " _ "
+    // (including single quotes, apostrophes, commas, etc.)
+    text = text.replace(/[^a-zA-Z0-9\s_]/g, ' _ ');
+
+    // Now convert to lowercase
+    text = text.toLowerCase();
+
+    // Collapse multiple spaces 
+    text = text.replace(/\s+/g, ' ').trim();
+
+    return text;
+  }
+
+  // HELPER to remove leading/trailing underscores/spaces from a token, if any
+  // Example: "___hello__" => "hello"
+  // We'll just strip underscores from the edges; if token is entirely underscores, it becomes empty
   function cleanWord(word) {
-    let w = word.toLowerCase();
-    // remove leading/trailing punctuation-like chars
-    w = w.replace(/^[^a-z0-9']+|[^a-z0-9']+$/gi, '');
-    return w;
+    return word.replace(/^_+|_+$/g, '');
   }
 
   // Shuffle array with cryptographically secure random
@@ -143,13 +181,11 @@
       .filter(i => i !== correctIndex)
       .map(i => tokenData[i].cleaned);
 
-    // Remove duplicates from the pool if any
+    // remove duplicates from the pool if any
     const uniquePool = Array.from(new Set(pool));
-
-    // Shuffle the pool
     shuffleArray(uniquePool);
 
-    // Take the first 3 from that pool (if pool is smaller, take what we can)
+    // Take first 3
     const wrongChoices = uniquePool.slice(0, 3);
 
     // Combine correct + wrong, shuffle again
@@ -159,10 +195,11 @@
     return allChoices;
   }
 
-  // Return a string with the entire paragraph, including any underscores and
-  // the 4 choice buttons (plus progress) inline for the current word to guess.
+  // Return a string with the entire sanitized paragraph, including underscores for unguessed tokens,
+  // plus the 4 choice buttons and progress inline for the current guess.
   function buildSentenceHTML() {
     let html = '';
+
     // We'll figure out the 4 choices for the current token (if needed)
     const choices = getChoicesForCurrentToken();
 
@@ -182,7 +219,7 @@
         const thisIsCurrent = (guessableTokens[currentGuessIndex] === i);
 
         if (thisIsCurrent) {
-          // Show underscores
+          // We'll show underscores for the length
           let underscores = '_'.repeat(t.cleaned.length || 4);
 
           // Build the inline choice buttons + progress (the user wants them to the right).
@@ -248,24 +285,23 @@
         completionMsg.classList.remove('d-none');
       }
     } 
-    // If wrong, we do nothing except re-render. The buttons will re-shuffle in buildSentenceHTML
+    // If wrong, do nothing except re-render (choices re-shuffle)
     updateDisplayedText();
   }
 
   // Start the game
   startBtn.addEventListener('click', () => {
-    originalText = userInput.value.trim().toLowerCase();
-    if (!originalText) {
+    let rawInput = userInput.value.trim();
+    if (!rawInput) {
       alert('Please enter some text first!');
       return;
     }
 
-    // Hide initial view, show game view
-    initialView.classList.add('d-none');
-    gameView.classList.remove('d-none');
+    // 1) Sanitize text
+    sanitizedText = sanitizeText(rawInput);
 
-    // Split text into tokens by whitespace
-    const rawTokens = originalText.split(/\s+/);
+    // 2) Split by whitespace
+    const rawTokens = sanitizedText.split(/\s+/);
 
     tokenData = [];
     guessableTokens = [];
@@ -275,36 +311,45 @@
 
     // Build token data
     rawTokens.forEach(tok => {
+      // Clean leading/trailing underscores
       const cleaned = cleanWord(tok);
-      const skip = skipWordsSet.has(cleaned) || !cleaned;
+
+      // If after cleaning it's empty or skipWordsSet, we mark it skip
+      let skip = false;
+      if (!cleaned || skipWordsSet.has(cleaned)) {
+        skip = true;
+      }
+
       tokenData.push({
-        original: tok,   // stored as-lowercased
-        cleaned: cleaned,
+        original: tok,    // the sanitized raw token (with underscores replaced, etc.)
+        cleaned: cleaned, // the final "core" portion for guessing
         skip: skip,
-        guessed: false
+        guessed: skip     // skip-words are effectively "already guessed"
       });
     });
 
-    // Fill guessableTokens
+    // Fill guessableTokens from those not skip
     tokenData.forEach((t, idx) => {
       if (!t.skip) {
         guessableTokens.push(idx);
-      } else {
-        // skip-words are automatically "guessed"
-        t.guessed = true;
       }
     });
+
+    // Hide initial view, show game view
+    initialView.classList.add('d-none');
+    gameView.classList.remove('d-none');
 
     // Initial render
     updateDisplayedText();
   });
 
-  // Restart the game (same text)
+  // Restart the game (same sanitized text in memory)
   restartBtn.addEventListener('click', () => {
-    if (!originalText) return;
+    if (!sanitizedText) return;
 
     // Reset guess state
     tokenData.forEach((t) => {
+      // skip tokens remain guessed
       if (!t.skip) t.guessed = false;
     });
     currentGuessIndex = 0;
@@ -317,7 +362,7 @@
   // Clear all - reset the entire page to initial state
   function clearAllPage() {
     userInput.value = '';
-    originalText = '';
+    sanitizedText = '';
     tokenData = [];
     guessableTokens = [];
     currentGuessIndex = 0;
