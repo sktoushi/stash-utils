@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Sentence Reconstruction Game</title>
+  <!-- Bootstrap CSS (CDN) -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  />
+</head>
+<body class="bg-light">
+
+<div class="container my-5">
+  <h1 class="text-center mb-4">Sentence Reconstruction</h1>
+
+  <!-- Text Area and Control Buttons (Initial View) -->
+  <div id="initialView">
+    <div class="mb-3">
+      <label for="userInput" class="form-label fw-bold">Enter Your Passage:</label>
+      <textarea
+        class="form-control"
+        id="userInput"
+        rows="6"
+        placeholder="Type or paste your paragraphs here..."
+      ></textarea>
+    </div>
+    <button id="startBtn" class="btn btn-primary me-2">Start</button>
+    <button id="clearBtn" class="btn btn-secondary">Clear All</button>
+  </div>
+
+  <!-- Game View (Hidden by Default) -->
+  <div id="gameView" class="d-none">
+    <p class="fw-bold" id="progressText">Reconstructing your text (lowercased) ...</p>
+    <div class="mb-3">
+      <p id="workInProgress" class="p-3 border" style="min-height: 100px; white-space: pre-wrap;">
+        <!-- This is where the reconstructed text will gradually appear -->
+      </p>
+    </div>
+
+    <!-- Choice Buttons -->
+    <div class="d-flex flex-wrap mb-3" id="choiceButtons">
+      <!-- Buttons for the four distinct choices will be dynamically generated here -->
+    </div>
+
+    <!-- Informational Feedback -->
+    <div class="alert alert-info d-none" id="completionMsg"></div>
+
+    <!-- Game Control Buttons -->
+    <button id="restartBtn" class="btn btn-warning me-2">Restart</button>
+    <button id="clearBtn2" class="btn btn-secondary">Clear All</button>
+  </div>
+</div>
+
+<!-- Bootstrap Bundle JS (CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  /**
+   * Returns a cryptographically secure random number between 0 (inclusive) and 1 (exclusive).
+   */
+  function getSecureRandomNumber() {
+    const array = new Uint32Array(1);
+    window.crypto.getRandomValues(array);
+    return array[0] / (0xFFFFFFFF + 1);
+  }
+
+  // Grab references to DOM elements
+  const initialView = document.getElementById('initialView');
+  const gameView = document.getElementById('gameView');
+  const startBtn = document.getElementById('startBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const userInput = document.getElementById('userInput');
+
+  const progressText = document.getElementById('progressText');
+  const workInProgress = document.getElementById('workInProgress');
+  const choiceButtons = document.getElementById('choiceButtons');
+  const completionMsg = document.getElementById('completionMsg');
+
+  const restartBtn = document.getElementById('restartBtn');
+  const clearBtn2 = document.getElementById('clearBtn2');
+
+  // Some example 'skip' words (articles, conjunctions, etc.) + single punctuation
+  // You can add more if needed
+  const skipWordsSet = new Set([
+    'a', 'an', 'the', 'is', 'are', 'and', 'or', 'but', 'nor', 'yet', 'so', 'for',
+    // additional short words or punctuation if you like, e.g. 'of', 'in', etc.
+    'of', 'in', 'to', 'by', 'with', 'from', '&', ',', '.', '?', '!', ':', ';', '"', '\'', '(', ')', '-', '_'
+  ]);
+
+  // We'll store the entire token info here
+  // each element: { original: string, cleaned: string, skip: boolean, guessed: boolean }
+  let tokenData = [];
+  // We'll keep track of only the guessable tokens (meaningful words) in their original order
+  let guessableTokens = []; // array of indices pointing to tokenData
+  let currentGuessIndex = 0; // which guessable token are we on?
+
+  // We'll store the original text (lowercased) so we can re-init on restart
+  let originalText = '';
+
+  // HELPER: remove leading/trailing punctuation
+  // but keep apostrophes if they're in the middle of the word
+  function cleanWord(word) {
+    // Lowercase the word
+    let w = word.toLowerCase();
+
+    // If the entire thing is punctuation, it becomes ''
+    // but if there's an apostrophe or dash in the middle we keep it
+    // We'll remove leading/trailing punctuation with a regex
+    // so "hello," => "hello", "(hello)" => "hello", "don't" => "don't"
+    w = w.replace(/^[^a-z0-9']+|[^a-z0-9']+$/gi, '');
+    return w;
+  }
+
+  // HELPER: shuffle array using secure random
+  function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(getSecureRandomNumber() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  // Build the displayed text in #workInProgress
+  function updateDisplayedText() {
+    const displayed = tokenData.map((t) => {
+      if (t.skip) {
+        // automatically display
+        return t.original;
+      } else if (t.guessed) {
+        // if guessed, show the original
+        return t.original;
+      }
+      // not guessed yet, we can display an underscore or blank
+      // or if we want to replicate spacing or punctuation, do so
+      // We'll replace the word with some underscores for clarity
+      // e.g., "____"
+      // but the user wanted to see them gradually appear
+      // For clarity, let's do blank or underscores
+      const underscore = '_'.repeat(t.cleaned.length || 4);
+      return underscore;
+    });
+
+    workInProgress.textContent = displayed.join(' ');
+  }
+
+  // Generate four distinct choices for the next guess
+  function generateChoices() {
+    choiceButtons.innerHTML = '';
+
+    if (currentGuessIndex >= guessableTokens.length) {
+      // No more choices
+      return;
+    }
+    const correctTokenIndex = guessableTokens[currentGuessIndex];
+    const correctCleanWord = tokenData[correctTokenIndex].cleaned;
+
+    // We need to pick 3 random wrong choices from other guessable tokens
+    // that are not this correct one
+    const wrongPool = guessableTokens.filter(i => i !== correctTokenIndex).map(i => tokenData[i].cleaned);
+
+    shuffleArray(wrongPool);
+    const wrongChoices = wrongPool.slice(0, 3);
+
+    let fourChoices = [correctCleanWord, ...wrongChoices];
+    shuffleArray(fourChoices);
+
+    // Create buttons
+    fourChoices.forEach(choice => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-outline-dark me-2 mb-2';
+      btn.textContent = choice;
+      btn.onclick = () => handleChoiceClick(choice);
+      choiceButtons.appendChild(btn);
+    });
+  }
+
+  // When the user clicks one of the choice buttons
+  function handleChoiceClick(chosenWord) {
+    if (currentGuessIndex >= guessableTokens.length) {
+      return;
+    }
+
+    const correctTokenIndex = guessableTokens[currentGuessIndex];
+    const correctCleanWord = tokenData[correctTokenIndex].cleaned;
+
+    if (chosenWord === correctCleanWord) {
+      // Mark guessed
+      tokenData[correctTokenIndex].guessed = true;
+      currentGuessIndex++;
+      updateDisplayedText();
+
+      if (currentGuessIndex === guessableTokens.length) {
+        // Completed
+        completionMsg.textContent = 'You have successfully reconstructed the text!';
+        completionMsg.classList.remove('d-none');
+        // Clear choices
+        choiceButtons.innerHTML = '';
+      } else {
+        // Generate next set of choices
+        generateChoices();
+      }
+    } else {
+      // Wrong guess, shuffle again
+      generateChoices();
+    }
+  }
+
+  // Start the game
+  startBtn.addEventListener('click', () => {
+    originalText = userInput.value.trim().toLowerCase();
+    if (!originalText) {
+      alert('Please enter some text first!');
+      return;
+    }
+
+    // Hide initial view, show game view
+    initialView.classList.add('d-none');
+    gameView.classList.remove('d-none');
+
+    // Split text into tokens by whitespace
+    const rawTokens = originalText.split(/\s+/);
+
+    tokenData = [];
+    guessableTokens = [];
+    currentGuessIndex = 0;
+    completionMsg.classList.add('d-none');
+    completionMsg.textContent = '';
+
+    // Build our token data
+    // We'll keep the original version (already lowercased) + cleaned + skip
+    rawTokens.forEach((tok) => {
+      const cleaned = cleanWord(tok);
+      const skip = skipWordsSet.has(cleaned) || !cleaned;
+      tokenData.push({
+        original: tok,  // already lowercased
+        cleaned: cleaned,
+        skip: skip,
+        guessed: false
+      });
+    });
+
+    // Build guessableTokens from tokens that are not skip
+    tokenData.forEach((t, idx) => {
+      if (!t.skip) {
+        guessableTokens.push(idx);
+      } else {
+        // skip-words are automatically considered "guessed"
+        t.guessed = true;
+      }
+    });
+
+    // Update displayed text (initially with underscores for guessable words)
+    updateDisplayedText();
+
+    // Generate the first set of 4 choices
+    generateChoices();
+  });
+
+  // Restart the game (with the same text still in memory)
+  restartBtn.addEventListener('click', () => {
+    if (!originalText) return;
+
+    // Re-init the game state
+    tokenData.forEach((t) => {
+      // skip tokens remain guessed
+      if (!t.skip) {
+        t.guessed = false;
+      }
+    });
+
+    currentGuessIndex = 0;
+    completionMsg.classList.add('d-none');
+    completionMsg.textContent = '';
+
+    updateDisplayedText();
+    generateChoices();
+  });
+
+  // Clear all - reset the entire page to initial state
+  function clearAllPage() {
+    userInput.value = '';
+    originalText = '';
+    tokenData = [];
+    guessableTokens = [];
+    currentGuessIndex = 0;
+    workInProgress.textContent = '';
+    completionMsg.classList.add('d-none');
+    completionMsg.textContent = '';
+    choiceButtons.innerHTML = '';
+
+    initialView.classList.remove('d-none');
+    gameView.classList.add('d-none');
+  }
+
+  clearBtn.addEventListener('click', clearAllPage);
+  clearBtn2.addEventListener('click', clearAllPage);
+
+</script>
+</body>
+</html>
