@@ -169,6 +169,10 @@
       <button class="btn btn-success btn-lg" onclick="copyBackText()">Copy Back</button>
       <button class="btn btn-info btn-lg" onclick="openFrontAsLink()">Open Front as Link</button>
       <button class="btn btn-info btn-lg" onclick="openBackAsLink()">Open Back as Link</button>
+
+      <!-- NEW BUTTONS for MaxMemorizer -->
+      <button class="btn btn-primary btn-lg" onclick="frontCardMaxMemorizer()">FrontCard-MaxMemorizer</button>
+      <button class="btn btn-primary btn-lg" onclick="backCardMaxMemorizer()">BackCard-MaxMemorizer</button>
     </div>
 
     <!-- Search Buttons (Google & ChatGPT); hidden until reveal -->
@@ -1310,6 +1314,23 @@
     }
 
     /****************************************************
+     * NEW: Redirect to MaxMemorizer with the front/back text
+     ****************************************************/
+    function frontCardMaxMemorizer() {
+      if (!currentFront) return;
+      // pass the front text as a param in the URL
+      const url = "maxmemorizer.html?startText=" + encodeURIComponent(currentFront);
+      window.open(url, "_blank");
+    }
+
+    function backCardMaxMemorizer() {
+      if (!currentBack) return;
+      // pass the back text as a param in the URL
+      const url = "maxmemorizer.html?startText=" + encodeURIComponent(currentBack);
+      window.open(url, "_blank");
+    }
+
+    /****************************************************
      * Searching
      ****************************************************/
     function googleSearchFront() {
@@ -1372,7 +1393,7 @@
         timestamp: ts
       };
       state.drawHistory.unshift(entry);
-      while (state.drawHistory.length > historyLimit) {
+      while (state.drawHistory.length > 5) {
         state.drawHistory.pop();
       }
     }
@@ -1582,7 +1603,6 @@
 
       // If rangeEnd is empty, but rangeStart is not, do one link
       if (!rangeEndVal && rangeStartVal) {
-        // single link
         const url = `https://github.com/${username}/${repository}/issues/${rangeStartVal}`;
         const line = `${url}, ${datePrefix}`;
         const inserted = await addLinesToDb([line], false, 1);
