@@ -19,7 +19,7 @@
 
     /* Make sure choice buttons + progress appear inline for the current guess */
     .choice-buttons-inline {
-      margin-left: 8px; 
+      margin-left: 8px;
       display: inline-block;
       vertical-align: middle;
       white-space: nowrap;
@@ -69,6 +69,106 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+  /***********************************************
+   * IndexedDB Setup: same logic from your main code
+   ***********************************************/
+  const DB_NAME = 'myCsvDb_default';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'records';
+  let db = null;
+
+  /**
+   * Open (or create/upgrade) the IndexedDB database.
+   */
+  function openDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = (event) => {
+        db = event.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          const store = db.createObjectStore(STORE_NAME, {
+            keyPath: 'id',
+            autoIncrement: true
+          });
+          store.createIndex('textIndex', 'text', { unique: true });
+        }
+      };
+      request.onsuccess = (event) => {
+        db = event.target.result;
+        resolve(db);
+      };
+      request.onerror = (event) => {
+        console.error('IndexedDB error:', event.target.error);
+        reject(event.target.error);
+      };
+    });
+  }
+
+  /**
+   * Adds the given lines to the DB, skipping duplicates (by checking textIndex).
+   * @param {string[]} lines
+   */
+  function addLinesToDb(lines) {
+    return new Promise((resolve, reject) => {
+      if (!db) {
+        console.error('IndexedDB not opened yet!');
+        resolve(0);
+        return;
+      }
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const textIndex = store.index('textIndex');
+
+      let addedCount = 0;
+      let processedCount = 0;
+
+      function processNextLine(i) {
+        if (i >= lines.length) {
+          resolve(addedCount);
+          return;
+        }
+        const line = lines[i].trim();
+        if (!line) {
+          processedCount++;
+          processNextLine(i + 1);
+          return;
+        }
+        // Check if it's already in DB
+        const checkReq = textIndex.get(line);
+        checkReq.onsuccess = () => {
+          if (checkReq.result) {
+            // Duplicate found; skip adding
+            processedCount++;
+            processNextLine(i + 1);
+          } else {
+            // Add new record
+            const addReq = store.add({ text: line });
+            addReq.onsuccess = () => {
+              addedCount++;
+              processedCount++;
+              processNextLine(i + 1);
+            };
+            addReq.onerror = () => {
+              processedCount++;
+              processNextLine(i + 1);
+            };
+          }
+        };
+        checkReq.onerror = () => {
+          processedCount++;
+          processNextLine(i + 1);
+        };
+      }
+      processNextLine(0);
+
+      tx.oncomplete = () => { /* transaction done */ };
+      tx.onerror = (err) => {
+        console.error('Transaction error:', err);
+        reject(err);
+      };
+    });
+  }
+
   /**
    * Returns a cryptographically secure random number between 0 (inclusive) and 1 (exclusive).
    */
@@ -78,6 +178,9 @@
     return array[0] / (0xFFFFFFFF + 1);
   }
 
+  /***********************************************
+   * Sentence Reconstruction Logic
+   ***********************************************/
   // Grab references to DOM elements
   const initialView = document.getElementById('initialView');
   const gameView = document.getElementById('gameView');
@@ -92,7 +195,7 @@
   const restartBtn = document.getElementById('restartBtn');
   const clearBtn2 = document.getElementById('clearBtn2');
 
-  // Expanded skip words (common short or "filler" words)
+  // Expanded skip words set
   const skipWordsSet = new Set([
     'a','an','the','is','are','and','or','but','nor','yet','so','for','of','in','to','by','with','from',
     'it','its','be','am','was','were','this','that','these','those','at','on','if','do','does','did',
@@ -101,57 +204,36 @@
     'go','goes','went','just','now','will','shall','very','every','all','what','when','where','how','why'
   ]);
 
-  // We'll store metadata for each token in the input.
-  // tokenData[i] = { original: string, cleaned: string, skip: boolean, guessed: boolean }
+  // We'll store metadata for each token
   let tokenData = [];
-
-  // guessableTokens is an array of indices pointing into tokenData for those tokens that must be guessed
+  // Indices for guessable tokens
   let guessableTokens = [];
-
-  // The current index within guessableTokens that the user is trying to guess
+  // Current index in guessableTokens
   let currentGuessIndex = 0;
-
-  // We'll store the sanitized-lowercased text so we can re-init if needed
+  // We store sanitized text for re-init on "Restart"
   let sanitizedText = '';
 
   /**
    * Sanitize the text:
-   * - Replace double quotes -> " __ "
-   * - Replace question marks -> " _q "
-   * - Replace exclamation -> " _x "
-   * - Replace all other punctuation/special chars -> " _ "
-   * - Then convert to lowercase
-   * - Replace multiple spaces with single space
-   * - Trim
+   *  - Replace double quotes -> " __ "
+   *  - Replace question marks -> " _q "
+   *  - Replace exclamation -> " _x "
+   *  - Replace all other punctuation/special chars -> " _ "
+   *  - convert to lowercase
+   *  - remove multiple spaces
    */
   function sanitizeText(input) {
     let text = input;
-
-    // Replace double quotes with " __ "
     text = text.replace(/"/g, ' __ ');
-
-    // Replace question marks with " _q "
     text = text.replace(/\?/g, ' _q ');
-
-    // Replace exclamation marks with " _x "
     text = text.replace(/!/g, ' _x ');
-
-    // Replace everything else that's not alphanumeric or whitespace or underscores
-    // or our special placeholders (_q, _x, __) with " _ "
     text = text.replace(/[^a-zA-Z0-9\s_]/g, ' _ ');
-
-    // Now convert to lowercase
     text = text.toLowerCase();
-
-    // Collapse multiple spaces
     text = text.replace(/\s+/g, ' ').trim();
-
     return text;
   }
 
-  // HELPER to remove leading/trailing underscores/spaces from a token, if any
-  // Example: "___hello__" => "hello"
-  // We'll just strip underscores from the edges; if token is entirely underscores, it becomes empty
+  // Helper to strip underscores from edges
   function cleanWord(word) {
     return word.replace(/^_+|_+$/g, '');
   }
@@ -165,28 +247,25 @@
     return array;
   }
 
-  // Build an array of four unique choices: the correct word, plus 3 distinct "wrong" words
+  // Build array of four unique choices
   function getChoicesForCurrentToken() {
     if (currentGuessIndex >= guessableTokens.length) {
       return [];
     }
-
     const correctIndex = guessableTokens[currentGuessIndex];
     const correctClean = tokenData[correctIndex].cleaned;
 
-    // Build a pool of all other guessable words (cleaned)
+    // All other guessable words
     const pool = guessableTokens
       .filter(i => i !== correctIndex)
       .map(i => tokenData[i].cleaned);
 
-    // remove duplicates from the pool if any
     const uniquePool = Array.from(new Set(pool));
     shuffleArray(uniquePool);
 
-    // Take the first 3
+    // Take first 3
     const wrongChoices = uniquePool.slice(0, 3);
 
-    // Combine correct + wrong, then shuffle again
     let allChoices = [correctClean, ...wrongChoices];
     shuffleArray(allChoices);
 
@@ -194,9 +273,7 @@
   }
 
   /**
-   * Returns a Pantone-ish green gradient hex color based on progress (0-100).
-   * 
-   * We move from white => light light green => light green => greenish => green => deeper green at 100%.
+   * Returns a greenish hex color based on progress (0-100).
    */
   function getProgressColor(percentage) {
     if (percentage <= 0) {
@@ -210,55 +287,47 @@
     } else if (percentage < 100) {
       return '#31a354'; /* More intense green */
     } else {
-      return '#006d2c'; /* Final deeper green at 100% */
+      return '#006d2c'; /* Deep green at 100% */
     }
   }
 
-  // Return a string with the entire sanitized paragraph, including underscores for unguessed tokens,
-  // plus the 4 choice buttons and progress inline for the current guess.
+  // Build the reconstruction HTML
   function buildSentenceHTML() {
     let html = '';
-
-    // We'll figure out the 4 choices for the current token (if needed)
     const choices = getChoicesForCurrentToken();
 
-    // Calculate progress if we have guessable tokens
     let progressPercent = 0;
     if (guessableTokens.length > 0) {
       progressPercent = (currentGuessIndex / guessableTokens.length) * 100;
     }
     const progressPercentFixed = progressPercent.toFixed(1);
-
-    // Get color for current progress
     const buttonColor = getProgressColor(progressPercent);
 
     for (let i = 0; i < tokenData.length; i++) {
       const t = tokenData[i];
-      // If skip or guessed, display the token as-is
       if (t.skip || t.guessed) {
+        // Display token as-is
         html += `<span class="me-1">${t.original}</span>`;
       } else {
-        // Not guessed yet. Check if this is the current token to guess
         const thisIsCurrent = (guessableTokens[currentGuessIndex] === i);
-
         if (thisIsCurrent) {
-          // We'll show underscores for the length
+          // Show underscores + choice buttons
           let underscores = '_'.repeat(t.cleaned.length || 4);
 
-          // Build the inline choice buttons + progress
           let buttonsHTML = '';
           choices.forEach(choice => {
             buttonsHTML += `
-              <button 
-                class="btn me-2 mb-1" 
+              <button
+                class="btn me-2 mb-1"
                 style="display:inline-block; background-color: ${buttonColor}; color: #000;"
                 onclick="handleChoiceClick('${choice}')"
               >
                 ${choice}
-              </button>`;
+              </button>
+            `;
           });
 
-          // The user wants a 5th disabled button showing progress
+          // 5th disabled button for progress
           buttonsHTML += `
             <button
               class="btn mb-1"
@@ -266,7 +335,8 @@
               disabled
             >
               ${progressPercentFixed}%
-            </button>`;
+            </button>
+          `;
 
           html += `
             <span class="me-1" style="white-space: nowrap;">
@@ -277,7 +347,7 @@
             </span>
           `;
         } else {
-          // It's guessable but not the current token. Just show underscores
+          // It's guessable but not current
           let underscores = '_'.repeat(t.cleaned.length || 4);
           html += `<span class="me-1">${underscores}</span>`;
         }
@@ -286,107 +356,31 @@
     return html;
   }
 
-  // Update the displayed text in #workInProgress
   function updateDisplayedText() {
     workInProgress.innerHTML = buildSentenceHTML();
   }
 
-  // When the user clicks on one of the choice buttons
+  // Handle choice clicks
   function handleChoiceClick(chosenWord) {
     if (currentGuessIndex >= guessableTokens.length) {
       return;
     }
-
     const correctTokenIndex = guessableTokens[currentGuessIndex];
     const correctClean = tokenData[correctTokenIndex].cleaned;
 
     if (chosenWord === correctClean) {
-      // Mark the token as guessed
       tokenData[correctTokenIndex].guessed = true;
       currentGuessIndex++;
-
-      // Check if we've completed all guessable tokens
       if (currentGuessIndex === guessableTokens.length) {
-        // Show final result
         completionMsg.textContent = 'You have successfully reconstructed the text!';
         completionMsg.classList.remove('d-none');
       }
     }
-    // If wrong, do nothing except re-render (choices re-shuffle)
     updateDisplayedText();
   }
+  window.handleChoiceClick = handleChoiceClick; // expose globally
 
-  // Start the game
-  startBtn.addEventListener('click', () => {
-    let rawInput = userInput.value.trim();
-    if (!rawInput) {
-      alert('Please enter some text first!');
-      return;
-    }
-
-    // 1) Sanitize text
-    sanitizedText = sanitizeText(rawInput);
-
-    // 2) Split by whitespace
-    const rawTokens = sanitizedText.split(/\s+/);
-
-    tokenData = [];
-    guessableTokens = [];
-    currentGuessIndex = 0;
-    completionMsg.classList.add('d-none');
-    completionMsg.textContent = '';
-
-    // Build token data
-    rawTokens.forEach(tok => {
-      // Clean leading/trailing underscores
-      const cleaned = cleanWord(tok);
-
-      // If after cleaning it's empty or skipWordsSet, mark it as skip
-      let skip = false;
-      if (!cleaned || skipWordsSet.has(cleaned)) {
-        skip = true;
-      }
-
-      tokenData.push({
-        original: tok,    // the sanitized raw token (with underscores replaced, etc.)
-        cleaned: cleaned, // the final "core" portion for guessing
-        skip: skip,
-        guessed: skip     // skip-words are effectively "already guessed"
-      });
-    });
-
-    // Fill guessableTokens from those not skipped
-    tokenData.forEach((t, idx) => {
-      if (!t.skip) {
-        guessableTokens.push(idx);
-      }
-    });
-
-    // Hide initial view, show game view
-    initialView.classList.add('d-none');
-    gameView.classList.remove('d-none');
-
-    // Initial render
-    updateDisplayedText();
-  });
-
-  // Restart the game (same sanitized text in memory)
-  restartBtn.addEventListener('click', () => {
-    if (!sanitizedText) return;
-
-    // Reset guess state
-    tokenData.forEach((t) => {
-      // skip tokens remain guessed
-      if (!t.skip) t.guessed = false;
-    });
-    currentGuessIndex = 0;
-    completionMsg.classList.add('d-none');
-    completionMsg.textContent = '';
-
-    updateDisplayedText();
-  });
-
-  // Clear all - reset the entire page to initial state
+  // Clear all - reset page
   function clearAllPage() {
     userInput.value = '';
     sanitizedText = '';
@@ -400,12 +394,96 @@
     initialView.classList.remove('d-none');
     gameView.classList.add('d-none');
   }
-
   clearBtn.addEventListener('click', clearAllPage);
   clearBtn2.addEventListener('click', clearAllPage);
 
-  // Expose handleChoiceClick globally so inline onclick works
-  window.handleChoiceClick = handleChoiceClick;
+  // Start the game + log input to IndexedDB
+  startBtn.addEventListener('click', async () => {
+    let rawInput = userInput.value.trim();
+    if (!rawInput) {
+      alert('Please enter some text first!');
+      return;
+    }
+
+    /****************************************
+     * 1) Write the user's text into IndexedDB
+     *    (similar to "Add Text to DB" logic)
+     ****************************************/
+    await openDatabase();
+
+    // Replace commas with underscores
+    rawInput = rawInput.replace(/,/g, '_');
+
+    // Build date-time prefix => "YYMMDD hh:mm:ss"
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const datePrefix = `${yy}${mm}${dd} ${hh}:${min}:${ss}`;
+
+    const fullLine = `${datePrefix}, ${rawInput}`;
+    try {
+      const insertedCount = await addLinesToDb([fullLine]);
+      console.log(`Inserted ${insertedCount} line(s) into IndexedDB.`);
+    } catch (err) {
+      console.error('Error inserting line into DB:', err);
+    }
+
+    /****************************************
+     * 2) Proceed with the sentence game logic
+     ****************************************/
+    // Now sanitize and set up the reconstruction game
+    sanitizedText = sanitizeText(rawInput);
+    const rawTokens = sanitizedText.split(/\s+/);
+
+    tokenData = [];
+    guessableTokens = [];
+    currentGuessIndex = 0;
+    completionMsg.classList.add('d-none');
+    completionMsg.textContent = '';
+
+    rawTokens.forEach(tok => {
+      const cleaned = cleanWord(tok);
+      let skip = false;
+      if (!cleaned || skipWordsSet.has(cleaned)) {
+        skip = true;
+      }
+      tokenData.push({
+        original: tok,
+        cleaned: cleaned,
+        skip: skip,
+        guessed: skip // skip-words are effectively guessed
+      });
+    });
+
+    // Indices for tokens that need guessing
+    tokenData.forEach((t, idx) => {
+      if (!t.skip) {
+        guessableTokens.push(idx);
+      }
+    });
+
+    // Switch UI to game mode
+    initialView.classList.add('d-none');
+    gameView.classList.remove('d-none');
+
+    updateDisplayedText();
+  });
+
+  // Restart game (same sanitized text)
+  restartBtn.addEventListener('click', () => {
+    if (!sanitizedText) return;
+    tokenData.forEach(t => {
+      if (!t.skip) t.guessed = false;
+    });
+    currentGuessIndex = 0;
+    completionMsg.classList.add('d-none');
+    completionMsg.textContent = '';
+    updateDisplayedText();
+  });
 </script>
 </body>
 </html>
