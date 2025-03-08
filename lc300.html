@@ -171,8 +171,12 @@
       <button class="btn btn-info btn-lg" onclick="openBackAsLink()">Open Back as Link</button>
 
       <!-- NEW BUTTONS for MaxMemorizer -->
-      <button class="btn btn-primary btn-lg" onclick="frontCardMaxMemorizer()">FrontCard-MaxMemorizer</button>
-      <button class="btn btn-primary btn-lg" onclick="backCardMaxMemorizer()">BackCard-MaxMemorizer</button>
+      <button class="btn btn-primary btn-lg" onclick="frontCardMaxMemorizer()">
+        FrontCard-MaxMemorizer
+      </button>
+      <button class="btn btn-primary btn-lg" onclick="backCardMaxMemorizer()">
+        BackCard-MaxMemorizer
+      </button>
     </div>
 
     <!-- Search Buttons (Google & ChatGPT); hidden until reveal -->
@@ -414,9 +418,7 @@
       drawHistory: []
     };
     const historyLimit = 5;
-    let lastDrawnId = null;
-
-    // We'll keep track if a card is currently drawn (so we can show/hide the attribute section).
+    let lastDrawnId = null; // store the card ID we last drew
     let currentlyDrawnRecordId = null;
 
     // Prevent consecutive or infinite date-based auto-draws:
@@ -806,6 +808,7 @@
           if (i !== j) {
             const front = attributes[i];
             const back = attributes[j];
+            // build a unique card ID
             const cardUniqueId = (recordId << 16) + pairIndex;
             results.push({ id: cardUniqueId, front, back });
             pairIndex++;
@@ -884,7 +887,7 @@
       }
 
       const selectedId = weightedPick(state[chosenBucket]);
-      lastDrawnId = selectedId;
+      lastDrawnId = selectedId; // store the card ID
       currentlyDrawnRecordId = getRecordIdFromCardId(selectedId);
 
       // Move from bucket2 => bucket1, or increment bucket1 freq
@@ -1314,19 +1317,19 @@
     }
 
     /****************************************************
-     * NEW: Redirect to MaxMemorizer with the front/back text
+     * NEW: Redirect to maxmemorizer with just cardId & side
      ****************************************************/
     function frontCardMaxMemorizer() {
-      if (!currentFront) return;
-      // pass the front text as a param in the URL
-      const url = "maxmemorizer.html?startText=" + encodeURIComponent(currentFront);
+      if (!lastDrawnId) return; // ensure we have a drawn card
+      // pass the cardId & side=front
+      const url = `maxmemorizer.html?cardId=${lastDrawnId}&side=front`;
       window.open(url, "_blank");
     }
 
     function backCardMaxMemorizer() {
-      if (!currentBack) return;
-      // pass the back text as a param in the URL
-      const url = "maxmemorizer.html?startText=" + encodeURIComponent(currentBack);
+      if (!lastDrawnId) return; // ensure we have a drawn card
+      // pass the cardId & side=back
+      const url = `maxmemorizer.html?cardId=${lastDrawnId}&side=back`;
       window.open(url, "_blank");
     }
 
@@ -1603,6 +1606,7 @@
 
       // If rangeEnd is empty, but rangeStart is not, do one link
       if (!rangeEndVal && rangeStartVal) {
+        // single link
         const url = `https://github.com/${username}/${repository}/issues/${rangeStartVal}`;
         const line = `${url}, ${datePrefix}`;
         const inserted = await addLinesToDb([line], false, 1);
