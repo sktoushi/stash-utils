@@ -92,11 +92,13 @@
   const restartBtn = document.getElementById('restartBtn');
   const clearBtn2 = document.getElementById('clearBtn2');
 
-  // Skip words (articles, short words, etc.) that should be auto-guessed
-  // You can add/remove from here as needed.
+  // Expanded skip words (common short or "filler" words)
   const skipWordsSet = new Set([
-    'a', 'an', 'the', 'is', 'are', 'and', 'or', 'but', 'nor', 'yet', 'so', 'for',
-    'of', 'in', 'to', 'by', 'with', 'from'
+    'a','an','the','is','are','and','or','but','nor','yet','so','for','of','in','to','by','with','from',
+    'it','its','be','am','was','were','this','that','these','those','at','on','if','do','does','did',
+    'because','since','i','me','my','you','your','he','she','they','them','we','us','as','then','out',
+    'up','down','over','under','above','below','have','has','had','can','may','should','would','could',
+    'go','goes','went','just','now','will','shall','very','every','all','what','when','where','how','why'
   ]);
 
   // We'll store metadata for each token in the input.
@@ -125,7 +127,7 @@
   function sanitizeText(input) {
     let text = input;
 
-    // Replace double quotes with " __ " 
+    // Replace double quotes with " __ "
     text = text.replace(/"/g, ' __ ');
 
     // Replace question marks with " _q "
@@ -136,16 +138,12 @@
 
     // Replace everything else that's not alphanumeric or whitespace or underscores
     // or our special placeholders (_q, _x, __) with " _ "
-    // We'll do a broad pattern, but skip letters, digits, whitespace, underscore
-    // plus skip any leftover of the above sequences
-    // We'll do multiple passes: first, any leftover punctuation is turned into " _ "
-    // (including single quotes, apostrophes, commas, etc.)
     text = text.replace(/[^a-zA-Z0-9\s_]/g, ' _ ');
 
     // Now convert to lowercase
     text = text.toLowerCase();
 
-    // Collapse multiple spaces 
+    // Collapse multiple spaces
     text = text.replace(/\s+/g, ' ').trim();
 
     return text;
@@ -185,14 +183,35 @@
     const uniquePool = Array.from(new Set(pool));
     shuffleArray(uniquePool);
 
-    // Take first 3
+    // Take the first 3
     const wrongChoices = uniquePool.slice(0, 3);
 
-    // Combine correct + wrong, shuffle again
+    // Combine correct + wrong, then shuffle again
     let allChoices = [correctClean, ...wrongChoices];
     shuffleArray(allChoices);
 
     return allChoices;
+  }
+
+  /**
+   * Returns a Pantone-ish green gradient hex color based on progress (0-100).
+   * 
+   * We move from white => light light green => light green => greenish => green => deeper green at 100%.
+   */
+  function getProgressColor(percentage) {
+    if (percentage <= 0) {
+      return '#FFFFFF'; /* White */
+    } else if (percentage < 25) {
+      return '#edf8e1'; /* Very light green */
+    } else if (percentage < 50) {
+      return '#bae4b3'; /* Light green */
+    } else if (percentage < 75) {
+      return '#74c476'; /* Greenish */
+    } else if (percentage < 100) {
+      return '#31a354'; /* More intense green */
+    } else {
+      return '#006d2c'; /* Final deeper green at 100% */
+    }
   }
 
   // Return a string with the entire sanitized paragraph, including underscores for unguessed tokens,
@@ -204,10 +223,14 @@
     const choices = getChoicesForCurrentToken();
 
     // Calculate progress if we have guessable tokens
-    let progressPercent = '0.0';
+    let progressPercent = 0;
     if (guessableTokens.length > 0) {
-      progressPercent = ((currentGuessIndex / guessableTokens.length) * 100).toFixed(1);
+      progressPercent = (currentGuessIndex / guessableTokens.length) * 100;
     }
+    const progressPercentFixed = progressPercent.toFixed(1);
+
+    // Get color for current progress
+    const buttonColor = getProgressColor(progressPercent);
 
     for (let i = 0; i < tokenData.length; i++) {
       const t = tokenData[i];
@@ -222,23 +245,27 @@
           // We'll show underscores for the length
           let underscores = '_'.repeat(t.cleaned.length || 4);
 
-          // Build the inline choice buttons + progress (the user wants them to the right).
+          // Build the inline choice buttons + progress
           let buttonsHTML = '';
           choices.forEach(choice => {
-            buttonsHTML += `<button 
-              class="btn btn-outline-dark me-2 mb-1" 
-              style="display:inline-block;"
-              onclick="handleChoiceClick('${choice}')"
-            >${choice}</button>`;
+            buttonsHTML += `
+              <button 
+                class="btn me-2 mb-1" 
+                style="display:inline-block; background-color: ${buttonColor}; color: #000;"
+                onclick="handleChoiceClick('${choice}')"
+              >
+                ${choice}
+              </button>`;
           });
 
           // The user wants a 5th disabled button showing progress
-          buttonsHTML += `<button
-              class="btn btn-secondary mb-1"
-              style="display:inline-block;"
+          buttonsHTML += `
+            <button
+              class="btn mb-1"
+              style="display:inline-block; background-color: ${buttonColor}; color: #000;"
               disabled
             >
-            ${progressPercent}%
+              ${progressPercentFixed}%
             </button>`;
 
           html += `
@@ -284,7 +311,7 @@
         completionMsg.textContent = 'You have successfully reconstructed the text!';
         completionMsg.classList.remove('d-none');
       }
-    } 
+    }
     // If wrong, do nothing except re-render (choices re-shuffle)
     updateDisplayedText();
   }
@@ -314,7 +341,7 @@
       // Clean leading/trailing underscores
       const cleaned = cleanWord(tok);
 
-      // If after cleaning it's empty or skipWordsSet, we mark it skip
+      // If after cleaning it's empty or skipWordsSet, mark it as skip
       let skip = false;
       if (!cleaned || skipWordsSet.has(cleaned)) {
         skip = true;
@@ -328,7 +355,7 @@
       });
     });
 
-    // Fill guessableTokens from those not skip
+    // Fill guessableTokens from those not skipped
     tokenData.forEach((t, idx) => {
       if (!t.skip) {
         guessableTokens.push(idx);
