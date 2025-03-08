@@ -69,16 +69,17 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  /***********************************************
-   * IndexedDB Setup: same logic from your main code
-   ***********************************************/
-  const DB_NAME = 'myCsvDb_default';
+  /**************************************************
+   *   Shared IndexedDB Setup
+   *   Using the same DB_NAME, STORE_NAME
+   **************************************************/
+  const DB_NAME = "myCsvDb_default"; // must match Land Cruiser 300 page
   const DB_VERSION = 1;
-  const STORE_NAME = 'records';
+  const STORE_NAME = "records";
   let db = null;
 
   /**
-   * Open (or create/upgrade) the IndexedDB database.
+   * Opens (or creates/upgrades) the shared IndexedDB database.
    */
   function openDatabase() {
     return new Promise((resolve, reject) => {
@@ -98,31 +99,30 @@
         resolve(db);
       };
       request.onerror = (event) => {
-        console.error('IndexedDB error:', event.target.error);
+        console.error("IndexedDB error:", event.target.error);
         reject(event.target.error);
       };
     });
   }
 
   /**
-   * Adds the given lines to the DB, skipping duplicates (by checking textIndex).
-   * @param {string[]} lines
+   * Insert lines into DB, skipping duplicates.
    */
   function addLinesToDb(lines) {
     return new Promise((resolve, reject) => {
       if (!db) {
-        console.error('IndexedDB not opened yet!');
+        console.error("IndexedDB is not opened yet!");
         resolve(0);
         return;
       }
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const textIndex = store.index('textIndex');
-
       let addedCount = 0;
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      const textIndex = store.index("textIndex");
+
       let processedCount = 0;
 
-      function processNextLine(i) {
+      function processNext(i) {
         if (i >= lines.length) {
           resolve(addedCount);
           return;
@@ -130,40 +130,40 @@
         const line = lines[i].trim();
         if (!line) {
           processedCount++;
-          processNextLine(i + 1);
+          processNext(i + 1);
           return;
         }
-        // Check if it's already in DB
         const checkReq = textIndex.get(line);
         checkReq.onsuccess = () => {
           if (checkReq.result) {
-            // Duplicate found; skip adding
+            // Duplicate found, skip
             processedCount++;
-            processNextLine(i + 1);
+            processNext(i + 1);
           } else {
-            // Add new record
             const addReq = store.add({ text: line });
             addReq.onsuccess = () => {
               addedCount++;
               processedCount++;
-              processNextLine(i + 1);
+              processNext(i + 1);
             };
             addReq.onerror = () => {
               processedCount++;
-              processNextLine(i + 1);
+              processNext(i + 1);
             };
           }
         };
         checkReq.onerror = () => {
           processedCount++;
-          processNextLine(i + 1);
+          processNext(i + 1);
         };
       }
-      processNextLine(0);
+      processNext(0);
 
-      tx.oncomplete = () => { /* transaction done */ };
+      tx.oncomplete = () => {
+        // done
+      };
       tx.onerror = (err) => {
-        console.error('Transaction error:', err);
+        console.error("Transaction error:", err);
         reject(err);
       };
     });
@@ -178,22 +178,21 @@
     return array[0] / (0xFFFFFFFF + 1);
   }
 
-  /***********************************************
-   * Sentence Reconstruction Logic
-   ***********************************************/
-  // Grab references to DOM elements
-  const initialView = document.getElementById('initialView');
-  const gameView = document.getElementById('gameView');
-  const startBtn = document.getElementById('startBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const userInput = document.getElementById('userInput');
+  /**************************************************
+   *   Sentence Reconstruction Logic
+   **************************************************/
+  const initialView = document.getElementById("initialView");
+  const gameView = document.getElementById("gameView");
+  const startBtn = document.getElementById("startBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const userInput = document.getElementById("userInput");
 
-  const progressText = document.getElementById('progressText');
-  const workInProgress = document.getElementById('workInProgress');
-  const completionMsg = document.getElementById('completionMsg');
+  const progressText = document.getElementById("progressText");
+  const workInProgress = document.getElementById("workInProgress");
+  const completionMsg = document.getElementById("completionMsg");
 
-  const restartBtn = document.getElementById('restartBtn');
-  const clearBtn2 = document.getElementById('clearBtn2');
+  const restartBtn = document.getElementById("restartBtn");
+  const clearBtn2 = document.getElementById("clearBtn2");
 
   // Expanded skip words set
   const skipWordsSet = new Set([
@@ -204,23 +203,160 @@
     'go','goes','went','just','now','will','shall','very','every','all','what','when','where','how','why'
   ]);
 
-  // We'll store metadata for each token
+  // Array of token metadata
   let tokenData = [];
-  // Indices for guessable tokens
+  // Indices of guessable tokens
   let guessableTokens = [];
   // Current index in guessableTokens
   let currentGuessIndex = 0;
-  // We store sanitized text for re-init on "Restart"
+  // We'll store sanitized text for re-init
   let sanitizedText = '';
 
+  // Query param helper
+  function getUrlParameter(name) {
+    name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    const results = regex.exec(window.location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+  }
+
+  // On load: open DB, see if we have startText param
+  window.addEventListener('load', async () => {
+    await openDatabase();
+    // Check if ?startText= is present
+    const passedText = getUrlParameter('startText').trim();
+    if (passedText) {
+      // Insert it into DB (like "Add Text to DB")
+      const now = new Date();
+      const yy = String(now.getFullYear()).slice(-2);
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const dd = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const min = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const datePrefix = `${yy}${mm}${dd} ${hh}:${min}:${ss}`;
+
+      const textNoCommas = passedText.replace(/,/g, "_");
+      const fullLine = `${datePrefix}, ${textNoCommas}`;
+      await addLinesToDb([fullLine]);
+
+      // Now automatically start the game with that text
+      startGame(textNoCommas);
+    }
+  });
+
   /**
-   * Sanitize the text:
-   *  - Replace double quotes -> " __ "
-   *  - Replace question marks -> " _q "
-   *  - Replace exclamation -> " _x "
-   *  - Replace all other punctuation/special chars -> " _ "
-   *  - convert to lowercase
-   *  - remove multiple spaces
+   * If user manually clicks Start:
+   * 1) Insert text into DB (like Add Text to DB)
+   * 2) Then run game logic
+   */
+  startBtn.addEventListener('click', async () => {
+    let rawInputVal = userInput.value.trim();
+    if (!rawInputVal) {
+      alert("Please enter some text first!");
+      return;
+    }
+
+    // Insert into DB
+    const now = new Date();
+    const yy = String(now.getFullYear()).slice(-2);
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const datePrefix = `${yy}${mm}${dd} ${hh}:${min}:${ss}`;
+
+    let inputNoCommas = rawInputVal.replace(/,/g, "_");
+    const fullLine = `${datePrefix}, ${inputNoCommas}`;
+    await addLinesToDb([fullLine]);
+
+    // Now run the game logic
+    startGame(inputNoCommas);
+  });
+
+  // The main game logic in a function so we can call it from both param-based and Start button
+  function startGame(inputText) {
+    // 1) Sanitize
+    sanitizedText = sanitizeText(inputText);
+    // 2) Split
+    const rawTokens = sanitizedText.split(/\s+/);
+
+    tokenData = [];
+    guessableTokens = [];
+    currentGuessIndex = 0;
+    completionMsg.classList.add('d-none');
+    completionMsg.textContent = '';
+
+    // Build token data
+    rawTokens.forEach(tok => {
+      const cleaned = cleanWord(tok);
+      let skip = false;
+      if (!cleaned || skipWordsSet.has(cleaned)) {
+        skip = true;
+      }
+      tokenData.push({
+        original: tok,
+        cleaned: cleaned,
+        skip: skip,
+        guessed: skip // skip-words are effectively guessed
+      });
+    });
+
+    // Fill guessableTokens
+    tokenData.forEach((t, idx) => {
+      if (!t.skip) {
+        guessableTokens.push(idx);
+      }
+    });
+
+    // Switch UI
+    initialView.classList.add('d-none');
+    gameView.classList.remove('d-none');
+
+    // Render
+    updateDisplayedText();
+  }
+
+  // Clear All resets page state
+  function clearAllPage() {
+    userInput.value = '';
+    sanitizedText = '';
+    tokenData = [];
+    guessableTokens = [];
+    currentGuessIndex = 0;
+    workInProgress.innerHTML = '';
+    completionMsg.classList.add('d-none');
+    completionMsg.textContent = '';
+
+    initialView.classList.remove('d-none');
+    gameView.classList.add('d-none');
+  }
+  clearBtn.addEventListener('click', clearAllPage);
+  clearBtn2.addEventListener('click', clearAllPage);
+
+  // Restart game with same sanitized text
+  restartBtn.addEventListener('click', () => {
+    if (!sanitizedText) return;
+    tokenData.forEach(t => {
+      if (!t.skip) t.guessed = false;
+    });
+    currentGuessIndex = 0;
+    completionMsg.classList.add('d-none');
+    completionMsg.textContent = '';
+    updateDisplayedText();
+  });
+
+  /*********************************************
+   * Utility functions
+   *********************************************/
+  /**
+   * Sanitize text:
+   * - Replace double quotes -> __
+   * - Replace ? with _q
+   * - Replace ! with _x
+   * - Replace other punctuation => _
+   * - Lowercase, remove multiple spaces
    */
   function sanitizeText(input) {
     let text = input;
@@ -233,12 +369,10 @@
     return text;
   }
 
-  // Helper to strip underscores from edges
   function cleanWord(word) {
     return word.replace(/^_+|_+$/g, '');
   }
 
-  // Shuffle array with cryptographically secure random
   function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
       const j = Math.floor(getSecureRandomNumber() * (i + 1));
@@ -247,7 +381,7 @@
     return array;
   }
 
-  // Build array of four unique choices
+  // Build array of 4 unique choices: correct + 3 distinct wrong
   function getChoicesForCurrentToken() {
     if (currentGuessIndex >= guessableTokens.length) {
       return [];
@@ -255,7 +389,6 @@
     const correctIndex = guessableTokens[currentGuessIndex];
     const correctClean = tokenData[correctIndex].cleaned;
 
-    // All other guessable words
     const pool = guessableTokens
       .filter(i => i !== correctIndex)
       .map(i => tokenData[i].cleaned);
@@ -263,7 +396,6 @@
     const uniquePool = Array.from(new Set(pool));
     shuffleArray(uniquePool);
 
-    // Take first 3
     const wrongChoices = uniquePool.slice(0, 3);
 
     let allChoices = [correctClean, ...wrongChoices];
@@ -272,26 +404,23 @@
     return allChoices;
   }
 
-  /**
-   * Returns a greenish hex color based on progress (0-100).
-   */
+  // Progress-based color
   function getProgressColor(percentage) {
     if (percentage <= 0) {
-      return '#FFFFFF'; /* White */
+      return '#FFFFFF';
     } else if (percentage < 25) {
-      return '#edf8e1'; /* Very light green */
+      return '#edf8e1';
     } else if (percentage < 50) {
-      return '#bae4b3'; /* Light green */
+      return '#bae4b3';
     } else if (percentage < 75) {
-      return '#74c476'; /* Greenish */
+      return '#74c476';
     } else if (percentage < 100) {
-      return '#31a354'; /* More intense green */
+      return '#31a354';
     } else {
-      return '#006d2c'; /* Deep green at 100% */
+      return '#006d2c';
     }
   }
 
-  // Build the reconstruction HTML
   function buildSentenceHTML() {
     let html = '';
     const choices = getChoicesForCurrentToken();
@@ -306,12 +435,10 @@
     for (let i = 0; i < tokenData.length; i++) {
       const t = tokenData[i];
       if (t.skip || t.guessed) {
-        // Display token as-is
         html += `<span class="me-1">${t.original}</span>`;
       } else {
         const thisIsCurrent = (guessableTokens[currentGuessIndex] === i);
         if (thisIsCurrent) {
-          // Show underscores + choice buttons
           let underscores = '_'.repeat(t.cleaned.length || 4);
 
           let buttonsHTML = '';
@@ -327,7 +454,7 @@
             `;
           });
 
-          // 5th disabled button for progress
+          // add progress button
           buttonsHTML += `
             <button
               class="btn mb-1"
@@ -347,7 +474,6 @@
             </span>
           `;
         } else {
-          // It's guessable but not current
           let underscores = '_'.repeat(t.cleaned.length || 4);
           html += `<span class="me-1">${underscores}</span>`;
         }
@@ -360,11 +486,8 @@
     workInProgress.innerHTML = buildSentenceHTML();
   }
 
-  // Handle choice clicks
   function handleChoiceClick(chosenWord) {
-    if (currentGuessIndex >= guessableTokens.length) {
-      return;
-    }
+    if (currentGuessIndex >= guessableTokens.length) return;
     const correctTokenIndex = guessableTokens[currentGuessIndex];
     const correctClean = tokenData[correctTokenIndex].cleaned;
 
@@ -372,118 +495,13 @@
       tokenData[correctTokenIndex].guessed = true;
       currentGuessIndex++;
       if (currentGuessIndex === guessableTokens.length) {
-        completionMsg.textContent = 'You have successfully reconstructed the text!';
+        completionMsg.textContent = "You have successfully reconstructed the text!";
         completionMsg.classList.remove('d-none');
       }
     }
     updateDisplayedText();
   }
-  window.handleChoiceClick = handleChoiceClick; // expose globally
-
-  // Clear all - reset page
-  function clearAllPage() {
-    userInput.value = '';
-    sanitizedText = '';
-    tokenData = [];
-    guessableTokens = [];
-    currentGuessIndex = 0;
-    workInProgress.innerHTML = '';
-    completionMsg.classList.add('d-none');
-    completionMsg.textContent = '';
-
-    initialView.classList.remove('d-none');
-    gameView.classList.add('d-none');
-  }
-  clearBtn.addEventListener('click', clearAllPage);
-  clearBtn2.addEventListener('click', clearAllPage);
-
-  // Start the game + log input to IndexedDB
-  startBtn.addEventListener('click', async () => {
-    let rawInput = userInput.value.trim();
-    if (!rawInput) {
-      alert('Please enter some text first!');
-      return;
-    }
-
-    /****************************************
-     * 1) Write the user's text into IndexedDB
-     *    (similar to "Add Text to DB" logic)
-     ****************************************/
-    await openDatabase();
-
-    // Replace commas with underscores
-    rawInput = rawInput.replace(/,/g, '_');
-
-    // Build date-time prefix => "YYMMDD hh:mm:ss"
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(-2);
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const hh = String(now.getHours()).padStart(2, '0');
-    const min = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
-    const datePrefix = `${yy}${mm}${dd} ${hh}:${min}:${ss}`;
-
-    const fullLine = `${datePrefix}, ${rawInput}`;
-    try {
-      const insertedCount = await addLinesToDb([fullLine]);
-      console.log(`Inserted ${insertedCount} line(s) into IndexedDB.`);
-    } catch (err) {
-      console.error('Error inserting line into DB:', err);
-    }
-
-    /****************************************
-     * 2) Proceed with the sentence game logic
-     ****************************************/
-    // Now sanitize and set up the reconstruction game
-    sanitizedText = sanitizeText(rawInput);
-    const rawTokens = sanitizedText.split(/\s+/);
-
-    tokenData = [];
-    guessableTokens = [];
-    currentGuessIndex = 0;
-    completionMsg.classList.add('d-none');
-    completionMsg.textContent = '';
-
-    rawTokens.forEach(tok => {
-      const cleaned = cleanWord(tok);
-      let skip = false;
-      if (!cleaned || skipWordsSet.has(cleaned)) {
-        skip = true;
-      }
-      tokenData.push({
-        original: tok,
-        cleaned: cleaned,
-        skip: skip,
-        guessed: skip // skip-words are effectively guessed
-      });
-    });
-
-    // Indices for tokens that need guessing
-    tokenData.forEach((t, idx) => {
-      if (!t.skip) {
-        guessableTokens.push(idx);
-      }
-    });
-
-    // Switch UI to game mode
-    initialView.classList.add('d-none');
-    gameView.classList.remove('d-none');
-
-    updateDisplayedText();
-  });
-
-  // Restart game (same sanitized text)
-  restartBtn.addEventListener('click', () => {
-    if (!sanitizedText) return;
-    tokenData.forEach(t => {
-      if (!t.skip) t.guessed = false;
-    });
-    currentGuessIndex = 0;
-    completionMsg.classList.add('d-none');
-    completionMsg.textContent = '';
-    updateDisplayedText();
-  });
+  window.handleChoiceClick = handleChoiceClick;
 </script>
 </body>
 </html>
