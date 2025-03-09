@@ -1317,19 +1317,17 @@
     }
 
     /****************************************************
-     * NEW: Redirect to maxmemorizer with just cardId & side
+     * NEW: Redirect to maxmemorizer with the DB name, plus cardId & side
      ****************************************************/
     function frontCardMaxMemorizer() {
       if (!lastDrawnId) return; // ensure we have a drawn card
-      // pass the cardId & side=front
-      const url = `maxmemorizer.html?cardId=${lastDrawnId}&side=front`;
+      const url = `maxmemorizer.html?db=${DB_NAME}&cardId=${lastDrawnId}&side=front`;
       window.open(url, "_blank");
     }
 
     function backCardMaxMemorizer() {
       if (!lastDrawnId) return; // ensure we have a drawn card
-      // pass the cardId & side=back
-      const url = `maxmemorizer.html?cardId=${lastDrawnId}&side=back`;
+      const url = `maxmemorizer.html?db=${DB_NAME}&cardId=${lastDrawnId}&side=back`;
       window.open(url, "_blank");
     }
 
