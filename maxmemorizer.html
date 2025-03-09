@@ -70,10 +70,23 @@
 
 <script>
   /********************************************************************
-   *            SHARED INDEXEDDB (myCsvDb_default)
-   * This must match the Land Cruiser 300 page so they share data.
+   *   URL Param helper
    ********************************************************************/
-  const DB_NAME = "myCsvDb_default"; 
+  function getUrlParameter(name) {
+    name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    const results = regex.exec(window.location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+  }
+
+  /********************************************************************
+   *   Determine DB name from ?db=... (defaults to "myCsvDb_default")
+   ********************************************************************/
+  let dbNameFromParam = getUrlParameter('db').trim();
+  if (!dbNameFromParam) {
+    dbNameFromParam = "myCsvDb_default";
+  }
+  const DB_NAME = dbNameFromParam;
   const DB_VERSION = 1;
   const STORE_NAME = "records";
   let db = null;
@@ -209,8 +222,8 @@
   async function loadCardFromDb(cardId, whichSide) {
     // recordId = top 16 bits
     const recordId = cardId >>> 16;
-    // pairIndex = lower 16 bits
-    const pairIndex = cardId & 0xFFFF;
+    // pairIndex = lower 16 bits (not strictly needed here, but for clarity)
+    // const pairIndex = cardId & 0xFFFF;
 
     // get the record from DB
     const recordData = await getRecordById(recordId);
@@ -277,16 +290,6 @@
   let guessableTokens = [];
   let currentGuessIndex = 0;
   let sanitizedText = '';
-
-  /**
-   * Query param helper
-   */
-  function getUrlParameter(name) {
-    name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
-    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-    const results = regex.exec(window.location.search);
-    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-  }
 
   window.addEventListener("load", async () => {
     // 1) open the DB
@@ -478,17 +481,17 @@
    */
   function getProgressColor(percentage) {
     if (percentage <= 0) {
-      return '#FFFFFF'; 
+      return '#FFFFFF';
     } else if (percentage < 25) {
-      return '#edf8e1'; 
+      return '#edf8e1';
     } else if (percentage < 50) {
-      return '#bae4b3'; 
+      return '#bae4b3';
     } else if (percentage < 75) {
-      return '#74c476'; 
+      return '#74c476';
     } else if (percentage < 100) {
-      return '#31a354'; 
+      return '#31a354';
     } else {
-      return '#006d2c'; 
+      return '#006d2c';
     }
   }
 
