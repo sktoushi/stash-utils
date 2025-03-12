@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Clairvoyance 2025</title>
+  <!-- Bootstrap CSS -->
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+    rel="stylesheet" 
+    integrity="sha384-ENjdO4Dr2bkBIFxQpeo3rSwQo4YBUq5D7Z3zUDav0KccN+SOf5I1rZ4pJZMUfE65" 
+    crossorigin="anonymous"
+  >
+  <style>
+    .scoreboard-table th, .scoreboard-table td {
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+  <h1 class="mb-4">Clairvoyance 2025</h1>
+  
+  <div class="card p-4 mb-4">
+    <p>
+      <strong>Instructions:</strong><br>
+      1. We have 3 categories: <em>lowercase letters</em>, <em>numbers</em>, <em>special characters</em>.<br>
+      2. Each category has a random probability weight; they add to 1.<br>
+      3. For letters, we use a random subset of <strong>10 distinct lowercase</strong> letters.<br>
+      4. We draw 100 random characters based on the probability weights.<br>
+      5. Your job: guess the next character on each draw. You get points for correct predictions:
+         <ul>
+           <li>If you guess the correct category, you get <code>randomCoefficient1</code>.</li>
+           <li>If you guess the exact character, you get <code>randomCoefficient1 + randomCoefficient2</code> (with <code>randomCoefficient2 &gt; randomCoefficient1</code>).</li>
+         </ul>
+      6. You may quit any time to see your results early.<br>
+      7. Your final score and timestamp will be stored (only for the last 30 days).<br>
+      8. If today's daily average beats yesterday's, or you place in the Top 15 scoreboard, an immediate redirect occurs.
+    </p>
+  </div>
+
+  <div class="mb-3">
+    <button id="startBtn" class="btn btn-primary">Start Game</button>
+    <button id="quitBtn" class="btn btn-danger" disabled>Quit</button>
+  </div>
+
+  <div id="gameArea" class="d-none">
+    <p id="drawStatus" class="fw-bold">Draws left: 100</p>
+    <form id="guessForm" class="row g-2 mb-3">
+      <div class="col-auto">
+        <label for="guessInput" class="visually-hidden">Your Guess</label>
+        <input 
+          type="text" 
+          class="form-control" 
+          id="guessInput" 
+          placeholder="Enter your guess (1 char)" 
+          maxlength="1" 
+          required
+        >
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-success">Submit Guess</button>
+      </div>
+    </form>
+    <p class="mb-0">Score: <span id="currentScore">0</span></p>
+  </div>
+
+  <div id="resultArea" class="card p-4 mt-4 d-none">
+    <h3>Game Over</h3>
+    <p id="finalMessage"></p>
+    <!-- Daily Stats (up to 30 days) -->
+    <div id="dailyStats" class="mt-4"></div>
+    <!-- Leaderboard -->
+    <h4 class="mt-4">Leaderboard (Top 15 Scores, Last 30 Days)</h4>
+    <div id="leaderboard"></div>
+  </div>
+</div>
+
+<!-- Bootstrap JS Bundle (including Popper) -->
+<script 
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+1D09tJzj6I2OMGV7KpP0N1pM9j7+"
+  crossorigin="anonymous">
+</script>
+
+<script>
+  // ========== IndexedDB Setup ==========
+  const DB_NAME = 'RandomCharacterGameDB';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'scores';  // store final score results
+  let userFinalScore = 0;       // track the user's newly-finished score for redirect logic
+
+  /**
+   * Open or upgrade the IndexedDB database.
+   * Returns a Promise that resolves with the db instance.
+   */
+  function openDatabase() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onupgradeneeded = function(e) {
+        const db = e.target.result;
+        if(!db.objectStoreNames.contains(STORE_NAME)) {
+          const store = db.createObjectStore(STORE_NAME, {
+            keyPath: 'id',
+            autoIncrement: true
+          });
+          // We'll store objects of shape { id, score, timestamp }
+          store.createIndex('score', 'score', { unique: false });
+          store.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+      };
+
+      request.onsuccess = function(e) {
+        resolve(e.target.result);
+      };
+      request.onerror = function(e) {
+        reject(e.target.error);
+      };
+    });
+  }
+
+  /**
+   * Store a new score record {score, timestamp} in the DB.
+   */
+  async function storeScore(score) {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      const entry = {
+        score,
+        timestamp: Date.now()
+      };
+      store.add(entry);
+
+      tx.oncomplete = () => { resolve(); };
+      tx.onerror = (err) => { reject(err); };
+    });
+  }
+
+  /**
+   * Permanently remove any records older than 30 days.
+   */
+  async function removeOldScores() {
+    const now = Date.now();
+    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+    const cutoff = now - THIRTY_DAYS_MS;
+
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+
+      // We'll open a cursor, check timestamps, delete if older than cutoff
+      const req = store.openCursor();
+      req.onsuccess = function(e) {
+        const cursor = e.target.result;
+        if(cursor) {
+          const record = cursor.value;
+          if(record.timestamp < cutoff) {
+            cursor.delete();
+          }
+          cursor.continue();
+        } else {
+          // done
+          resolve();
+        }
+      };
+      req.onerror = (err) => reject(err);
+    });
+  }
+
+  /**
+   * Get all scores from the DB (after removing old scores).
+   * Returns a Promise that resolves to an array of {id, score, timestamp}.
+   */
+  async function getAllScores() {
+    // remove older than 30 days first
+    await removeOldScores();
+
+    // now load all
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        resolve(request.result || []);
+      };
+      request.onerror = (err) => {
+        reject(err);
+      };
+    });
+  }
+
+  // ========== Game Logic ==========
+  let lettersSubset = [];       // 10 random letters for this game
+  let probLetters = 0;         // Probability weight for letters
+  let probNumbers = 0;         // Probability weight for numbers
+  let probSpecials = 0;        // Probability weight for special chars
+  let randomCoefficient1 = 0;  // smaller random
+  let randomCoefficient2 = 0;  // bigger random
+  
+  const totalDraws = 100;
+  let drawsLeft = totalDraws;
+  let currentScore = 0;
+  let correctCategoryCount = 0;
+  let correctCharacterCount = 0;
+
+  // Pools
+  const allLetters = "abcdefghijklmnopqrstuvwxyz".split("");
+  const numbers = "0123456789".split("");
+  const specials = "!@#$%^&*()".split("");
+
+  // Elements
+  const startBtn    = document.getElementById("startBtn");
+  const quitBtn     = document.getElementById("quitBtn");
+  const drawStatus  = document.getElementById("drawStatus");
+  const guessForm   = document.getElementById("guessForm");
+  const guessInput  = document.getElementById("guessInput");
+  const currentScoreEl = document.getElementById("currentScore");
+  const gameArea    = document.getElementById("gameArea");
+  const resultArea  = document.getElementById("resultArea");
+  const finalMessage= document.getElementById("finalMessage");
+  const dailyStatsEl= document.getElementById("dailyStats");
+  const leaderboardEl= document.getElementById("leaderboard");
+
+  // Redirection target
+  const REDIRECT_URL = "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-finer-things-in-life";
+
+  // Start Game
+  startBtn.addEventListener("click", () => {
+    initGame();
+  });
+
+  // Quit
+  quitBtn.addEventListener("click", () => {
+    endGame();
+  });
+
+  // Handle Guess Submission
+  guessForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (drawsLeft <= 0) return;
+    const userGuess = guessInput.value.trim();
+    if (userGuess.length === 1) {
+      // Process guess
+      makeDraw(userGuess.toLowerCase());
+      guessInput.value = "";
+      guessInput.focus();
+    }
+  });
+
+  function initGame() {
+    // Hide result area (if it was visible)
+    resultArea.classList.add("d-none");
+    // Show game area
+    gameArea.classList.remove("d-none");
+    quitBtn.disabled = false;
+
+    // Reset variables
+    drawsLeft = totalDraws;
+    currentScore = 0;
+    correctCategoryCount = 0;
+    correctCharacterCount = 0;
+    currentScoreEl.textContent = currentScore;
+    drawStatus.textContent = `Draws left: ${drawsLeft}`;
+
+    // 1) Pick 10 random letters
+    lettersSubset = getRandomLetters(10);
+
+    // 2) Random probability for categories
+    let w1 = Math.random();
+    let w2 = Math.random();
+    let w3 = Math.random();
+    let sum = w1 + w2 + w3;
+    probLetters = w1 / sum;
+    probNumbers = w2 / sum;
+    probSpecials = w3 / sum;
+
+    // 3) Random coefficients (randomCoefficient2 > randomCoefficient1)
+    randomCoefficient1 = Math.random();
+    do {
+      randomCoefficient2 = Math.random();
+    } while(randomCoefficient2 <= randomCoefficient1);
+
+    console.log("10-letter subset: ", lettersSubset);
+    console.log(`Category Probabilities -> Letters: ${probLetters.toFixed(3)}, Numbers: ${probNumbers.toFixed(3)}, Specials: ${probSpecials.toFixed(3)}`);
+    console.log(`randomCoefficient1 = ${randomCoefficient1.toFixed(4)}, randomCoefficient2 = ${randomCoefficient2.toFixed(4)}`);
+  }
+
+  function makeDraw(userGuess) {
+    // Determine category by random
+    const r = Math.random();
+    let chosenCategory = "";
+    let chosenChar = "";
+    
+    if (r < probLetters) {
+      chosenCategory = "letter";
+      chosenChar = lettersSubset[Math.floor(Math.random() * lettersSubset.length)];
+    } else if (r < probLetters + probNumbers) {
+      chosenCategory = "number";
+      chosenChar = numbers[Math.floor(Math.random() * numbers.length)];
+    } else {
+      chosenCategory = "special";
+      chosenChar = specials[Math.floor(Math.random() * specials.length)];
+    }
+
+    // Scoring
+    // Identify user guess category:
+    let userCategory = getCategory(userGuess);
+    let pointsEarned = 0;
+
+    if (userCategory === chosenCategory) {
+      // correct category
+      if (userGuess === chosenChar) {
+        // exact match
+        pointsEarned = randomCoefficient1 + randomCoefficient2;
+        correctCharacterCount++;
+        correctCategoryCount++; // exact match => correct category
+      } else {
+        // correct category but not exact
+        pointsEarned = randomCoefficient1;
+        correctCategoryCount++;
+      }
+    } else {
+      // wrong category => 0 points
+      pointsEarned = 0;
+    }
+
+    currentScore += pointsEarned;
+    currentScoreEl.textContent = currentScore.toFixed(4);
+
+    // Decrement draws
+    drawsLeft--;
+    drawStatus.textContent = `Draws left: ${drawsLeft}`;
+    
+    // If finished 100 draws, end game
+    if (drawsLeft <= 0) {
+      endGame();
+    }
+  }
+
+  async function endGame() {
+    quitBtn.disabled = true;
+    gameArea.classList.add("d-none");
+    resultArea.classList.remove("d-none");
+
+    const drawsCompleted = totalDraws - drawsLeft;
+    userFinalScore = currentScore; // track for later reference
+
+    // Summaries
+    const summaryText = `
+      You played ${drawsCompleted} draw(s).<br>
+      Correct category guesses: <strong>${correctCategoryCount}</strong><br>
+      Correct character guesses: <strong>${correctCharacterCount}</strong><br>
+      Final Score: <strong>${currentScore.toFixed(4)}</strong>
+    `;
+    finalMessage.innerHTML = summaryText;
+
+    // 1) Store the score in IndexedDB
+    await storeScore(currentScore);
+
+    // 2) Build daily stats & leaderboard
+    //   (This process also obliterates older records automatically)
+    await buildDailyStatsAndLeaderboard();
+  }
+
+  // Utility: pick random letters from allLetters
+  function getRandomLetters(count) {
+    let copy = [...allLetters];
+    let chosen = [];
+    for (let i = 0; i < count; i++) {
+      let index = Math.floor(Math.random() * copy.length);
+      chosen.push(copy[index]);
+      copy.splice(index, 1); 
+    }
+    return chosen;
+  }
+
+  // Utility: determine category from single-character guess
+  function getCategory(ch) {
+    if (lettersSubset.includes(ch)) {
+      return "letter";
+    } else if (numbers.includes(ch)) {
+      return "number";
+    } else if (specials.includes(ch)) {
+      return "special";
+    }
+    // If user typed something not in the subsets, 
+    // treat it as "wrong category."
+    return "unknown";
+  }
+
+  // ========== Daily Stats & Leaderboard Building ==========
+
+  /**
+   * Fetch all scores (only last 30 days remain),
+   * then build daily averages + day-to-day % change,
+   * then build top 15 scoreboard,
+   * then check if today's average improved or user in top 15 -> redirect if yes.
+   */
+  async function buildDailyStatsAndLeaderboard() {
+    const allScores = await getAllScores();
+
+    if(!allScores || allScores.length === 0) {
+      dailyStatsEl.innerHTML = "<p>No game data yet.</p>";
+      leaderboardEl.innerHTML = "<p>No game data yet.</p>";
+      return;
+    }
+
+    // 1) Build daily average for last 30 days
+    let now = Date.now();
+    let MS_PER_DAY = 86400000;
+    let earliest = now - (30 * MS_PER_DAY);
+
+    // Group by date (YYYY-MM-DD)
+    let dailyMap = new Map();
+    for(const record of allScores) {
+      if(record.timestamp < earliest) continue;
+      let dayStr = getDayString(record.timestamp); // e.g. '2025-03-12'
+      if(!dailyMap.has(dayStr)) {
+        dailyMap.set(dayStr, []);
+      }
+      dailyMap.get(dayStr).push(record.score);
+    }
+
+    // Sort days ascending
+    let sortedDays = Array.from(dailyMap.keys()).sort();
+
+    // Build array of { day, avgScore }
+    let dailyAverages = [];
+    for(let d of sortedDays) {
+      let scoresArr = dailyMap.get(d);
+      let sum = scoresArr.reduce((a,b) => a+b, 0);
+      let avg = sum / scoresArr.length;
+      dailyAverages.push({ day: d, avgScore: avg });
+    }
+
+    // Generate HTML for daily averages + day-to-day % change
+    // day-to-day % change = ((todayAvg - yesterdayAvg) / yesterdayAvg)*100
+    let statsHtml = `<h5>Daily Averages (Last 30 Days)</h5>`;
+    statsHtml += `<table class="table table-bordered scoreboard-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Average Score</th>
+                        <th>% Change from Prev Day</th>
+                      </tr>
+                    </thead>
+                    <tbody>`;
+
+    for(let i=0; i<dailyAverages.length; i++){
+      let dayData = dailyAverages[i];
+      let changeHtml = "-";
+      if(i > 0) {
+        let prevAvg = dailyAverages[i-1].avgScore;
+        let diff = dayData.avgScore - prevAvg;
+        let pctChange = (diff / prevAvg) * 100;
+        if(isFinite(pctChange)) {
+          changeHtml = pctChange.toFixed(2) + "%";
+        }
+      }
+      statsHtml += `
+        <tr>
+          <td>${dayData.day}</td>
+          <td>${dayData.avgScore.toFixed(4)}</td>
+          <td>${changeHtml}</td>
+        </tr>
+      `;
+    }
+
+    statsHtml += `</tbody></table>`;
+    dailyStatsEl.innerHTML = statsHtml;
+
+    // 2) Build leaderboard: top 15 scores from last 30 days
+    // Sort by score descending
+    const sortedAllScores = allScores.sort((a,b) => b.score - a.score);
+    const top15 = sortedAllScores.slice(0, 15);
+
+    let leaderboardHtml = `<table class="table table-bordered scoreboard-table">
+                             <thead>
+                               <tr>
+                                 <th>Rank</th>
+                                 <th>Score</th>
+                                 <th>Date/Time</th>
+                               </tr>
+                             </thead>
+                             <tbody>`;
+    top15.forEach((entry, idx) => {
+      let dt = new Date(entry.timestamp).toLocaleString(); 
+      leaderboardHtml += `
+        <tr>
+          <td>${idx+1}</td>
+          <td>${entry.score.toFixed(4)}</td>
+          <td>${dt}</td>
+        </tr>
+      `;
+    });
+    leaderboardHtml += `</tbody></table>`;
+    leaderboardEl.innerHTML = leaderboardHtml;
+
+    // 3) Check if today's average improved from yesterday
+    //    Only relevant if we have at least 2 days in dailyAverages
+    if(dailyAverages.length >= 2) {
+      let latest = dailyAverages[dailyAverages.length - 1].avgScore;
+      let prev   = dailyAverages[dailyAverages.length - 2].avgScore;
+      if(latest > prev) {
+        // immediate redirect
+        window.location.href = REDIRECT_URL;
+        return; // stop any further checks
+      }
+    }
+
+    // 4) Check if userFinalScore is in the top 15
+    //    If top15 < 15 items, user is automatically in it
+    if(top15.length < 15) {
+      // definitely in top 15
+      window.location.href = REDIRECT_URL;
+      return;
+    } else {
+      // if the user's score >= 15th place, they're in
+      const fifteenthScore = top15[top15.length - 1].score;
+      if(userFinalScore >= fifteenthScore) {
+        window.location.href = REDIRECT_URL;
+        return;
+      }
+    }
+  }
+
+  /**
+   * Convert a timestamp to a YYYY-MM-DD string.
+   */
+  function getDayString(ts) {
+    let d = new Date(ts);
+    let year = d.getFullYear();
+    let month = (d.getMonth() + 1).toString().padStart(2, '0');
+    let day = d.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+</script>
+
+</body>
+</html>
