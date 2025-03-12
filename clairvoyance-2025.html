@@ -9,7 +9,7 @@
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
-    integrity="sha384-ENjdO4Dr2bkBIFxQpeo3rSwQo4YBUf5D7Z3zUDav0KccN+SOf5I1rZ4pJZMUfE65"
+    integrity="sha384-ENjdO4Dr2bkBIFxQpeo3rSwQo4YBUf5D7z3zUDav0KccN+SOf5I1rZ4pJZMUfE65"
     crossorigin="anonymous"
   >
   <!-- Font Awesome (optional, for icons) -->
@@ -45,15 +45,17 @@
       color: #f8f9fa;
       border: 1px solid #ced4da;
     }
-    .scoreboard-table th,
-    .scoreboard-table td {
-      text-align: center;
-    }
 
     /* Toast overrides for dark mode if desired */
     body.dark-mode .toast.text-bg-primary {
       background-color: #0d6efd !important;
       color: #fff;
+    }
+
+    /* Scoreboard cells centered */
+    .scoreboard-table th,
+    .scoreboard-table td {
+      text-align: center;
     }
 
     /* Show Pantone color info in the top-right corner */
@@ -119,12 +121,14 @@
           <form id="guessForm" class="row g-2 mb-3">
             <div class="col-auto">
               <label for="guessInput" class="visually-hidden">Your Guess</label>
+              <!-- Restrict to one character: letters, digits, or our 10 specials -->
               <input
                 type="text"
                 class="form-control"
                 id="guessInput"
                 placeholder="Enter your guess (1 char)"
                 maxlength="1"
+                pattern="[a-zA-Z0-9!@#$%^&*()]"
                 required
               >
             </div>
@@ -132,6 +136,41 @@
               <button type="submit" class="btn btn-success">Submit Guess</button>
             </div>
           </form>
+
+          <!-- Number and Special Character Buttons -->
+          <div class="row g-2 mb-3 text-center">
+            <div class="col-12 col-lg-6">
+              <h5>Numbers</h5>
+              <div class="d-flex flex-wrap justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('0')">0</button>
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('1')">1</button>
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('2')">2</button>
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('3')">3</button>
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('4')">4</button>
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('5')">5</button>
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('6')">6</button>
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('7')">7</button>
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('8')">8</button>
+                <button type="button" class="btn btn-outline-primary" onclick="buttonGuess('9')">9</button>
+              </div>
+            </div>
+            <div class="col-12 col-lg-6">
+              <h5>Specials</h5>
+              <div class="d-flex flex-wrap justify-content-center gap-2">
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess('!')">!</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess('@')">@</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess('#')">#</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess('$')">$</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess('%')">%</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess('^')">^</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess('&')">&</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess('*')">*</button>
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess('(')"> ( </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="buttonGuess(')')"> ) </button>
+              </div>
+            </div>
+          </div>
+
           <p class="mb-0">Score: <span id="currentScore">0</span></p>
         </div>
       </div>
@@ -160,7 +199,7 @@
     crossorigin="anonymous">
   </script>
 
-  <!-- ========== Script for Game Logic & IndexedDB (Unchanged Functionality) ========== -->
+  <!-- ========== Script for Game Logic & IndexedDB (With Lowercasing) ========== -->
   <script>
     // ========== Dark Mode Handling ==========
     function toggleDarkMode() {
@@ -340,16 +379,28 @@
       endGame();
     });
 
+    // Force guessInput to lowercase as user types
+    guessInput.addEventListener("input", () => {
+      guessInput.value = guessInput.value.toLowerCase();
+    });
+
     guessForm.addEventListener("submit", (e) => {
       e.preventDefault();
       if (drawsLeft <= 0) return;
-      const userGuess = guessInput.value.trim();
+      // Convert to lowercase before comparing
+      const userGuess = guessInput.value.trim().toLowerCase();
       if (userGuess.length === 1) {
-        makeDraw(userGuess.toLowerCase());
+        makeDraw(userGuess);
         guessInput.value = "";
         guessInput.focus();
       }
     });
+
+    // This function is triggered by the numeric & special character buttons
+    function buttonGuess(ch) {
+      guessInput.value = ch.toLowerCase();
+      guessForm.dispatchEvent(new Event('submit')); 
+    }
 
     function initGame() {
       // Hide results area if visible
@@ -590,10 +641,6 @@
       return `${year}-${month}-${day}`;
     }
 
-    // ========== Show/Hide Instructions in a Modal ==========
-    // We’ll attach a hidden modal in the body (below).
-    // The “Help” button toggles it via code (helpBtn.addEventListener).
-
     // ========== On Page Load ==========
     window.addEventListener('DOMContentLoaded', async () => {
       loadDarkModePreference();
@@ -630,7 +677,7 @@
     </div>
   </div>
 
-  <!-- Toast Container (if you ever want to show custom toasts) -->
+  <!-- Toast Container (if you want to show custom toasts) -->
   <div aria-live="polite" aria-atomic="true" class="position-relative">
     <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 11;">
       <!-- Toasts can be appended here dynamically -->
