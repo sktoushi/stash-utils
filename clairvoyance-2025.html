@@ -9,7 +9,7 @@
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
-    integrity="sha384-ENjdO4Dr2bkBIFxQpeo3rSwQo4YBUq5D7Z3zUDav0KccN+SOf5I1rZ4pJZMUfE65"
+    integrity="sha384-ENjdO4Dr2bkBIFxQpeo3rSwQo4YBUf5D7Z3zUDav0KccN+SOf5I1rZ4pJZMUfE65"
     crossorigin="anonymous"
   >
   <style>
@@ -21,17 +21,77 @@
 </head>
 <body class="bg-light">
 
-<div class="container py-3">
+<div class="container py-4">
+
+  <!-- Page Header -->
   <div class="row">
-    <div class="col-12">
-      <h1 class="mb-3 text-primary text-center display-6 fw-bold">Clairvoyance 2025</h1>
+    <div class="col-12 text-center mb-3">
+      <h1 class="text-primary display-6 fw-bold">Clairvoyance 2025</h1>
     </div>
   </div>
 
-  <!-- Instructions Section (Hidden by default) -->
-  <div id="instructionsContainer" class="row d-none">
-    <div class="col-12 col-md-10 col-lg-8 mx-auto">
+  <!-- Buttons Row -->
+  <div class="row mb-4">
+    <div class="col text-center">
+      <div class="btn-group" role="group">
+        <button id="helpBtn" class="btn btn-info">Help</button>
+        <button id="startBtn" class="btn btn-primary">Start Game</button>
+        <button id="quitBtn" class="btn btn-danger" disabled>Quit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Area -->
+  <div id="gameArea" class="row d-none">
+    <div class="col-12 col-md-8 col-lg-6 mx-auto">
       <div class="card shadow-sm p-3 mb-4">
+        <p id="drawStatus" class="fw-bold">Draws left: 100</p>
+        <form id="guessForm" class="row g-2 mb-3">
+          <div class="col-auto">
+            <label for="guessInput" class="visually-hidden">Your Guess</label>
+            <input
+              type="text"
+              class="form-control"
+              id="guessInput"
+              placeholder="Enter your guess (1 char)"
+              maxlength="1"
+              required
+            >
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-success">Submit Guess</button>
+          </div>
+        </form>
+        <p class="mb-0">Score: <span id="currentScore">0</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Area -->
+  <div id="resultArea" class="row d-none">
+    <div class="col-12 col-md-10 col-lg-8 mx-auto">
+      <div class="card shadow-sm p-3">
+        <h3 class="text-success">Game Over</h3>
+        <p id="finalMessage"></p>
+        <!-- Daily Stats (up to 30 days) -->
+        <div id="dailyStats" class="mt-4"></div>
+        <!-- Leaderboard -->
+        <h4 class="mt-4 text-secondary">Leaderboard (Top 15 Scores, Last 30 Days)</h4>
+        <div id="leaderboard" class="table-responsive"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Instructions Modal -->
+<div class="modal fade" id="instructionsModal" tabindex="-1" aria-labelledby="instructionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="instructionsModalLabel">Instructions</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
         <p class="lead mb-0">
           <strong>Instructions:</strong><br>
           1. We have 3 categories: <em>lowercase letters</em>, <em>numbers</em>, <em>special characters</em>.<br>
@@ -50,51 +110,9 @@
       </div>
     </div>
   </div>
-
-  <div class="row mb-3">
-    <!-- Help button toggles instructions -->
-    <div class="col-auto mx-auto">
-      <button id="helpBtn" class="btn btn-info">Help</button>
-      <button id="startBtn" class="btn btn-primary">Start Game</button>
-      <button id="quitBtn" class="btn btn-danger" disabled>Quit</button>
-    </div>
-  </div>
-
-  <div id="gameArea" class="d-none mb-4 row">
-    <div class="col-12 col-md-10 col-lg-8 mx-auto">
-      <p id="drawStatus" class="fw-bold">Draws left: 100</p>
-      <form id="guessForm" class="row g-2 mb-3">
-        <div class="col-auto">
-          <label for="guessInput" class="visually-hidden">Your Guess</label>
-          <input 
-            type="text" 
-            class="form-control" 
-            id="guessInput" 
-            placeholder="Enter your guess (1 char)" 
-            maxlength="1" 
-            required
-          >
-        </div>
-        <div class="col-auto">
-          <button type="submit" class="btn btn-success">Submit Guess</button>
-        </div>
-      </form>
-      <p class="mb-0">Score: <span id="currentScore">0</span></p>
-    </div>
-  </div>
-
-  <div id="resultArea" class="card shadow-sm p-3 mt-4 d-none">
-    <h3 class="text-success">Game Over</h3>
-    <p id="finalMessage"></p>
-    <!-- Daily Stats (up to 30 days) -->
-    <div id="dailyStats" class="mt-4"></div>
-    <!-- Leaderboard -->
-    <h4 class="mt-4 text-secondary">Leaderboard (Top 15 Scores, Last 30 Days)</h4>
-    <div id="leaderboard" class="table-responsive"></div>
-  </div>
 </div>
 
-<!-- Bootstrap JS Bundle (including Popper) -->
+<!-- Bootstrap JS Bundle (includes Popper) -->
 <script
   src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
   integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+1D09tJzj6I2OMGV7KpP0N1pM9j7+"
@@ -213,7 +231,6 @@
   const helpBtn        = document.getElementById("helpBtn");
   const startBtn       = document.getElementById("startBtn");
   const quitBtn        = document.getElementById("quitBtn");
-  const instructions   = document.getElementById("instructionsContainer");
   const drawStatus     = document.getElementById("drawStatus");
   const guessForm      = document.getElementById("guessForm");
   const guessInput     = document.getElementById("guessInput");
@@ -226,15 +243,18 @@
 
   const REDIRECT_URL = "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-finer-things-in-life";
 
-  // Toggle instructions on Help button click
+  // Show Instructions Modal on Help button click
   helpBtn.addEventListener("click", () => {
-    instructions.classList.toggle("d-none");
+    const instructionsModal = new bootstrap.Modal(document.getElementById("instructionsModal"));
+    instructionsModal.show();
   });
 
+  // Start the game
   startBtn.addEventListener("click", () => {
     initGame();
   });
 
+  // Quit the game
   quitBtn.addEventListener("click", () => {
     endGame();
   });
@@ -251,7 +271,9 @@
   });
 
   function initGame() {
+    // Hide results area if visible
     resultArea.classList.add("d-none");
+    // Show game area
     gameArea.classList.remove("d-none");
     quitBtn.disabled = false;
 
@@ -262,8 +284,10 @@
     currentScoreEl.textContent = currentScore;
     drawStatus.textContent = `Draws left: ${drawsLeft}`;
 
+    // Get random 10-letter subset
     lettersSubset = getRandomLetters(10);
 
+    // Randomize category probabilities
     let w1 = Math.random();
     let w2 = Math.random();
     let w3 = Math.random();
@@ -272,25 +296,18 @@
     probNumbers = w2 / sum;
     probSpecials = w3 / sum;
 
+    // Random coefficients
     randomCoefficient1 = Math.random();
     do {
       randomCoefficient2 = Math.random();
     } while(randomCoefficient2 <= randomCoefficient1);
-
-    console.log("10-letter subset: ", lettersSubset);
-    console.log(
-      `Category Probabilities -> Letters: ${probLetters.toFixed(3)}, Numbers: ${probNumbers.toFixed(3)}, Specials: ${probSpecials.toFixed(3)}`
-    );
-    console.log(
-      `randomCoefficient1 = ${randomCoefficient1.toFixed(4)}, randomCoefficient2 = ${randomCoefficient2.toFixed(4)}`
-    );
   }
 
   function makeDraw(userGuess) {
     const r = Math.random();
     let chosenCategory = "";
     let chosenChar = "";
-    
+
     if (r < probLetters) {
       chosenCategory = "letter";
       chosenChar = lettersSubset[Math.floor(Math.random() * lettersSubset.length)];
@@ -314,7 +331,7 @@
         pointsEarned = randomCoefficient1;
         correctCategoryCount++;
       }
-    } 
+    }
 
     currentScore += pointsEarned;
     currentScoreEl.textContent = currentScore.toFixed(4);
@@ -352,7 +369,7 @@
     for (let i = 0; i < count; i++) {
       let index = Math.floor(Math.random() * copy.length);
       chosen.push(copy[index]);
-      copy.splice(index, 1); 
+      copy.splice(index, 1);
     }
     return chosen;
   }
@@ -370,7 +387,6 @@
 
   async function buildDailyStatsAndLeaderboard() {
     const allScores = await getAllScores();
-
     if(!allScores || allScores.length === 0) {
       dailyStatsEl.innerHTML = "<p>No game data yet.</p>";
       leaderboardEl.innerHTML = "<p>No game data yet.</p>";
@@ -381,6 +397,7 @@
     let MS_PER_DAY = 86400000;
     let earliest = now - (30 * MS_PER_DAY);
 
+    // Group scores by day
     let dailyMap = new Map();
     for(const record of allScores) {
       if(record.timestamp < earliest) continue;
@@ -400,6 +417,7 @@
       dailyAverages.push({ day: d, avgScore: avg });
     }
 
+    // Build daily averages table
     let statsHtml = `<h5 class="text-primary">Daily Averages (Last 30 Days)</h5>`;
     statsHtml += `
       <table class="table table-bordered table-hover scoreboard-table">
@@ -434,6 +452,7 @@
     statsHtml += `</tbody></table>`;
     dailyStatsEl.innerHTML = statsHtml;
 
+    // Build leaderboard
     const sortedAllScores = allScores.sort((a,b) => b.score - a.score);
     const top15 = sortedAllScores.slice(0, 15);
     let leaderboardHtml = `
@@ -448,7 +467,7 @@
         <tbody>
     `;
     top15.forEach((entry, idx) => {
-      let dt = new Date(entry.timestamp).toLocaleString(); 
+      let dt = new Date(entry.timestamp).toLocaleString();
       leaderboardHtml += `
         <tr>
           <td>${idx+1}</td>
@@ -460,6 +479,7 @@
     leaderboardHtml += `</tbody></table>`;
     leaderboardEl.innerHTML = leaderboardHtml;
 
+    // Check redirect logic
     if(dailyAverages.length >= 2) {
       let latest = dailyAverages[dailyAverages.length - 1].avgScore;
       let prev   = dailyAverages[dailyAverages.length - 2].avgScore;
