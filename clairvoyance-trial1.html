@@ -2,345 +2,188 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <!-- For mobile responsiveness -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Progress Bar Guessing Game</title>
-
-  <!-- Bootstrap CSS -->
+  <title>Lockpick-Inspired Progress Bar Game</title>
+  <!-- Bootstrap CSS from CDN -->
   <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
-    integrity="sha384-ENjdO4Dr2bkBIFxQpeo3rSwQo4YBUf5D7z3zUDav0Kccn+SOf5I1rZ4pJZMUfE65"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    integrity="sha384-ENjdO4Dr2bkBIFxQpeA6bwZRoHwb23RJkSmJ6CuhTmnwj3KC5q8fqmX0Qf3ZVNaH"
     crossorigin="anonymous"
   >
-
-  <!-- Font Awesome (optional, for icons) -->
-  <link
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    rel="stylesheet"
-  >
-
   <style>
-    body {
-      background-color: #f8f9fa;
-      transition: background-color 0.5s ease;
-      min-height: 100vh;
+    .progress-container {
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
-    body.dark-mode {
-      background-color: #343a40;
-      color: #f8f9fa;
+    .weight-label {
+      min-width: 50px;
+      font-weight: bold;
     }
-
-    .dark-mode .card {
-      background-color: #495057;
-      color: #f8f9fa;
-    }
-    .dark-mode .btn-close {
-      filter: invert(1);
-    }
-    .dark-mode .form-control,
-    .dark-mode .form-select {
-      background-color: #6c757d;
-      color: #f8f9fa;
-      border: 1px solid #ced4da;
-    }
-
-    /* Scoreboard cells centered */
-    .scoreboard-table th,
-    .scoreboard-table td {
-      text-align: center;
-    }
-
-    /* Custom scrollbar for dark mode */
-    .dark-mode ::-webkit-scrollbar {
-      width: 8px;
-    }
-    .dark-mode ::-webkit-scrollbar-track {
-      background: #343a40;
-    }
-    .dark-mode ::-webkit-scrollbar-thumb {
-      background: #6c757d;
-      border-radius: 4px;
-    }
-
-    /* Keep the main container flexible */
-    .flex-grow-1 {
-      flex: 1;
+    .range-input {
+      width: 200px;
     }
   </style>
 </head>
-<body class="d-flex flex-column">
 
-  <!-- ====== HEADER AREA ====== -->
-  <header class="border-bottom mb-3 shadow-sm">
-    <nav class="navbar navbar-expand-lg navbar-light bg-light px-3 py-2">
-      <div class="container-fluid">
-        <span class="navbar-brand fs-4 fw-bold text-primary">
-          Progress Bar Guessing Game
-        </span>
-        <div class="d-flex align-items-center gap-2">
-          <button class="btn btn-secondary" onclick="toggleDarkMode()" title="Toggle Dark Mode">
-            <i class="fas fa-moon"></i>
-          </button>
-          <button class="btn btn-info" id="helpBtn">
-            <i class="fas fa-question-circle"></i> Help
-          </button>
-        </div>
-      </div>
-    </nav>
-  </header>
+<body class="bg-light">
+  <div class="container py-5">
+    <h1 class="mb-4">Lockpick-Inspired Progress Bar Game</h1>
+    <p class="lead">
+      Adjust the sliders to guess the secret sum. Each slider has a hidden “weight,”
+      so your final guess is the sum of (sliderValue × weight) for all sliders. You have
+      a limited number of tries—good luck!
+    </p>
 
-  <!-- ====== MAIN CONTENT ====== -->
-  <main class="container flex-grow-1">
+    <div id="progressBarsContainer"></div>
 
-    <!-- Control row -->
-    <div class="row justify-content-center mb-3">
-      <div class="col-auto">
-        <div class="btn-group" role="group">
-          <button id="startBtn" class="btn btn-primary">Start Game</button>
-          <button id="quitBtn" class="btn btn-danger" disabled>Quit</button>
-        </div>
-      </div>
+    <div class="mb-3">
+      <button id="checkGuessBtn" class="btn btn-primary">Check Guess</button>
+      <button id="newGameBtn" class="btn btn-secondary ms-2">New Game</button>
     </div>
 
-    <!-- Game area -->
-    <div id="gameArea" class="row d-none justify-content-center">
-      <div class="col-12 col-md-8 col-lg-6">
-        <div class="card shadow p-3 mb-4">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <div class="fw-bold" id="triesStatus">Tries left: 5</div>
-              <!-- A simple progress bar for tries left -->
-              <div class="flex-grow-1 mx-3">
-                <div class="progress" style="height: 8px;">
-                  <div id="triesProgressBar" class="progress-bar" role="progressbar"
-                       style="width: 100%;" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-              </div>
-              <div class="text-success fw-bold">
-                Score: <span id="currentScore">0</span>
-              </div>
-            </div>
+    <p id="triesLeft" class="fw-bold"></p>
+    <p id="feedback" class="fw-bold"></p>
+  </div>
 
-            <!-- Explanation of bars -->
-            <p class="mb-1">
-              Adjust each progress bar (via the “-” / “+” buttons) until you’re satisfied, then click “Submit Guess.”
-            </p>
-
-            <div id="barsContainer" class="mb-3"></div>
-
-            <div class="text-center">
-              <button id="submitGuessBtn" class="btn btn-success" disabled>Submit Guess</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Results area -->
-    <div id="resultArea" class="row d-none justify-content-center">
-      <div class="col-12 col-md-10 col-lg-8">
-        <div class="card shadow p-3">
-          <h3 class="text-success">Game Over</h3>
-          <p id="finalMessage"></p>
-          <!-- Daily Stats (up to 30 days) -->
-          <div id="dailyStats" class="mt-4"></div>
-          <!-- Leaderboard -->
-          <h4 class="mt-4 text-secondary">Leaderboard (Top 15 Scores, Last 30 Days)</h4>
-          <div id="leaderboard" class="table-responsive"></div>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <!-- ====== FOOTER ====== -->
-  <footer class="text-center py-2 border-top bg-light">
-    <small class="text-muted">
-      &copy; 2025 Progress Bar Guessing Game. All Rights Reserved.
-    </small>
-  </footer>
-
-  <!-- Bootstrap JS Bundle (includes Popper) -->
+  <!-- Bootstrap JS (Optional for some components) -->
   <script
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+1D09tJzj6I2OMGV7KpP0N1pM9j7+"
-    crossorigin="anonymous">
-  </script>
+    integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+o2Qp0hK7MqfWXi5u3yHuZT+KJZd"
+    crossorigin="anonymous"
+  ></script>
 
   <script>
-    // ====== Dark Mode Handling ======
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-      const isDark = document.body.classList.contains('dark-mode');
-      localStorage.setItem('darkMode', isDark);
-    }
-    function loadDarkModePreference() {
-      const isDark = localStorage.getItem('darkMode') === 'true';
-      if (isDark) {
-        document.body.classList.add('dark-mode');
-      }
-    }
+    // Global variables
+    let targetSum = 0;
+    let triesLeft = 0;
+    let barsData = []; // Each element will be { weight, sliderValue, sliderElement }
+    let maxBars = 5;
+    let minBars = 2;
 
-    // ====== Game Data & Settings ======
-    let totalTries      = 5;     // will be randomized
-    let triesLeft       = 0;     // will be assigned
-    let currentScore    = 0;
-    let targetValue     = 0;     // random
-    let progressBars    = [];    // array of bar objects { id, elementRefs, maxValue, pointValue, currentValue }
-
-    // References to DOM elements
-    const startBtn       = document.getElementById("startBtn");
-    const quitBtn        = document.getElementById("quitBtn");
-    const triesStatus    = document.getElementById("triesStatus");
-    const triesProgress  = document.getElementById("triesProgressBar");
-    const currentScoreEl = document.getElementById("currentScore");
-    const gameArea       = document.getElementById("gameArea");
-    const resultArea     = document.getElementById("resultArea");
-    const finalMessage   = document.getElementById("finalMessage");
-    const dailyStatsEl   = document.getElementById("dailyStats");
-    const leaderboardEl  = document.getElementById("leaderboard");
-    const barsContainer  = document.getElementById("barsContainer");
-    const submitGuessBtn = document.getElementById("submitGuessBtn");
-
-    // For redirect logic
-    const REDIRECT_URL = "https://example.com/redirect-target";
-    let userFinalScore = 0;
-
-    // ====== Start & Quit Listeners ======
-    startBtn.addEventListener("click", () => {
-      initGame();
-    });
-    quitBtn.addEventListener("click", () => {
-      endGame();
-    });
-    submitGuessBtn.addEventListener("click", () => {
-      if (triesLeft > 0) {
-        makeGuess();
-      }
-    });
-
-    // ====== Core Game Logic ======
+    // Initialize and start a new game
     function initGame() {
-      // Hide results area, show game area
-      resultArea.classList.add("d-none");
-      gameArea.classList.remove("d-none");
-      quitBtn.disabled = false;
+      // Clear previous data
+      document.getElementById('progressBarsContainer').innerHTML = '';
+      document.getElementById('feedback').textContent = '';
+      
+      // Random number of bars
+      const numberOfBars = Math.floor(Math.random() * (maxBars - minBars + 1)) + minBars;
 
-      // Randomize the total tries (3 to 7, for example)
-      totalTries = 3 + Math.floor(Math.random() * 5);
-      triesLeft = totalTries;
-      triesStatus.textContent = "Tries left: " + triesLeft;
-      triesProgress.style.width = "100%";
+      // Random tries
+      triesLeft = Math.floor(Math.random() * 3) + 3; // e.g. 3–5 tries
 
-      // Randomize target (e.g. 50 to 500 range)
-      targetValue = 50 + Math.floor(Math.random() * 451);
+      // Reset global barsData
+      barsData = [];
 
-      // Reset score
-      currentScore = 0;
-      currentScoreEl.textContent = currentScore.toFixed(2);
+      // Create each progress bar (slider) with random weight and random initial value
+      for (let i = 0; i < numberOfBars; i++) {
+        const weight = Math.floor(Math.random() * 5) + 1; // Weight between 1 and 5
+        const initialValue = Math.floor(Math.random() * 101); // 0–100
 
-      // Create progress bars
-      // Let's randomize the number of bars between 2 and 5
-      const barCount = 2 + Math.floor(Math.random() * 4);
-      progressBars = [];
-      barsContainer.innerHTML = "";
-      for (let i = 0; i < barCount; i++) {
-        const maxVal = 10 + Math.floor(Math.random() * 91);  // bar max between 10 and 100
-        const startVal = Math.floor(Math.random() * (maxVal + 1));
-        const pointVal = (0.5 + Math.random() * 2).toFixed(2); // random points from 0.5 to 2.5
-
-        // Construct the DOM for each bar row
-        // We'll show a label, a progress bar, plus/minus controls
-        const barRow = document.createElement("div");
-        barRow.className = "mb-3";
-
-        const label = document.createElement("div");
-        label.className = "d-flex justify-content-between align-items-center mb-1";
-        label.innerHTML = `
-          <span class="fw-semibold">Bar #${i + 1} <small>(Max: ${maxVal}, Pts: ${pointVal})</small></span>
-          <span>Value: <span id="barValueDisplay_${i}" class="text-primary fw-bold">${startVal}</span></span>
-        `;
-
-        const progressContainer = document.createElement("div");
-        progressContainer.className = "d-flex align-items-center gap-2";
-        
-        // minus button
-        const minusBtn = document.createElement("button");
-        minusBtn.type = "button";
-        minusBtn.className = "btn btn-outline-secondary btn-sm";
-        minusBtn.textContent = "-";
-        minusBtn.onclick = () => adjustBar(i, -1);
-
-        // plus button
-        const plusBtn = document.createElement("button");
-        plusBtn.type = "button";
-        plusBtn.className = "btn btn-outline-secondary btn-sm";
-        plusBtn.textContent = "+";
-        plusBtn.onclick = () => adjustBar(i, 1);
-
-        const pbWrapper = document.createElement("div");
-        pbWrapper.className = "progress flex-grow-1";
-        pbWrapper.style.height = "24px";
-
-        const barElement = document.createElement("div");
-        barElement.id = `progressBar_${i}`;
-        barElement.className = "progress-bar";
-        barElement.role = "progressbar";
-        barElement.ariaValuemin = "0";
-        barElement.ariaValuemax = maxVal.toString();
-        barElement.style.width = `${(startVal / maxVal) * 100}%`;
-        barElement.textContent = "";
-
-        pbWrapper.appendChild(barElement);
-
-        progressContainer.appendChild(minusBtn);
-        progressContainer.appendChild(pbWrapper);
-        progressContainer.appendChild(plusBtn);
-
-        barRow.appendChild(label);
-        barRow.appendChild(progressContainer);
-        barsContainer.appendChild(barRow);
-
-        progressBars.push({
-          id: i,
-          maxValue: maxVal,
-          pointValue: parseFloat(pointVal),
-          currentValue: startVal,
-          barElement,
-          valueDisplay: label.querySelector(`#barValueDisplay_${i}`)
-        });
+        barsData.push({ weight, sliderValue: initialValue, sliderElement: null });
       }
 
-      // Make sure submit guess button is ready
-      submitGuessBtn.disabled = false;
+      // Random target sum (you can tweak the range as you like)
+      // For instance, let’s allow up to 5 * 100 * 5 = 2500 as a max
+      targetSum = Math.floor(Math.random() * 2501);
+
+      // Build UI
+      const container = document.getElementById('progressBarsContainer');
+      barsData.forEach((bar, index) => {
+        // Create a row with a label, a range input, and a progress bar that reflects the same value
+        const row = document.createElement('div');
+        row.classList.add('progress-container');
+
+        const label = document.createElement('div');
+        label.classList.add('weight-label');
+        label.textContent = `W: ${bar.weight}`;
+
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.min = '0';
+        input.max = '100';
+        input.value = bar.sliderValue;
+        input.classList.add('form-range', 'range-input');
+
+        // Create a progress bar just for visual effect
+        const progressBarWrapper = document.createElement('div');
+        progressBarWrapper.classList.add('progress');
+        progressBarWrapper.style.width = '200px';
+
+        const progressBar = document.createElement('div');
+        progressBar.classList.add('progress-bar');
+        progressBar.style.width = bar.sliderValue + '%';
+        progressBar.setAttribute('aria-valuenow', bar.sliderValue);
+        progressBar.setAttribute('aria-valuemin', '0');
+        progressBar.setAttribute('aria-valuemax', '100');
+
+        // Keep references
+        bar.sliderElement = input;
+
+        // On input change, update data
+        input.addEventListener('input', (e) => {
+          bar.sliderValue = +e.target.value;
+          progressBar.style.width = bar.sliderValue + '%';
+          progressBar.setAttribute('aria-valuenow', bar.sliderValue);
+        });
+
+        progressBarWrapper.appendChild(progressBar);
+        row.appendChild(label);
+        row.appendChild(input);
+        row.appendChild(progressBarWrapper);
+
+        container.appendChild(row);
+      });
+
+      // Update tries left label
+      document.getElementById('triesLeft').textContent = `Tries Left: ${triesLeft}`;
     }
 
-    function adjustBar(barIndex, delta) {
-      const barObj = progressBars[barIndex];
-      const newVal = barObj.currentValue + delta;
+    // Check guess
+    function checkGuess() {
+      if (triesLeft < 1) {
+        document.getElementById('feedback').textContent =
+          'No tries left. Click "New Game" to play again.';
+        return;
+      }
 
-      if (newVal < 0 || newVal > barObj.maxValue) return;
-      barObj.currentValue = newVal;
+      // Calculate the guess
+      let sum = 0;
+      barsData.forEach((bar) => {
+        sum += bar.weight * bar.sliderValue;
+      });
 
-      // Update display
-      barObj.barElement.style.width = `${(newVal / barObj.maxValue) * 100}%`;
-      barObj.valueDisplay.textContent = newVal;
-    }
-
-    function makeGuess() {
-      // We compute how close the user’s guess is to the target
-      // For “guess,” we simply sum up the bar values
-      const guessSum = progressBars.reduce((acc, bar) => acc + bar.currentValue, 0);
-      const diff = Math.abs(guessSum - targetValue);
-
-      // Each bar contributes points if used “wisely.” For a simple example:
-      // If the user is *closer* than half the target, each bar’s pointValue is added.
-      // Otherwise partial credit, or no credit. You can define your own formula:
-      let roundPoints = 0;
-      if (diff === 0) {
-        // Perfect guess
-        roundPoints = progressBars.reduce((acc, bar) => acc + bar.pointValue * 3, 0); // triple points on perfect
+      // Compare with targetSum
+      if (sum === targetSum) {
+        document.getElementById('feedback').textContent =
+          `Perfect! You got it exactly! The target was ${targetSum}.`;
+        triesLeft = 0;
       } else {
-        const halfTarget = targetVa
+        triesLeft--;
+        if (sum < targetSum) {
+          document.getElementById('feedback').textContent =
+            `Your guess (${sum}) is too LOW. Try again!`;
+        } else {
+          document.getElementById('feedback').textContent =
+            `Your guess (${sum}) is too HIGH. Try again!`;
+        }
+      }
+
+      // Update tries left
+      document.getElementById('triesLeft').textContent = `Tries Left: ${triesLeft}`;
+
+      if (triesLeft === 0 && sum !== targetSum) {
+        document.getElementById('feedback').textContent +=
+          ` No more tries! The correct sum was ${targetSum}.`;
+      }
+    }
+
+    // Event listeners
+    window.addEventListener('DOMContentLoaded', initGame);
+    document.getElementById('checkGuessBtn').addEventListener('click', checkGuess);
+    document.getElementById('newGameBtn').addEventListener('click', initGame);
+  </script>
+</body>
+</html>
