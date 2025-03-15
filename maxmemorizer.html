@@ -61,18 +61,24 @@
       </button>
     </div>
 
-    <!-- Additional features for thorough learning -->
-    <button class="btn btn-info me-2 mb-2" onclick="summarizeText()">
+    <!-- Summarize Text -->
+    <button id="summarizeBtn" class="btn btn-info me-2 mb-2" onclick="summarizeText()">
       Summarize Text
     </button>
-    <button class="btn btn-info me-2 mb-2" onclick="generateQuiz()">
+
+    <!-- Generate Quick Quiz -->
+    <button id="quickQuizBtn" class="btn btn-info me-2 mb-2" onclick="generateQuiz()">
       Generate Quick Quiz
     </button>
-    <button class="btn btn-info me-2 mb-2" onclick="readAloudText()">
-      Read Aloud (TTS)
+
+    <!-- 4chan Button -->
+    <button id="fourChanBtn" class="btn btn-info me-2 mb-2" onclick="fourChanExplain()">
+      4chan
     </button>
-    <button class="btn btn-info mb-2" onclick="highlightKeywords()">
-      Highlight Keywords
+
+    <!-- Read Aloud (TTS) -->
+    <button id="readAloudBtn" class="btn btn-info mb-2" onclick="readAloudText()">
+      Read Aloud (TTS)
     </button>
   </div>
 
@@ -305,13 +311,50 @@
   const restartBtn = document.getElementById("restartBtn");
   const clearBtn2 = document.getElementById("clearBtn2");
 
-  // Common “filler” words to skip
+  // The tool buttons
+  const chatGPTBtn = document.getElementById("searchChatGPTBtn");
+  const summarizeBtn = document.getElementById("summarizeBtn");
+  const quickQuizBtn = document.getElementById("quickQuizBtn");
+  const fourChanBtn = document.getElementById("fourChanBtn");
+  const readAloudBtn = document.getElementById("readAloudBtn");
+
+  // Enhanced common “filler” words to skip
   const skipWordsSet = new Set([
-    'a','an','the','is','are','and','or','but','nor','yet','so','for','of','in','to','by','with','from',
-    'it','its','be','am','was','were','this','that','these','those','at','on','if','do','does','did',
-    'because','since','i','me','my','you','your','he','she','they','them','we','us','as','then','out',
-    'up','down','over','under','above','below','have','has','had','can','may','should','would','could',
-    'go','goes','went','just','now','will','shall','very','every','all','what','when','where','how','why'
+    // Articles, conjunctions, and auxiliary verbs
+    'a','an','the','is','are','was','were','am','be','been','being',
+    'and','or','but','nor','so','yet','for',
+    
+    // Prepositions
+    'of','in','to','by','with','from','at','on','into','onto','upon',
+    'about','above','below','under','over','between','among','around','through',
+    'before','after','during','since','until',
+    
+    // Pronouns
+    'i','me','my','mine','you','your','yours','he','him','his','she','her','hers',
+    'it','its','we','us','our','ours','they','them','their','theirs',
+    'this','that','these','those',
+    
+    // Question words
+    'who','whom','whose','which','what','when','where','how','why',
+    
+    // Common verbs and modals (reducing noise from auxiliary/helping verbs)
+    'do','does','did','done','doing',
+    'have','has','had','having',
+    'can','could','shall','should','will','would','may','might','must',
+    'let','lets','make','makes','made','making',
+    'go','goes','went','gone','going','get','gets','got','gotten','getting',
+    
+    // Common adverbs and determiners (often non-essential in learning contexts)
+    'just','only','even','also','too','very','much','more','most','some','any',
+    'every','all','no','none','not','never','always','sometimes','often','rarely',
+    'perhaps','maybe','quite','rather','almost','already','soon','yet','still',
+    
+    // Redundant filler words and transitions
+    'then','out','up','down','over','again','like','such','same',
+    'whether','though','although','because','since','unless','instead',
+    'either','neither','both','while','meanwhile','otherwise',
+    'further','furthermore','moreover','besides','however','therefore',
+    'thus','hence','indeed','anyway','anyhow'
   ]);
 
   let tokenData = [];
@@ -326,6 +369,9 @@
     // 2) check if we have cardId & side
     const rawCardId = getUrlParameter("cardId").trim();
     const rawSide = getUrlParameter("side").trim().toLowerCase();
+
+    // Set random colors for the tool buttons each time the page is visited
+    setRandomColorsForToolButtons();
 
     // If we do, load the text from DB and start the game automatically
     if (rawCardId && rawSide && (rawSide === "front" || rawSide === "back")) {
@@ -623,6 +669,33 @@
    ********************************************************************/
 
   /**
+   * Random color generator for the tool buttons
+   */
+  function getRandomColorHex() {
+    // random rgb
+    const r = Math.floor(getSecureRandomNumber() * 256);
+    const g = Math.floor(getSecureRandomNumber() * 256);
+    const b = Math.floor(getSecureRandomNumber() * 256);
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function setRandomColorsForToolButtons() {
+    const colors = [
+      getRandomColorHex(),
+      getRandomColorHex(),
+      getRandomColorHex(),
+      getRandomColorHex(),
+      getRandomColorHex()
+    ];
+    // We have 5 tool buttons
+    chatGPTBtn.style.backgroundColor = colors[0];
+    summarizeBtn.style.backgroundColor = colors[1];
+    quickQuizBtn.style.backgroundColor = colors[2];
+    fourChanBtn.style.backgroundColor = colors[3];
+    readAloudBtn.style.backgroundColor = colors[4];
+  }
+
+  /**
    * Open ChatGPT with the current text area contents in a new tab
    */
   function searchChatGPT() {
@@ -637,7 +710,7 @@
   }
 
   /**
-   * Summarize the user input. (Placeholder logic – adapt as needed.)
+   * Summarize Text -> same logic as searchChatGPT, but with prefix "Summarize Text: "
    */
   function summarizeText() {
     const textVal = userInput.value.trim();
@@ -645,13 +718,14 @@
       alert("No text found to summarize!");
       return;
     }
-    // In a real scenario, you'd do something more advanced or call an API.
-    // Here, we'll just show a quick approximation or placeholder:
-    alert("Summary:\n\nThis is a very rough placeholder summary.\n(Implement an AI or custom logic to do real summarization.)");
+    const prefixed = "Summarize Text: " + textVal;
+    const encoded = encodeURIComponent(prefixed);
+    const url = `https://chat.openai.com/?q=${encoded}`;
+    window.open(url, "_blank");
   }
 
   /**
-   * Generate a quick quiz from the user input. (Placeholder logic.)
+   * Generate Quick Quiz -> prefix "Generate Quick Quiz: "
    */
   function generateQuiz() {
     const textVal = userInput.value.trim();
@@ -659,8 +733,25 @@
       alert("No text found to generate a quiz!");
       return;
     }
-    // Just an example:
-    alert("Quiz generated (placeholder):\n1) What is the main topic?\n2) List one key detail.\n(Implement real quiz logic here.)");
+    const prefixed = "Generate Quick Quiz: " + textVal;
+    const encoded = encodeURIComponent(prefixed);
+    const url = `https://chat.openai.com/?q=${encoded}`;
+    window.open(url, "_blank");
+  }
+
+  /**
+   * 4Chan -> prefix "4chan: explain this, full tokens "
+   */
+  function fourChanExplain() {
+    const textVal = userInput.value.trim();
+    if (!textVal) {
+      alert("No text found for 4chan explanation!");
+      return;
+    }
+    const prefixed = "4chan: explain this, full tokens " + textVal;
+    const encoded = encodeURIComponent(prefixed);
+    const url = `https://chat.openai.com/?q=${encoded}`;
+    window.open(url, "_blank");
   }
 
   /**
@@ -676,25 +767,6 @@
     speechSynthesis.speak(utter);
   }
 
-  /**
-   * Highlight "keywords" in the input – naive approach
-   */
-  function highlightKeywords() {
-    const textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("No text found to highlight!");
-      return;
-    }
-    // For demonstration: we highlight any word with length >= 7
-    const highlighted = textVal.split(/\s+/).map(word => {
-      if (word.length >= 7) {
-        return `**${word}**`;
-      }
-      return word;
-    }).join(" ");
-
-    alert("Highlighted words (7+ letters) in the text:\n\n" + highlighted + "\n\n(Replace with actual text rendering, if desired.)");
-  }
 </script>
 </body>
 </html>
