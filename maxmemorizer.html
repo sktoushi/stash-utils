@@ -252,8 +252,6 @@
   async function loadCardFromDb(cardId, whichSide) {
     // recordId = top 16 bits
     const recordId = cardId >>> 16;
-    // pairIndex = lower 16 bits (not strictly needed here, but for clarity)
-    // const pairIndex = cardId & 0xFFFF;
 
     // get the record from DB
     const recordData = await getRecordById(recordId);
@@ -338,7 +336,9 @@
       }
       const textFromDb = await loadCardFromDb(cardIdNum, rawSide);
       if (textFromDb) {
-        // We have the single attribute from the DB. Let's do the game.
+        // Put this text into the textarea as well, so the tools can read it
+        userInput.value = textFromDb;
+        // Then start the game with that text
         startGame(textFromDb);
       }
     }
@@ -376,6 +376,9 @@
    * The main function to parse + set up the reconstruction from an input text
    */
   function startGame(inputText) {
+    // Keep the text in the textarea for the "Extra Tools" to reference
+    userInput.value = inputText;
+
     // 1) sanitize
     sanitizedText = sanitizeText(inputText);
     // 2) split tokens
