@@ -48,7 +48,7 @@
 </head>
 <body>
 
-  <!-- Display random Pantone color in top-right corner (optional) -->
+  <!-- Display random Pantone color in top-left corner (optional) -->
   <div id="pantoneColorDisplay"
        style="position: absolute; top: 10px; left: 10px; background-color: #ffffffcc; padding: 5px; border-radius: 5px; font-weight: bold;"></div>
 
@@ -119,17 +119,19 @@
     let CSV_DATA = [];
     let GAUGE_SCALE = 100;
     const DEFAULT_STORAGE_LOCATION = "https://github.com/sktoushi/stash-utils/upload/main";
+    // We'll store the CSV filename from URL param so we can keep it for the "download" name
+    let csvFileName = "";
 
     window.addEventListener('load', async () => {
       // Set up the CSV Storage location from localStorage or default
       initializeStorageField();
 
       // Determine CSV name from ?target= param
-      const csvFileName = getUrlParameter('target').trim();
-      // If not provided, we can fallback to something like "default.csv" or just skip
+      csvFileName = getUrlParameter('target').trim();
+      // If not provided, we can fallback to something like "default.csv"
       if (!csvFileName) {
         showToast("No 'target' param provided. CSV won't be fetched.");
-        return;
+        csvFileName = "default.csv";
       }
 
       // Attempt to fetch the CSV from the same directory
@@ -281,13 +283,16 @@
           // Show a gauge
           const gaugeDiv = document.createElement("div");
 
+          // We'll compute the percentage for the gauge
+          const gaugePct = Math.min(100, (pdVal / GAUGE_SCALE) * 100);
+
           gaugeDiv.innerHTML = `
             <div class="progress-label">
               Probability Distribution: ${pdVal}/${GAUGE_SCALE}
             </div>
             <div class="progress" style="height: 30px;">
               <div class="progress-bar bg-info" role="progressbar" 
-                   style="width: ${(pdVal / GAUGE_SCALE) * 100}%; transition: width 0.5s;"
+                   style="width: ${gaugePct}%; transition: width 0.5s;"
                    aria-valuenow="${pdVal}" aria-valuemin="0" aria-valuemax="${GAUGE_SCALE}">
                 ${pdVal}
               </div>
@@ -352,21 +357,21 @@
       let csvOutput = "";
       CSV_DATA.forEach(item => {
         let rowType = (item.rowType || "").replace(/,/g, "_");
-        let dist = (item.probabilityDistribution === null) ? "" : item.probabilityDistribution;
+        // If the probabilityDistribution is null, keep it as "null"
+        let dist = (item.probabilityDistribution === null) ? "null" : item.probabilityDistribution;
         let content = (item.content || "");
         csvOutput += `${rowType},${dist},${content}\n`;
       });
 
-      // Download file
-      const now = new Date().toISOString().replace(/[:.]/g, '-');
-      const fileName = `updated_${now}.csv`;
+      // Use the same file name as the "target" parameter
+      // If user didn't provide a param, fallback "default.csv" is already in `csvFileName`
       const blob = new Blob([csvOutput], { type: "text/csv;charset=utf-8;" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = fileName;
+      link.download = csvFileName;
       link.click();
 
-      showToast("Downloading CSV. Will redirect in 5 seconds...");
+      showToast(`Downloading "${csvFileName}". Will redirect in 5 seconds...`);
 
       // Wait 5s -> redirect
       setTimeout(() => {
@@ -417,7 +422,7 @@
     }
 
     /****************************************************
-     *  CSV Storage Field: Edit/Save/Reset
+     *  CSV Storage Field: Edit/Save
      ****************************************************/
     function initializeStorageField() {
       const savedLocation = localStorage.getItem("csvStorageInput");
