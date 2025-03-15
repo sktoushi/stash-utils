@@ -71,7 +71,7 @@
       Generate Quick Quiz
     </button>
 
-    <!-- 4chan Button -->
+    <!-- 4Chan Button -->
     <button id="fourChanBtn" class="btn btn-info me-2 mb-2" onclick="fourChanExplain()">
       4chan
     </button>
@@ -756,14 +756,17 @@
 
   /**
    * Use speech synthesis to read aloud the user input
+   * (sanitize by ignoring underscores in the text)
    */
   function readAloudText() {
-    const textVal = userInput.value.trim();
+    let textVal = userInput.value.trim();
     if (!textVal) {
       alert("No text to read aloud!");
       return;
     }
-    const utter = new SpeechSynthesisUtterance(textVal);
+    // Remove underscores before speaking
+    let sanitizedForTTS = textVal.replace(/_/g, '');
+    const utter = new SpeechSynthesisUtterance(sanitizedForTTS);
     speechSynthesis.speak(utter);
   }
 
