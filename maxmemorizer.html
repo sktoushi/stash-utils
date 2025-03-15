@@ -43,24 +43,37 @@
       ></textarea>
     </div>
     <button id="startBtn" class="btn btn-primary me-2">Start</button>
-    <button id="clearBtn" class="btn btn-secondary me-2">Clear All</button>
+    <button id="clearBtn" class="btn btn-secondary">Clear All</button>
+  </div>
 
-    <!-- NEW BUTTON: Search ChatGPT for the current textarea content -->
-    <button id="chatGPTBtn" class="btn btn-success me-2">Search ChatGPT</button>
+  <!-- Extra Tools (Always Visible) -->
+  <div id="extraTools" class="mb-5">
+    <h5 class="mt-4">Extra Tools for Thorough Learning:</h5>
+    <p class="text-muted">
+      Below are optional features you might find useful while studying or analyzing your text.
+      These tools remain available even if content is pre-loaded (e.g. via <code>?cardId=</code>).
+    </p>
 
-    <!-- EXTRA FEATURES to help thoroughly learn the material -->
-    <div id="extraFeatures" class="mt-4">
-      <h5>Extra Learning Tools:</h5>
-      <div class="mb-2">
-        <button id="speakAloudBtn" class="btn btn-info me-2">Speak Aloud</button>
-        <button id="generateClozeBtn" class="btn btn-dark me-2">Generate Cloze Deletions</button>
-        <button id="highlightKeyBtn" class="btn btn-warning me-2">Highlight Key Terms</button>
-        <button id="translateBtn" class="btn btn-outline-primary me-2">Open in Google Translate</button>
-      </div>
-      <div class="form-text">
-        These additional tools help reinforce the material in different ways (listening, interactive cloze, visual highlighting, etc.).
-      </div>
+    <!-- Search ChatGPT Button -->
+    <div class="mb-3">
+      <button id="searchChatGPTBtn" class="btn btn-outline-success" onclick="searchChatGPT()">
+        Search ChatGPT
+      </button>
     </div>
+
+    <!-- Additional features for thorough learning -->
+    <button class="btn btn-info me-2 mb-2" onclick="summarizeText()">
+      Summarize Text
+    </button>
+    <button class="btn btn-info me-2 mb-2" onclick="generateQuiz()">
+      Generate Quick Quiz
+    </button>
+    <button class="btn btn-info me-2 mb-2" onclick="readAloudText()">
+      Read Aloud (TTS)
+    </button>
+    <button class="btn btn-info mb-2" onclick="highlightKeywords()">
+      Highlight Keywords
+    </button>
   </div>
 
   <!-- Game View (Hidden by Default) -->
@@ -239,6 +252,8 @@
   async function loadCardFromDb(cardId, whichSide) {
     // recordId = top 16 bits
     const recordId = cardId >>> 16;
+    // pairIndex = lower 16 bits (not strictly needed here, but for clarity)
+    // const pairIndex = cardId & 0xFFFF;
 
     // get the record from DB
     const recordData = await getRecordById(recordId);
@@ -292,13 +307,6 @@
   const restartBtn = document.getElementById("restartBtn");
   const clearBtn2 = document.getElementById("clearBtn2");
 
-  // NEW BUTTONS in extraFeatures
-  const chatGPTBtn = document.getElementById("chatGPTBtn");
-  const speakAloudBtn = document.getElementById("speakAloudBtn");
-  const generateClozeBtn = document.getElementById("generateClozeBtn");
-  const highlightKeyBtn = document.getElementById("highlightKeyBtn");
-  const translateBtn = document.getElementById("translateBtn");
-
   // Common “filler” words to skip
   const skipWordsSet = new Set([
     'a','an','the','is','are','and','or','but','nor','yet','so','for','of','in','to','by','with','from',
@@ -330,6 +338,7 @@
       }
       const textFromDb = await loadCardFromDb(cardIdNum, rawSide);
       if (textFromDb) {
+        // We have the single attribute from the DB. Let's do the game.
         startGame(textFromDb);
       }
     }
@@ -434,77 +443,6 @@
     completionMsg.classList.add('d-none');
     completionMsg.textContent = '';
     updateDisplayedText();
-  });
-
-  /*********************************************
-   * NEW: "Search ChatGPT" for the text area content
-   *********************************************/
-  chatGPTBtn.addEventListener("click", handleChatGPTSearch);
-  function handleChatGPTSearch() {
-    const textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("No text to search!");
-      return;
-    }
-    // Open ChatGPT with a query param
-    window.open("https://chat.openai.com/?q=" + encodeURIComponent(textVal), "_blank");
-  }
-
-  /*********************************************
-   * EXTRA FEATURES
-   *********************************************/
-  // 1) Speak Aloud the text
-  speakAloudBtn.addEventListener("click", () => {
-    const textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("Nothing to speak!");
-      return;
-    }
-    const utterance = new SpeechSynthesisUtterance(textVal);
-    speechSynthesis.speak(utterance);
-  });
-
-  // 2) Generate Cloze Deletions (basic example)
-  generateClozeBtn.addEventListener("click", () => {
-    const textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("Nothing to generate cloze from!");
-      return;
-    }
-    // Very naive approach: hide every 5th word
-    const words = textVal.split(/\s+/);
-    let result = words.map((w, idx) => {
-      if ((idx + 1) % 5 === 0) {
-        return "_____";
-      }
-      return w;
-    }).join(" ");
-    alert("Cloze Version:\n\n" + result);
-  });
-
-  // 3) Highlight Key Terms (simple example: highlight words over length 6)
-  highlightKeyBtn.addEventListener("click", () => {
-    const textVal = userInput.value;
-    if (!textVal.trim()) {
-      alert("No text to highlight!");
-      return;
-    }
-    let highlighted = textVal.replace(/\b(\w{7,})\b/g, match => {
-      // wrap in a "highlight" marker
-      return "[[HIGHLIGHT:" + match + "]]";
-    });
-    userInput.value = highlighted;
-    alert("Words of length 7+ are now bracketed in the textarea!");
-  });
-
-  // 4) Open in Google Translate
-  translateBtn.addEventListener("click", () => {
-    const textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("No text to translate!");
-      return;
-    }
-    window.open("https://translate.google.com/?sl=auto&tl=en&text=" + encodeURIComponent(textVal), "_blank");
   });
 
   /*********************************************
@@ -676,6 +614,84 @@
   }
   // Expose to the global scope so inline onclick works
   window.handleChoiceClick = handleChoiceClick;
+
+  /********************************************************************
+   * NEW FUNCTIONS FOR EXTRA TOOLS (ALWAYS VISIBLE)
+   ********************************************************************/
+
+  /**
+   * Open ChatGPT with the current text area contents in a new tab
+   */
+  function searchChatGPT() {
+    const textVal = userInput.value.trim();
+    if (!textVal) {
+      alert("No text found in the textarea to search!");
+      return;
+    }
+    const encoded = encodeURIComponent(textVal);
+    const url = `https://chat.openai.com/?q=${encoded}`;
+    window.open(url, "_blank");
+  }
+
+  /**
+   * Summarize the user input. (Placeholder logic – adapt as needed.)
+   */
+  function summarizeText() {
+    const textVal = userInput.value.trim();
+    if (!textVal) {
+      alert("No text found to summarize!");
+      return;
+    }
+    // In a real scenario, you'd do something more advanced or call an API.
+    // Here, we'll just show a quick approximation or placeholder:
+    alert("Summary:\n\nThis is a very rough placeholder summary.\n(Implement an AI or custom logic to do real summarization.)");
+  }
+
+  /**
+   * Generate a quick quiz from the user input. (Placeholder logic.)
+   */
+  function generateQuiz() {
+    const textVal = userInput.value.trim();
+    if (!textVal) {
+      alert("No text found to generate a quiz!");
+      return;
+    }
+    // Just an example:
+    alert("Quiz generated (placeholder):\n1) What is the main topic?\n2) List one key detail.\n(Implement real quiz logic here.)");
+  }
+
+  /**
+   * Use speech synthesis to read aloud the user input
+   */
+  function readAloudText() {
+    const textVal = userInput.value.trim();
+    if (!textVal) {
+      alert("No text to read aloud!");
+      return;
+    }
+    const utter = new SpeechSynthesisUtterance(textVal);
+    speechSynthesis.speak(utter);
+  }
+
+  /**
+   * Highlight "keywords" in the input – naive approach
+   */
+  function highlightKeywords() {
+    const textVal = userInput.value.trim();
+    if (!textVal) {
+      alert("No text found to highlight!");
+      return;
+    }
+    // For demonstration: we highlight any word with length >= 7
+    const highlighted = textVal.split(/\s+/).map(word => {
+      if (word.length >= 7) {
+        return `**${word}**`;
+      }
+      return word;
+    }).join(" ");
+
+    alert("Highlighted words (7+ letters) in the text:\n\n" + highlighted + "\n\n(Replace with actual text rendering, if desired.)");
+  }
 </script>
 </body>
 </html>
