@@ -361,11 +361,11 @@
   let currentGuessIndex = 0;
   let sanitizedText = '';
 
-  // NEW: We'll store Pantone data globally after first fetch
+  // We'll store Pantone data globally after first fetch
   let pantoneDataGlobal = null;
 
   /**
-   * NEW: Function to fetch pantone-colors.json (if not fetched yet) and then
+   * Function to fetch pantone-colors.json (if not fetched yet) and then
    * choose distinct random colors for background and buttons.
    */
   async function updateColorsPantone() {
@@ -396,13 +396,11 @@
       // set background color of body
       document.body.style.backgroundColor = bgColor;
 
-      // set all relevant buttons to a different color
+      // set all relevant buttons to the new (distinct) color
       const allButtons = document.querySelectorAll('button');
       allButtons.forEach((btn) => {
-        // We'll do a simple approach: button color is distinct from background
         btn.style.backgroundColor = btnColor;
-        // if you'd like to ensure contrast, you could set text color conditionally
-        btn.style.color = "#000";
+        btn.style.color = "#000"; // ensures decent contrast
       });
 
     } catch (err) {
@@ -417,6 +415,7 @@
     }
   }
 
+  // On page load, open DB, set initial random colors, etc.
   window.addEventListener("load", async () => {
     // 1) open the DB
     await openDatabase();
@@ -425,7 +424,7 @@
     const rawCardId = getUrlParameter("cardId").trim();
     const rawSide = getUrlParameter("side").trim().toLowerCase();
 
-    // NEW: We'll call updateColorsPantone once on load
+    // We'll call updateColorsPantone once on load
     await updateColorsPantone();
 
     // Then attach the same color update on every button click
