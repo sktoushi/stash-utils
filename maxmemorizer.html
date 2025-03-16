@@ -1,810 +1,1210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <title>Sentence Reconstruction Game</title>
-  <!-- Bootstrap CSS (CDN) -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  />
-  <style>
-    /* Ensure the reconstruction area is of modest size initially but can grow. */
-    #workInProgress {
-      width: 100%;
-      min-height: 150px; /* modest initial height */
-      overflow-wrap: break-word; /* handle long text gracefully */
-    }
+    <meta charset="UTF-8">
+    <title>Random URL Picker</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Removed the forced background-color: #f8f9fa; from body */
 
-    /* Make sure choice buttons + progress appear inline for the current guess */
-    .choice-buttons-inline {
-      margin-left: 8px;
-      display: inline-block;
-      vertical-align: middle;
-      white-space: nowrap;
-    }
-  </style>
-</head>
-<body class="bg-light">
-<div class="container my-5">
-  <h1 class="text-center mb-4">Sentence Reconstruction</h1>
-
-  <!-- Text Area and Control Buttons (Initial View) -->
-  <div id="initialView">
-    <div class="mb-3">
-      <label for="userInput" class="form-label fw-bold">Enter Your Passage:</label>
-      <textarea
-        class="form-control"
-        id="userInput"
-        rows="6"
-        placeholder="Type or paste your paragraphs here..."
-      ></textarea>
-    </div>
-    <button id="startBtn" class="btn btn-primary me-2">Start</button>
-    <button id="clearBtn" class="btn btn-secondary">Clear All</button>
-  </div>
-
-  <!-- Extra Tools (Always Visible) -->
-  <div id="extraTools" class="mb-5">
-    <h5 class="mt-4">Extra Tools for Thorough Learning:</h5>
-    <p class="text-muted">
-      Below are optional features you might find useful while studying or analyzing your text.
-      These tools remain available even if content is pre-loaded (e.g. via <code>?cardId=</code>).
-    </p>
-
-    <!-- Search ChatGPT Button -->
-    <div class="mb-3">
-      <button id="searchChatGPTBtn" class="btn btn-outline-success" onclick="searchChatGPT()">
-        Search ChatGPT
-      </button>
-    </div>
-
-    <!-- Summarize Text -->
-    <button id="summarizeBtn" class="btn btn-info me-2 mb-2" onclick="summarizeText()">
-      Summarize Text
-    </button>
-
-    <!-- Generate Quick Quiz -->
-    <button id="quickQuizBtn" class="btn btn-info me-2 mb-2" onclick="generateQuiz()">
-      Generate Quick Quiz
-    </button>
-
-    <!-- 4Chan Button -->
-    <button id="fourChanBtn" class="btn btn-info me-2 mb-2" onclick="fourChanExplain()">
-      4chan
-    </button>
-
-    <!-- Read Aloud (TTS) -->
-    <button id="readAloudBtn" class="btn btn-info mb-2" onclick="readAloudText()">
-      Read Aloud (TTS)
-    </button>
-  </div>
-
-  <!-- Game View (Hidden by Default) -->
-  <div id="gameView" class="d-none">
-    <p class="fw-bold" id="progressText">
-      Reconstructing your text ...
-    </p>
-    <div class="mb-3">
-      <!-- This is where the reconstructed text (plus choices inline) will appear -->
-      <div id="workInProgress" class="p-3 border"></div>
-    </div>
-
-    <!-- Informational Feedback -->
-    <div class="alert alert-info d-none" id="completionMsg"></div>
-
-    <!-- Game Control Buttons -->
-    <button id="restartBtn" class="btn btn-warning me-2">Restart</button>
-    <button id="clearBtn2" class="btn btn-secondary">Clear All</button>
-  </div>
-</div>
-
-<!-- Bootstrap Bundle JS (CDN) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-  /********************************************************************
-   *   URL Param helper
-   ********************************************************************/
-  function getUrlParameter(name) {
-    name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
-    const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-    const results = regex.exec(window.location.search);
-    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-  }
-
-  /********************************************************************
-   *   Determine DB name from ?db=... (defaults to "myCsvDb_default")
-   ********************************************************************/
-  let dbNameFromParam = getUrlParameter('db').trim();
-  if (!dbNameFromParam) {
-    dbNameFromParam = "myCsvDb_default";
-  }
-  const DB_NAME = dbNameFromParam;
-  const DB_VERSION = 1;
-  const STORE_NAME = "records";
-  let db = null;
-
-  /**
-   * Open (or create/upgrade) the shared IndexedDB database.
-   */
-  function openDatabase() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-      request.onupgradeneeded = (event) => {
-        db = event.target.result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          const store = db.createObjectStore(STORE_NAME, {
-            keyPath: 'id',
-            autoIncrement: true
-          });
-          store.createIndex('textIndex', 'text', { unique: true });
+        body.dark-mode {
+            background-color: #343a40;
+            color: #f8f9fa;
         }
-      };
-      request.onsuccess = (event) => {
-        db = event.target.result;
-        resolve(db);
-      };
-      request.onerror = (event) => {
-        console.error("IndexedDB error:", event.target.error);
-        reject(event.target.error);
-      };
-    });
-  }
-
-  /**
-   * Insert lines into DB, skipping duplicates (used if the user does a manual "Start").
-   */
-  function addLinesToDb(lines) {
-    return new Promise((resolve, reject) => {
-      if (!db) {
-        console.error("IndexedDB is not opened yet!");
-        resolve(0);
-        return;
-      }
-      let addedCount = 0;
-      const tx = db.transaction(STORE_NAME, "readwrite");
-      const store = tx.objectStore(STORE_NAME);
-      const textIndex = store.index("textIndex");
-
-      let processedCount = 0;
-
-      function processNext(i) {
-        if (i >= lines.length) {
-          resolve(addedCount);
-          return;
+        .container {
+            max-width: 900px;
+            margin-top: 30px;
         }
-        const line = lines[i].trim();
-        if (!line) {
-          processedCount++;
-          processNext(i + 1);
-          return;
+        .btn-draw {
+            width: 100%;
+            margin-bottom: 20px;
         }
-        // Check duplicates
-        const checkReq = textIndex.get(line);
-        checkReq.onsuccess = () => {
-          if (checkReq.result) {
-            // Already in DB
-            processedCount++;
-            processNext(i + 1);
-          } else {
-            const addReq = store.add({ text: line });
-            addReq.onsuccess = () => {
-              addedCount++;
-              processedCount++;
-              processNext(i + 1);
+        .slider-container, .input-container {
+            margin-bottom: 20px;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+        }
+        .btn-export {
+            margin-top: 10px;
+        }
+        .gauge-container {
+            margin-bottom: 20px;
+        }
+        .bucket-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .dark-mode .card {
+            background-color: #495057;
+            color: #f8f9fa;
+        }
+        .dark-mode .form-control, .dark-mode .form-select {
+            background-color: #6c757d;
+            color: #f8f9fa;
+            border: 1px solid #ced4da;
+        }
+        .dark-mode .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .dark-mode .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        /* Custom scrollbar for dark mode */
+        body.dark-mode ::-webkit-scrollbar {
+            width: 8px;
+        }
+        body.dark-mode ::-webkit-scrollbar-track {
+            background: #343a40;
+        }
+        body.dark-mode ::-webkit-scrollbar-thumb {
+            background: #6c757d;
+            border-radius: 4px;
+        }
+        /* Hide Bucket 3 by default (radio button will toggle) */
+        #bucket3Container.hidden {
+            display: none;
+        }
+    </style>
+    <script>
+        let currentTargetState = {}; 
+        let initialFiles = [];
+        let drawHistory = [];
+        const historyLimit = 5;
+        let lastDrawnId = null;
+        let currentTarget = "";
+        let localStorageKey = ""; // LocalStorage key based on the target
+        let lastPantoneColor = '#ffffff'; // store the last Pantone color if needed
+
+        /**
+         * Function to get a secure random number between 0 and 1 (exclusive).
+         */
+        function getSecureRandomNumber() {
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return array[0] / (0xFFFFFFFF + 1);
+        }
+
+        /**
+         * Fetch random color from pantone-colors.json and apply it to body background.
+         */
+        async function getRandomColor() {
+            try {
+                const response = await fetch('pantone-colors.json');
+                const pantoneData = await response.json();
+                
+                // pantoneData has two arrays: "names" and "values"
+                const { names, values } = pantoneData;
+
+                if (!names || !values || names.length !== values.length) {
+                    throw new Error('Invalid pantone-colors.json format. "names" and "values" must be parallel arrays.');
+                }
+
+                const randomIndex = Math.floor(getSecureRandomNumber() * names.length);
+                const randomName = names[randomIndex];
+                const randomValue = values[randomIndex];
+
+                // Apply the random color to entire page background
+                document.body.style.backgroundColor = randomValue;
+
+                // Display Pantone info in the top-right corner
+                const colorDisplay = document.getElementById('pantoneColorDisplay');
+                if (colorDisplay) {
+                    colorDisplay.textContent = `${randomName} (${randomValue})`;
+                }
+
+                lastPantoneColor = randomValue;
+                return randomValue;
+            } catch (error) {
+                console.error('Error fetching pantone-colors.json:', error);
+                // fallback to white
+                document.body.style.backgroundColor = '#ffffff';
+                lastPantoneColor = '#ffffff';
+                return '#ffffff';
+            }
+        }
+
+        /**
+         * Shuffle an array in place (Fisher-Yates).
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(getSecureRandomNumber() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        /**
+         * Parse URL parameters.
+         */
+        function getUrlParameter(name) {
+            name = name.replace(/[]/, '\').replace(/[]/, '\');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        /**
+         * Fetch JSON data based on ?target parameter, returning initialFiles.
+         */
+        async function fetchInitialFiles(target) {
+            try {
+                const response = await fetch(`${target}.json`);
+                if (!response.ok) {
+                    throw new Error(`Unable to fetch ${target}.json`);
+                }
+                const data = await response.json();
+                return data.initialFiles;
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                return [];
+            }
+        }
+
+        function getTotalFreq(bucket) {
+            return Object.values(bucket).reduce((sum, freq) => sum + freq, 0);
+        }
+
+        /**
+         * Save the current target's state to localStorage.
+         */
+        function saveState() {
+            localStorage.setItem(localStorageKey, JSON.stringify(currentTargetState));
+        }
+
+        /**
+         * Load the current target's state from localStorage or bucket-state.json fallback.
+         */
+        async function loadState() {
+            const storedStateString = localStorage.getItem(localStorageKey);
+            if (storedStateString) {
+                currentTargetState = JSON.parse(storedStateString);
+            } else {
+                try {
+                    const response = await fetch('bucket-state.json');
+                    if (!response.ok) throw new Error('Unable to fetch bucket-state.json');
+                    const data = await response.json();
+                    if (data[currentTarget]) {
+                        currentTargetState = { ...data[currentTarget] };
+                    } else {
+                        initializeTargetState();
+                    }
+                    saveState();
+                } catch (error) {
+                    alert('Error loading initial state: ' + error.message);
+                    initializeTargetState();
+                    saveState();
+                }
+            }
+
+            // Ensure new fields exist
+            if (currentTargetState.funCard1 === undefined) currentTargetState.funCard1 = "intent://com.google.android.apps.youtube.music#Intent;scheme=android-app;end;";
+            if (currentTargetState.funCard2 === undefined) currentTargetState.funCard2 = "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-finer-things-in-life";
+            if (currentTargetState.funCard3 === undefined) currentTargetState.funCard3 = "intent://www.instagram.com/reels/#Intent;package=com.instagram.android;scheme=https;end; ";
+            if (currentTargetState.funCard4 === undefined) currentTargetState.funCard4 = "intent://www.youtube.com/shorts/#Intent;package=com.google.android.youtube;scheme=https;end;";
+            if (currentTargetState.funCard5 === undefined) currentTargetState.funCard5 = "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-finer-things-in-life";
+            if (currentTargetState.defaultSessionCards === undefined) currentTargetState.defaultSessionCards = "100";
+            if (currentTargetState.bucket3 === undefined) currentTargetState.bucket3 = [];
+        }
+
+        /**
+         * Initialize the state for the current target.
+         */
+        function initializeTargetState() {
+            currentTargetState = {
+                b1: {},
+                b2: {},
+                uniqueBucket1Count: 0,
+                b1Prob: 0.33,
+                b2Prob: 0.67,
+                defaultFrequency: 1,
+                urlPrefix: '',
+                urlSuffix: '',
+                drawHistory: [],
+                funCard1: "intent://com.google.android.apps.youtube.music#Intent;scheme=android-app;end;",
+                funCard2: "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-finer-things-in-life",
+                funCard3: "intent://www.instagram.com/reels/#Intent;package=com.instagram.android;scheme=https;end; ",
+                funCard4: "intent://www.youtube.com/shorts/#Intent;package=com.google.android.youtube;scheme=https;end;",
+                funCard5: "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-finer-things-in-life",
+                defaultSessionCards: "100",
+                bucket3: []
             };
-            addReq.onerror = () => {
-              processedCount++;
-              processNext(i + 1);
-            };
-          }
-        };
-        checkReq.onerror = () => {
-          processedCount++;
-          processNext(i + 1);
-        };
-      }
-      processNext(0);
-
-      tx.oncomplete = () => { /* done */ };
-      tx.onerror = (err) => {
-        console.error("Transaction error:", err);
-        reject(err);
-      };
-    });
-  }
-
-  /********************************************************************
-   * HELPER: Return a cryptographically secure random number [0..1)
-   ********************************************************************/
-  function getSecureRandomNumber() {
-    const array = new Uint32Array(1);
-    window.crypto.getRandomValues(array);
-    return array[0] / (0xFFFFFFFF + 1);
-  }
-
-  /**
-   * Build all front/back permutations for a single record text
-   * (same logic used in Land Cruiser 300).
-   */
-  function generatePermutationsForRecord(recordId, recordText) {
-    const attributes = recordText.split(",")
-      .map(a => a.trim())
-      .filter(a => a.length > 0);
-
-    const results = [];
-    let pairIndex = 0;
-    for (let i = 0; i < attributes.length; i++) {
-      for (let j = 0; j < attributes.length; j++) {
-        if (i !== j) {
-          const front = attributes[i];
-          const back = attributes[j];
-          const cardUniqueId = (recordId << 16) + pairIndex;
-          results.push({ id: cardUniqueId, front, back });
-          pairIndex++;
+            initialFiles.forEach(file => {
+                const id = file[0];
+                const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
+                currentTargetState.b2[id] = freq;
+            });
         }
-      }
-    }
-    return results;
-  }
 
-  /**
-   * If we were given ?cardId=...&side=(front|back), fetch that record from the DB,
-   * reconstruct the permutations, and find the matching pair => load the requested side
-   */
-  async function loadCardFromDb(cardId, whichSide) {
-    // recordId = top 16 bits
-    const recordId = cardId >>> 16;
+        /**
+         * Reset the state for this target only.
+         */
+        async function resetState() {
+            await getRandomColor();
+            if (!confirm('Are you sure you want to reset the state? This action cannot be undone.')) return;
+            localStorage.removeItem(localStorageKey);
+            initializeTargetState();
+            saveState();
+            updateDisplay();
+            initializeSlider();
+            populateBucketLists();
+            populateHistoryList();
+            populateBucket3List();
+            updateBucket3Progress();
+            showToast('State has been reset for this target only.');
+        }
 
-    // get the record from DB
-    const recordData = await getRecordById(recordId);
-    if (!recordData) {
-      console.error(`No record found in DB with id=${recordId}`);
-      return "";
-    }
+        /**
+         * Export the current target's state to a JSON file.
+         */
+        async function exportState() {
+            await getRandomColor();
+            const stateStr = JSON.stringify(currentTargetState, null, 4);
+            const now = new Date();
+            const timestamp = now.toISOString().replace(/[:.]/g, '-');
+            const filename = `bucket-state-${currentTarget}-${timestamp}.json`;
 
-    // build permutations
-    const perms = generatePermutationsForRecord(recordId, recordData.text);
-    // find the one with cardId
-    const matching = perms.find(p => p.id === cardId);
-    if (!matching) {
-      console.error(`No matching cardId=${cardId} in record #${recordId}`);
-      return "";
-    }
+            const blob = new Blob([stateStr], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
 
-    return (whichSide === "front") ? matching.front : matching.back;
-  }
+            showToast('Current target state exported successfully.');
+        }
 
-  /**
-   * Simple helper to get a single record by ID from the DB.
-   */
-  function getRecordById(recordId) {
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, "readonly");
-      const store = tx.objectStore(STORE_NAME);
-      const getReq = store.get(recordId);
-      getReq.onsuccess = e => {
-        resolve(e.target.result); // either undefined or {id, text}
-      };
-      getReq.onerror = err => {
-        reject(err);
-      };
-    });
-  }
+        /**
+         * Import state from a JSON file (merges with or overwrites current target’s state).
+         */
+        async function importState() {
+            await getRandomColor();
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.json,application/json';
+            fileInput.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = event => {
+                        try {
+                            const importedState = JSON.parse(event.target.result);
+                            currentTargetState = {
+                                ...currentTargetState,
+                                ...importedState,
+                                drawHistory: [
+                                    ...(currentTargetState.drawHistory || []),
+                                    ...(importedState.drawHistory || [])
+                                ].slice(-historyLimit)
+                            };
+                            saveState();
+                            updateDisplay();
+                            initializeSlider();
+                            populateBucketLists();
+                            populateHistoryList();
+                            populateBucket3List();
+                            updateBucket3Progress();
+                            showToast('State imported successfully.');
+                        } catch (e) {
+                            alert('Invalid state data.');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            fileInput.click();
+        }
 
-  /********************************************************************
-   *   Sentence Reconstruction Logic
-   ********************************************************************/
-  const initialView = document.getElementById("initialView");
-  const gameView = document.getElementById("gameView");
-  const startBtn = document.getElementById("startBtn");
-  const clearBtn = document.getElementById("clearBtn");
-  const userInput = document.getElementById("userInput");
+        /**
+         * Update probabilities from the slider.
+         */
+        async function updateProbabilities() {
+            await getRandomColor();
+            const sliderValue = parseInt(document.getElementById('probSlider').value);
+            currentTargetState.b1Prob = sliderValue / 100;
+            currentTargetState.b2Prob = 1 - currentTargetState.b1Prob;
+            document.getElementById('probBucket1').innerText = (currentTargetState.b1Prob * 100).toFixed(0) + '%';
+            document.getElementById('probBucket2').innerText = (currentTargetState.b2Prob * 100).toFixed(0) + '%';
+            saveState();
+        }
 
-  const progressText = document.getElementById("progressText");
-  const workInProgress = document.getElementById("workInProgress");
-  const completionMsg = document.getElementById("completionMsg");
+        /**
+         * Draw a random URL from Bucket1/Bucket2.
+         */
+        async function pickRandom() {
+            await getRandomColor();
+            updateProbabilities();
 
-  const restartBtn = document.getElementById("restartBtn");
-  const clearBtn2 = document.getElementById("clearBtn2");
+            const rand = getSecureRandomNumber();
+            let selectedBucket = rand < currentTargetState.b1Prob ? 'b1' : 'b2';
+            let bucket = selectedBucket === 'b1' ? currentTargetState.b1 : currentTargetState.b2;
 
-  // The tool buttons
-  const chatGPTBtn = document.getElementById("searchChatGPTBtn");
-  const summarizeBtn = document.getElementById("summarizeBtn");
-  const quickQuizBtn = document.getElementById("quickQuizBtn");
-  const fourChanBtn = document.getElementById("fourChanBtn");
-  const readAloudBtn = document.getElementById("readAloudBtn");
+            if (getTotalFreq(bucket) === 0) {
+                bucket = (selectedBucket === 'b1') ? currentTargetState.b2 : currentTargetState.b1;
+            }
+            if (getTotalFreq(bucket) === 0) {
+                alert('Both buckets are empty!');
+                return;
+            }
 
-  // Enhanced common “filler” words to skip
-  const skipWordsSet = new Set([
-    // Articles, conjunctions, and auxiliary verbs
-    'a','an','the','is','are','was','were','am','be','been','being',
-    'and','or','but','nor','so','yet','for',
+            const cumulativeFreqs = [];
+            let cumulative = 0;
+            for (const id in bucket) {
+                cumulative += bucket[id];
+                cumulativeFreqs.push([parseInt(id), cumulative]);
+            }
 
-    // Prepositions
-    'of','in','to','by','with','from','at','on','into','onto','upon',
-    'about','above','below','under','over','between','among','around','through',
-    'before','after','during','since','until',
+            const totalFreq = cumulative;
+            const randomPick = Math.floor(getSecureRandomNumber() * totalFreq);
+            let selectedId;
+            for (const [id, cumFreq] of cumulativeFreqs) {
+                if (randomPick < cumFreq) {
+                    selectedId = id;
+                    break;
+                }
+            }
 
-    // Pronouns
-    'i','me','my','mine','you','your','yours','he','him','his','she','her','hers',
-    'it','its','we','us','our','ours','they','them','their','theirs',
-    'this','that','these','those',
+            const isDuplicate = selectedId in currentTargetState.b1;
+            if (isDuplicate) {
+                currentTargetState.b1[selectedId] += 1;
+            } else {
+                currentTargetState.b1[selectedId] = 1;
+                currentTargetState.uniqueBucket1Count += 1;
+                addToHistory(selectedId);
+            }
 
-    // Question words
-    'who','whom','whose','which','what','when','where','how','why',
+            if (selectedId in currentTargetState.b2) {
+                currentTargetState.b2[selectedId] = Math.max(1, currentTargetState.b2[selectedId] - 1);
+                if (currentTargetState.b2[selectedId] === 0) {
+                    delete currentTargetState.b2[selectedId];
+                }
+            }
 
-    // Common verbs and modals (reducing noise from auxiliary/helping verbs)
-    'do','does','did','done','doing',
-    'have','has','had','having',
-    'can','could','shall','should','will','would','may','might','must',
-    'let','lets','make','makes','made','making',
-    'go','goes','went','gone','going','get','gets','got','gotten','getting',
+            lastDrawnId = selectedId;
+            saveState();
 
-    // Common adverbs and determiners (often non-essential in learning contexts)
-    'just','only','even','also','too','very','much','more','most','some','any',
-    'every','all','no','none','not','never','always','sometimes','often','rarely',
-    'perhaps','maybe','quite','rather','almost','already','soon','yet','still',
+            const fileDetails = initialFiles.find(file => file[0] === selectedId);
+            if (!fileDetails) {
+                alert('Selected file not found.');
+                return;
+            }
+            const urlBody = fileDetails[1];
 
-    // Redundant filler words and transitions
-    'then','out','up','down','over','again','like','such','same',
-    'whether','though','although','because','since','unless','instead',
-    'either','neither','both','while','meanwhile','otherwise',
-    'further','furthermore','moreover','besides','however','therefore',
-    'thus','hence','indeed','anyway','anyhow'
-  ]);
+            // Build final URL
+            let url = urlBody;
+            if (currentTargetState.urlPrefix) {
+                url = currentTargetState.urlPrefix + url;
+            }
+            if (currentTargetState.urlSuffix) {
+                url = url + currentTargetState.urlSuffix;
+            }
 
-  let tokenData = [];
-  let guessableTokens = [];
-  let currentGuessIndex = 0;
-  let sanitizedText = '';
+            updateDisplay();
+            populateBucketLists();
+            populateHistoryList();
+            window.open(url, '_blank');
+            showToast(`Opened URL: ${url}`);
+        }
 
-  // We'll store Pantone data globally after first fetch
-  let pantoneDataGlobal = null;
+        /**
+         * Add a drawn URL to history.
+         */
+        function addToHistory(id) {
+            const fileDetails = initialFiles.find(file => file[0] == id);
+            if (fileDetails) {
+                const entry = {
+                    id: id,
+                    url: fileDetails[1],
+                    timestamp: new Date().toLocaleString()
+                };
+                currentTargetState.drawHistory.unshift(entry);
+                if (currentTargetState.drawHistory.length > historyLimit) {
+                    currentTargetState.drawHistory.pop();
+                }
+            }
+        }
 
-  /**
-   * Function to fetch pantone-colors.json (if not fetched yet) and then
-   * choose distinct random colors for background and buttons.
-   */
-  async function updateColorsPantone() {
-    try {
-      if (!pantoneDataGlobal) {
-        // fetch the JSON once
-        const resp = await fetch("pantone-colors.json");
-        if (!resp.ok) throw new Error("Cannot fetch pantone-colors.json");
-        pantoneDataGlobal = await resp.json();
-      }
-      const { names, values } = pantoneDataGlobal;
-      if (!names || !values || names.length !== values.length) {
-        throw new Error("Invalid pantone-colors.json format");
-      }
+        /**
+         * Undo the last draw action.
+         */
+        async function undoLastDraw() {
+            await getRandomColor();
+            if (lastDrawnId === null) {
+                alert('No draw action to undo.');
+                return;
+            }
+            if (!(lastDrawnId in currentTargetState.b1)) {
+                alert('Invalid state. Cannot undo.');
+                return;
+            }
+            currentTargetState.b1[lastDrawnId] -= 1;
+            if (currentTargetState.b1[lastDrawnId] === 0) {
+                delete currentTargetState.b1[lastDrawnId];
+                currentTargetState.uniqueBucket1Count -= 1;
+            }
+            if (lastDrawnId in currentTargetState.b2) {
+                currentTargetState.b2[lastDrawnId] += 1;
+            } else {
+                currentTargetState.b2[lastDrawnId] = 1;
+            }
 
-      // pick random index for background
-      const bgIndex = Math.floor(getSecureRandomNumber() * names.length);
-      let buttonIndex = Math.floor(getSecureRandomNumber() * names.length);
+            currentTargetState.drawHistory.shift();
+            lastDrawnId = null;
+            saveState();
+            updateDisplay();
+            populateBucketLists();
+            populateHistoryList();
+            showToast('Last draw action has been undone.');
+        }
 
-      // ensure button color != background color
-      while (buttonIndex === bgIndex) {
-        buttonIndex = Math.floor(getSecureRandomNumber() * names.length);
-      }
+        /**
+         * Update the main gauge displays.
+         */
+        function updateDisplay() {
+            const review1Value = ((currentTargetState.uniqueBucket1Count / getInitialB2Total()) * 100).toFixed(2);
+            document.getElementById('review1Gauge').value = review1Value;
+            document.getElementById('review1Text').innerText = review1Value + '%';
 
-      const bgColor = values[bgIndex];
-      const btnColor = values[buttonIndex];
+            const review2Value = (((getInitialB2Total() - currentTargetState.uniqueBucket1Count) / getInitialB2Total()) * 100).toFixed(2);
+            document.getElementById('review2Gauge').value = review2Value;
+            document.getElementById('review2Text').innerText = review2Value + '%';
 
-      // set background color of body
-      document.body.style.backgroundColor = bgColor;
+            const b1Total = getTotalFreq(currentTargetState.b1);
+            const b2Total = getTotalFreq(currentTargetState.b2);
+            document.getElementById('bucket1Freq').innerText = b1Total;
+            document.getElementById('bucket2Freq').innerText = b2Total;
+        }
 
-      // set all relevant buttons to the new (distinct) color
-      const allButtons = document.querySelectorAll('button');
-      allButtons.forEach((btn) => {
-        btn.style.backgroundColor = btnColor;
-        btn.style.color = "#000"; // ensures decent contrast
-      });
+        function getInitialB2Total() {
+            let total = 0;
+            initialFiles.forEach(file => {
+                const freq = file[2] !== null ? file[2] : currentTargetState.defaultFrequency;
+                total += freq;
+            });
+            return total;
+        }
 
-    } catch (err) {
-      console.warn("Pantone color fetch error:", err);
-      // fallback: do nothing or set defaults
-      document.body.style.backgroundColor = "#ffffff";
-      const allButtons = document.querySelectorAll('button');
-      allButtons.forEach((btn) => {
-        btn.style.backgroundColor = "#ccc";
-        btn.style.color = "#000";
-      });
-    }
-  }
+        function initializeSlider() {
+            const val = (currentTargetState.b1Prob * 100).toFixed(0);
+            document.getElementById('probSlider').value = val;
+            document.getElementById('probBucket1').innerText = val + '%';
+            document.getElementById('probBucket2').innerText = (100 - val) + '%';
+        }
 
-  // On page load, open DB, set initial random colors, etc.
-  window.addEventListener("load", async () => {
-    // 1) open the DB
-    await openDatabase();
+        async function toggleDefaultFrequency() {
+            await getRandomColor();
+            const dfInput = document.getElementById('defaultFrequency');
+            dfInput.disabled = !dfInput.disabled;
+            if (dfInput.disabled) {
+                dfInput.value = currentTargetState.defaultFrequency;
+            }
+        }
 
-    // 2) check if we have cardId & side
-    const rawCardId = getUrlParameter("cardId").trim();
-    const rawSide = getUrlParameter("side").trim().toLowerCase();
+        async function saveDefaultFrequency() {
+            await getRandomColor();
+            const dfInput = document.getElementById('defaultFrequency');
+            const dfValue = dfInput.value.trim();
+            if (dfValue !== '') {
+                const df = parseInt(dfValue);
+                if (!isNaN(df) && df > 0) {
+                    currentTargetState.defaultFrequency = df;
+                    initialFiles.forEach(file => {
+                        if (file[2] === null || file[2] === currentTargetState.defaultFrequency) {
+                            const id = file[0];
+                            currentTargetState.b2[id] = currentTargetState.defaultFrequency;
+                        }
+                    });
+                    dfInput.disabled = true;
+                    saveState();
+                    updateDisplay();
+                    populateBucketLists();
+                    showToast('Default frequency saved and applied.');
+                } else {
+                    alert('Please enter a valid positive integer for default frequency.');
+                }
+            } else {
+                alert('Default frequency cannot be empty.');
+            }
+        }
 
-    // We'll call updateColorsPantone once on load
-    await updateColorsPantone();
+        async function saveUrlPrefixSuffix() {
+            await getRandomColor();
+            currentTargetState.urlPrefix = document.getElementById('urlPrefix').value.trim();
+            currentTargetState.urlSuffix = document.getElementById('urlSuffix').value.trim();
+            saveState();
+            showToast('URL prefix and suffix saved.');
+        }
 
-    // Then attach the same color update on every button click
-    const allButtons = document.querySelectorAll('button');
-    allButtons.forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        // update to new random pantone colors
-        await updateColorsPantone();
-      });
-    });
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+        }
 
-    // If we do, load the text from DB and start the game automatically
-    if (rawCardId && rawSide && (rawSide === "front" || rawSide === "back")) {
-      const cardIdNum = parseInt(rawCardId, 10);
-      if (Number.isNaN(cardIdNum)) {
-        console.warn("Invalid cardId param:", rawCardId);
-        return;
-      }
-      const textFromDb = await loadCardFromDb(cardIdNum, rawSide);
-      if (textFromDb) {
-        // Put this text into the textarea as well, so the tools can read it
-        userInput.value = textFromDb;
-        // Then start the game with that text
-        startGame(textFromDb);
-      }
-    }
-  });
+        function loadDarkMode() {
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+            }
+        }
 
-  /**
-   * If the user manually clicks "Start", we take the entire userInput, store it, then start the game.
-   */
-  startBtn.addEventListener("click", async () => {
-    let rawInputVal = userInput.value.trim();
-    if (!rawInputVal) {
-      alert("Please enter some text first!");
-      return;
-    }
+        function showToast(message) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastEl = document.createElement('div');
+            toastEl.className = 'toast align-items-center text-bg-primary border-0';
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
 
-    // Insert into DB with date/time prefix, replacing commas with underscores
-    const now = new Date();
-    const yy = String(now.getFullYear()).slice(-2);
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const hh = String(now.getHours()).padStart(2, '0');
-    const min = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
-    const datePrefix = `${yy}${mm}${dd} ${hh}:${min}:${ss}`;
-
-    let inputNoCommas = rawInputVal.replace(/,/g, "_");
-    const fullLine = `${datePrefix}, ${inputNoCommas}`;
-    await addLinesToDb([fullLine]);
-
-    // Then run the game with the typed text
-    startGame(inputNoCommas);
-  });
-
-  /**
-   * The main function to parse + set up the reconstruction from an input text
-   */
-  function startGame(inputText) {
-    // Keep the text in the textarea for the "Extra Tools" to reference
-    userInput.value = inputText;
-
-    // 1) sanitize
-    sanitizedText = sanitizeText(inputText);
-    // 2) split tokens
-    const rawTokens = sanitizedText.split(/\s+/);
-
-    tokenData = [];
-    guessableTokens = [];
-    currentGuessIndex = 0;
-    completionMsg.classList.add('d-none');
-    completionMsg.textContent = '';
-
-    // Build token data
-    rawTokens.forEach(tok => {
-      const cleaned = cleanWord(tok);
-      let skip = false;
-      if (!cleaned || skipWordsSet.has(cleaned)) {
-        skip = true;
-      }
-      tokenData.push({
-        original: tok,
-        cleaned: cleaned,
-        skip: skip,
-        guessed: skip // skip-words are effectively "already guessed"
-      });
-    });
-
-    // Fill guessableTokens
-    tokenData.forEach((t, idx) => {
-      if (!t.skip) {
-        guessableTokens.push(idx);
-      }
-    });
-
-    // Switch UI
-    initialView.classList.add('d-none');
-    gameView.classList.remove('d-none');
-
-    updateDisplayedText();
-  }
-
-  // Clear all - reset page
-  function clearAllPage() {
-    userInput.value = '';
-    sanitizedText = '';
-    tokenData = [];
-    guessableTokens = [];
-    currentGuessIndex = 0;
-    workInProgress.innerHTML = '';
-    completionMsg.classList.add('d-none');
-    completionMsg.textContent = '';
-
-    initialView.classList.remove('d-none');
-    gameView.classList.add('d-none');
-  }
-  clearBtn.addEventListener('click', clearAllPage);
-  clearBtn2.addEventListener('click', clearAllPage);
-
-  // Restart game with the same sanitized text
-  restartBtn.addEventListener('click', () => {
-    if (!sanitizedText) return;
-    tokenData.forEach(t => {
-      if (!t.skip) t.guessed = false;
-    });
-    currentGuessIndex = 0;
-    completionMsg.classList.add('d-none');
-    completionMsg.textContent = '';
-    updateDisplayedText();
-  });
-
-  /*********************************************
-   * Utility functions for the reconstruction
-   *********************************************/
-  /**
-   * sanitizeText:
-   * - Replaces " with __
-   * - Replaces ? with _q
-   * - Replaces ! with _x
-   * - Replaces other punctuation => _
-   * - Lowercase, remove multiple spaces
-   */
-  function sanitizeText(input) {
-    let text = input;
-    text = text.replace(/"/g, ' __ ');
-    text = text.replace(/\?/g, ' _q ');
-    text = text.replace(/!/g, ' _x ');
-    text = text.replace(/[^a-zA-Z0-9\s_]/g, ' _ ');
-    text = text.toLowerCase();
-    text = text.replace(/\s+/g, ' ').trim();
-    return text;
-  }
-
-  function cleanWord(word) {
-    // Remove leading/trailing underscores
-    return word.replace(/^_+|_+$/g, '');
-  }
-
-  function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(getSecureRandomNumber() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  }
-
-  /**
-   * Build array of 4 unique choices: the correct word + 3 distinct wrong words
-   */
-  function getChoicesForCurrentToken() {
-    if (currentGuessIndex >= guessableTokens.length) {
-      return [];
-    }
-    const correctIndex = guessableTokens[currentGuessIndex];
-    const correctClean = tokenData[correctIndex].cleaned;
-
-    const pool = guessableTokens
-      .filter(i => i !== correctIndex)
-      .map(i => tokenData[i].cleaned);
-
-    const uniquePool = Array.from(new Set(pool));
-    shuffleArray(uniquePool);
-
-    // take 3
-    const wrongChoices = uniquePool.slice(0, 3);
-    const allChoices = [correctClean, ...wrongChoices];
-    shuffleArray(allChoices);
-
-    return allChoices;
-  }
-
-  /**
-   * Returns a greenish hex color based on progress
-   */
-  function getProgressColor(percentage) {
-    if (percentage <= 0) {
-      return '#FFFFFF';
-    } else if (percentage < 25) {
-      return '#edf8e1';
-    } else if (percentage < 50) {
-      return '#bae4b3';
-    } else if (percentage < 75) {
-      return '#74c476';
-    } else if (percentage < 100) {
-      return '#31a354';
-    } else {
-      return '#006d2c';
-    }
-  }
-
-  /**
-   * Build the HTML for the entire puzzle (tokens, choice buttons, underscores).
-   */
-  function buildSentenceHTML() {
-    let html = '';
-    const choices = getChoicesForCurrentToken();
-
-    let progressPercent = 0;
-    if (guessableTokens.length > 0) {
-      progressPercent = (currentGuessIndex / guessableTokens.length) * 100;
-    }
-    const progressPercentFixed = progressPercent.toFixed(1);
-    const buttonColor = getProgressColor(progressPercent);
-
-    for (let i = 0; i < tokenData.length; i++) {
-      const t = tokenData[i];
-      if (t.skip || t.guessed) {
-        // show token as-is
-        html += `<span class="me-1">${t.original}</span>`;
-      } else {
-        const thisIsCurrent = (guessableTokens[currentGuessIndex] === i);
-        if (thisIsCurrent) {
-          // show underscores + choice buttons
-          const underscores = '_'.repeat(t.cleaned.length || 4);
-
-          let buttonsHTML = '';
-          choices.forEach(choice => {
-            buttonsHTML += `
-              <button
-                class="btn me-2 mb-1"
-                style="display:inline-block; background-color: ${buttonColor}; color: #000;"
-                onclick="handleChoiceClick('${choice}')"
-              >
-                ${choice}
-              </button>
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
             `;
-          });
+            toastContainer.appendChild(toastEl);
+            const bsToast = new bootstrap.Toast(toastEl);
+            bsToast.show();
 
-          // 5th disabled button for progress
-          buttonsHTML += `
-            <button
-              class="btn mb-1"
-              style="display:inline-block; background-color: ${buttonColor}; color: #000;"
-              disabled
-            >
-              ${progressPercentFixed}%
-            </button>
-          `;
-
-          html += `
-            <span class="me-1" style="white-space: nowrap;">
-              ${underscores}
-              <span class="choice-buttons-inline">
-                ${buttonsHTML}
-              </span>
-            </span>
-          `;
-        } else {
-          // not the current token
-          const underscores = '_'.repeat(t.cleaned.length || 4);
-          html += `<span class="me-1">${underscores}</span>`;
+            toastEl.addEventListener('hidden.bs.toast', () => {
+                toastContainer.removeChild(toastEl);
+            });
         }
-      }
-    }
-    return html;
-  }
 
-  function updateDisplayedText() {
-    workInProgress.innerHTML = buildSentenceHTML();
-  }
+        function populateBucketLists() {
+            const bucket1List = document.getElementById('bucket1List');
+            const bucket2List = document.getElementById('bucket2List');
+            bucket1List.innerHTML = '';
+            bucket2List.innerHTML = '';
 
-  function handleChoiceClick(chosenWord) {
-    if (currentGuessIndex >= guessableTokens.length) {
-      return;
-    }
-    const correctTokenIndex = guessableTokens[currentGuessIndex];
-    const correctClean = tokenData[correctTokenIndex].cleaned;
+            for (const id in currentTargetState.b1) {
+                const fileDetails = initialFiles.find(file => file[0] == id);
+                if (fileDetails) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${currentTargetState.b1[id]})`;
+                    bucket1List.appendChild(li);
+                }
+            }
+            for (const id in currentTargetState.b2) {
+                const fileDetails = initialFiles.find(file => file[0] == id);
+                if (fileDetails) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item';
+                    li.innerHTML = `<a href="${fileDetails[1]}" target="_blank">${fileDetails[1]}</a> (Freq: ${currentTargetState.b2[id]})`;
+                    bucket2List.appendChild(li);
+                }
+            }
+        }
 
-    if (chosenWord === correctClean) {
-      tokenData[correctTokenIndex].guessed = true;
-      currentGuessIndex++;
-      if (currentGuessIndex === guessableTokens.length) {
-        completionMsg.textContent = "You have successfully reconstructed the text!";
-        completionMsg.classList.remove('d-none');
-      }
-    }
-    updateDisplayedText();
-  }
-  // Expose to the global scope so inline onclick works
-  window.handleChoiceClick = handleChoiceClick;
+        function populateHistoryList() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            currentTargetState.drawHistory.forEach(entry => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.innerHTML = `<strong>${entry.timestamp}:</strong> <a href="${entry.url}" target="_blank">${entry.url}</a>`;
+                historyList.appendChild(li);
+            });
+        }
 
-  /********************************************************************
-   * NEW FUNCTIONS FOR EXTRA TOOLS (ALWAYS VISIBLE)
-   ********************************************************************/
+        function populateBucket3List() {
+            const bucket3List = document.getElementById('bucket3List');
+            if (!bucket3List) return;
+            bucket3List.innerHTML = '';
+            currentTargetState.bucket3.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = `${index + 1}. ${item.description} (${item.url})`;
+                bucket3List.appendChild(li);
+            });
+        }
 
-  /**
-   * Open ChatGPT with the current text area contents in a new tab
-   */
-  function searchChatGPT() {
-    const textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("No text found in the textarea to search!");
-      return;
-    }
-    const encoded = encodeURIComponent(textVal);
-    const url = `https://chat.openai.com/?q=${encoded}`;
-    window.open(url, "_blank");
-  }
+        function updateBucket3Progress() {
+            const progressBar = document.getElementById('bucket3Progress');
+            if (!progressBar) return;
+            const total = currentTargetState.bucket3.length;
+            const max = parseInt(progressBar.getAttribute('data-bucket3-max') || "0");
+            if (total > max) {
+                progressBar.setAttribute('data-bucket3-max', total);
+                progressBar.max = total;
+            }
+            const newMax = parseInt(progressBar.getAttribute('data-bucket3-max'));
+            progressBar.max = newMax;
+            progressBar.value = total;
+            // optional: color it with lastPantoneColor
+            progressBar.style.backgroundColor = lastPantoneColor;
+        }
 
-  /**
-   * Summarize Text -> same logic as searchChatGPT, but with prefix "Summarize Text: "
-   */
-  function summarizeText() {
-    const textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("No text found to summarize!");
-      return;
-    }
-    const prefixed = "Summarize Text: " + textVal;
-    const encoded = encodeURIComponent(prefixed);
-    const url = `https://chat.openai.com/?q=${encoded}`;
-    window.open(url, "_blank");
-  }
+        async function saveFunCards() {
+            await getRandomColor();
+            currentTargetState.funCard1 = document.getElementById('funCard1').value.trim();
+            currentTargetState.funCard2 = document.getElementById('funCard2').value.trim();
+            currentTargetState.funCard3 = document.getElementById('funCard3').value.trim();
+            currentTargetState.funCard4 = document.getElementById('funCard4').value.trim();
+            currentTargetState.funCard5 = document.getElementById('funCard5').value.trim();
+            saveState();
+            showToast('Fun Cards saved.');
+        }
 
-  /**
-   * Generate Quick Quiz -> prefix "Generate Quick Quiz: "
-   */
-  function generateQuiz() {
-    const textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("No text found to generate a quiz!");
-      return;
-    }
-    const prefixed = "Generate Quick Quiz: " + textVal;
-    const encoded = encodeURIComponent(prefixed);
-    const url = `https://chat.openai.com/?q=${encoded}`;
-    window.open(url, "_blank");
-  }
+        async function saveDefaultSessionCards() {
+            await getRandomColor();
+            const dscValue = document.getElementById('defaultSessionCards').value.trim();
+            currentTargetState.defaultSessionCards = dscValue;
+            saveState();
+            showToast('Default Session Cards saved.');
+        }
 
-  /**
-   * 4Chan -> prefix "4chan: explain this, full tokens "
-   */
-  function fourChanExplain() {
-    const textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("No text found for 4chan explanation!");
-      return;
-    }
-    const prefixed = "4chan: explain this, full tokens " + textVal;
-    const encoded = encodeURIComponent(prefixed);
-    const url = `https://chat.openai.com/?q=${encoded}`;
-    window.open(url, "_blank");
-  }
+        async function generateSession() {
+            await getRandomColor();
+            currentTargetState.bucket3 = [];
+            let numDraws = parseInt(currentTargetState.defaultSessionCards);
+            if (isNaN(numDraws) || numDraws < 1) {
+                numDraws = 10;
+            }
 
-  /**
-   * Use speech synthesis to read aloud the user input
-   * (sanitize by ignoring underscores in the text)
-   */
-  function readAloudText() {
-    let textVal = userInput.value.trim();
-    if (!textVal) {
-      alert("No text to read aloud!");
-      return;
-    }
-    // Remove underscores before speaking
-    let sanitizedForTTS = textVal.replace(/_/g, '');
-    const utter = new SpeechSynthesisUtterance(sanitizedForTTS);
-    speechSynthesis.speak(utter);
-  }
-</script>
+            let baseFunProb = 0.10;
+            let rareFunProb = 0.03;
+            let superRareFunProb = 0.01;
+            let currentFunProb = baseFunProb;
+            let nonFunStreak = 0;
+            const boostPerFailure = 0.05;
+            let guaranteedFunThreshold = 10;
+            let cardsSinceLastFun = 0;
+            let recentFunCount = 0;
+            let hotStreakLimit = 3;
+            let hotStreakReductionActive = false;
+            let hotStreakReductionDuration = 3;
+            let hotStreakReductionCounter = 0;
+            let funCooldown = 0;
+
+            const availableFunCards = [];
+            const fc1 = currentTargetState.funCard1.trim();
+            const fc2 = currentTargetState.funCard2.trim();
+            const fc3 = currentTargetState.funCard3.trim();
+            const fc4 = currentTargetState.funCard4.trim();
+            const fc5 = currentTargetState.funCard5.trim();
+            if (fc1) availableFunCards.push(fc1);
+            if (fc2) availableFunCards.push(fc2);
+            if (fc3) availableFunCards.push(fc3);
+            if (fc4) availableFunCards.push(fc4);
+            if (fc5) availableFunCards.push(fc5);
+
+            function pickRandomFromBucket2() {
+                const bucket2 = currentTargetState.b2;
+                if (getTotalFreq(bucket2) === 0) return null;
+                let cumulative = 0;
+                const cumulativeFreqs = [];
+                for (const id in bucket2) {
+                    cumulative += bucket2[id];
+                    cumulativeFreqs.push([parseInt(id), cumulative]);
+                }
+                const totalFreq = cumulative;
+                const randomPick = Math.floor(getSecureRandomNumber() * totalFreq);
+                let selectedId;
+                for (const [id, cumFreq] of cumulativeFreqs) {
+                    if (randomPick < cumFreq) {
+                        selectedId = id;
+                        break;
+                    }
+                }
+                const fileDetails = initialFiles.find(file => file[0] === selectedId);
+                if (!fileDetails) return null;
+                return {
+                    url: fileDetails[1],
+                    description: "Study Card"
+                };
+            }
+
+            for (let i = 0; i < numDraws; i++) {
+                if (cardsSinceLastFun >= guaranteedFunThreshold && availableFunCards.length > 0) {
+                    const pickedFun = pickFunCard();
+                    currentTargetState.bucket3.push(pickedFun);
+                    resetFunMechanics();
+                    continue;
+                }
+                if (funCooldown > 0 || availableFunCards.length === 0) {
+                    const normalPick = pickRandomFromBucket2();
+                    if (normalPick) {
+                        currentTargetState.bucket3.push(normalPick);
+                    }
+                    funCooldown = Math.max(0, funCooldown - 1);
+                    nonFunStreak++;
+                    cardsSinceLastFun++;
+                    if (nonFunStreak >= 5) {
+                        currentFunProb += boostPerFailure;
+                    }
+                    continue;
+                }
+                if (hotStreakReductionActive) {
+                    hotStreakReductionCounter++;
+                    if (hotStreakReductionCounter <= hotStreakReductionDuration) {
+                        const normalPick = pickRandomFromBucket2();
+                        if (normalPick) {
+                            currentTargetState.bucket3.push(normalPick);
+                        }
+                        nonFunStreak++;
+                        cardsSinceLastFun++;
+                        if (nonFunStreak >= 5) {
+                            currentFunProb += boostPerFailure;
+                        }
+                        continue;
+                    } else {
+                        hotStreakReductionActive = false;
+                    }
+                }
+                const r = getSecureRandomNumber();
+                if (r < currentFunProb && availableFunCards.length > 0) {
+                    const pickedFun = pickFunCard();
+                    currentTargetState.bucket3.push(pickedFun);
+                    resetFunMechanics();
+                } else {
+                    const normalPick = pickRandomFromBucket2();
+                    if (normalPick) {
+                        currentTargetState.bucket3.push(normalPick);
+                    }
+                    nonFunStreak++;
+                    cardsSinceLastFun++;
+                    if (nonFunStreak >= 5) {
+                        currentFunProb += boostPerFailure;
+                    }
+                }
+            }
+
+            saveState();
+            populateBucket3List();
+            const progressBar = document.getElementById('bucket3Progress');
+            progressBar.setAttribute('data-bucket3-max', currentTargetState.bucket3.length.toString());
+            updateBucket3Progress();
+            showToast('Session generated in Bucket 3.');
+
+            function pickFunCard() {
+                const tierRand = getSecureRandomNumber();
+                let tier = 'common';
+                if (tierRand < 0.05) {
+                    tier = 'super rare';
+                } else if (tierRand < 0.25) {
+                    tier = 'rare';
+                }
+                const fcIdx = Math.floor(getSecureRandomNumber() * availableFunCards.length);
+                const fcUrl = availableFunCards[fcIdx];
+                return {
+                    url: fcUrl,
+                    description: `Fun Card (${tier})`
+                };
+            }
+            function resetFunMechanics() {
+                nonFunStreak = 0;
+                currentFunProb = baseFunProb;
+                cardsSinceLastFun = 0;
+                recentFunCount++;
+                funCooldown = Math.floor(3 + getSecureRandomNumber() * 3);
+                if (recentFunCount >= hotStreakLimit) {
+                    hotStreakReductionActive = true;
+                    hotStreakReductionCounter = 0;
+                    recentFunCount = 0;
+                }
+            }
+        }
+
+        async function drawFromBucket3() {
+            if (!currentTargetState.bucket3 || currentTargetState.bucket3.length === 0) {
+                await generateSession();
+            }
+            await getRandomColor();
+            if (!currentTargetState.bucket3 || currentTargetState.bucket3.length === 0) {
+                alert("No items available for Bucket 3 session.");
+                return;
+            }
+            const nextItem = currentTargetState.bucket3.shift();
+            saveState();
+            populateBucket3List();
+            updateBucket3Progress();
+
+            let url = nextItem.url;
+            if (currentTargetState.urlPrefix) {
+                url = currentTargetState.urlPrefix + url;
+            }
+            if (currentTargetState.urlSuffix) {
+                url = url + currentTargetState.urlSuffix;
+            }
+            window.open(url, '_blank');
+            showToast(`Drew from Bucket 3: ${nextItem.description}`);
+        }
+
+        function toggleBucket3Visibility() {
+            const showRadio = document.getElementById('showBucket3Radio');
+            const bucket3Container = document.getElementById('bucket3Container');
+            if (showRadio.checked) {
+                bucket3Container.classList.remove('hidden');
+            } else {
+                bucket3Container.classList.add('hidden');
+            }
+        }
+
+        async function setLuckyButtonColor() {
+            try {
+                const response = await fetch('pantone-colors.json');
+                const pantoneData = await response.json();
+                const { names, values } = pantoneData;
+                if (!names || !values || names.length !== values.length) {
+                    throw new Error('Invalid pantone-colors.json format.');
+                }
+                let attemptCount = 0;
+                while (attemptCount < 1000) {
+                    const randomIndex = Math.floor(getSecureRandomNumber() * names.length);
+                    const randomValue = values[randomIndex].toLowerCase();
+                    const bodyBg = document.body.style.backgroundColor.toLowerCase();
+                    if (randomValue !== bodyBg) {
+                        document.getElementById('feelingLuckyBtn').style.backgroundColor = randomValue;
+                        break;
+                    }
+                    attemptCount++;
+                }
+            } catch (error) {
+                console.error('Error fetching Pantone colors for lucky button:', error);
+            }
+        }
+
+        async function imFeelingLucky() {
+            await setLuckyButtonColor();
+            const r = getSecureRandomNumber();
+            if (r < 0.5) {
+                drawFromBucket3();
+            } else {
+                pickRandom();
+            }
+        }
+
+        async function main() {
+            loadDarkMode();
+
+            // On page load, apply random Pantone color:
+            await getRandomColor();
+
+            let bucket2Param = getUrlParameter('bucket2');
+            if (bucket2Param) {
+                currentTarget = 'bucket2Param';
+                localStorageKey = 'randomUrlPickerState_bucket2Param';
+                const parts = bucket2Param.split('~');
+                const urlsArr = parts.map((p, idx) => {
+                    let cleaned = p.trim();
+                    cleaned = cleaned.replace(/^"|"$/g, '');
+                    return [100000 + idx, cleaned, null];
+                });
+                initialFiles = urlsArr;
+            } else {
+                let targetParam = getUrlParameter('target');
+                const targetsParam = getUrlParameter('targets');
+                if (targetsParam) {
+                    const arr = targetsParam.split(',');
+                    shuffleArray(arr);
+                    targetParam = arr[0];
+                    console.log('Randomly chosen target from "targets" param:', targetParam);
+                }
+                if (!targetParam) {
+                    alert('Error: neither "bucket2" nor "target"/"targets" parameter found.');
+                    return;
+                }
+                currentTarget = targetParam;
+                localStorageKey = 'randomUrlPickerState_' + currentTarget;
+                initialFiles = await fetchInitialFiles(currentTarget);
+                if (initialFiles.length === 0) {
+                    alert('No files to initialize. Check your JSON and parameters.');
+                    return;
+                }
+            }
+
+            const titleEl = document.getElementById('pageTitle');
+            if (titleEl) {
+                titleEl.textContent = `${currentTarget}`;
+            }
+
+            await loadState();
+            updateDisplay();
+            initializeSlider();
+            populateBucketLists();
+            populateHistoryList();
+            populateBucket3List();
+            updateBucket3Progress();
+
+            document.getElementById('defaultFrequency').value = currentTargetState.defaultFrequency;
+            document.getElementById('urlPrefix').value = currentTargetState.urlPrefix;
+            document.getElementById('urlSuffix').value = currentTargetState.urlSuffix;
+            document.getElementById('defaultFrequency').disabled = true;
+
+            document.getElementById('funCard1').value = currentTargetState.funCard1;
+            document.getElementById('funCard2').value = currentTargetState.funCard2;
+            document.getElementById('funCard3').value = currentTargetState.funCard3;
+            document.getElementById('funCard4').value = currentTargetState.funCard4;
+            document.getElementById('funCard5').value = currentTargetState.funCard5;
+            document.getElementById('defaultSessionCards').value = currentTargetState.defaultSessionCards;
+
+            const hideRadio = document.getElementById('hideBucket3Radio');
+            hideRadio.checked = true;
+            toggleBucket3Visibility();
+
+            // Now attach the random color call to EVERY button press:
+            const allButtons = document.querySelectorAll('button');
+            allButtons.forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    await getRandomColor();
+                });
+            });
+
+            // Auto-run "I'm Feeling Lucky" once on load
+            imFeelingLucky();
+        }
+
+        window.onload = main;
+    </script>
+</head>
+<body>
+    <!-- Pantone color display in the upper-right -->
+    <div id="pantoneColorDisplay" style="position: absolute; top: 10px; right: 10px; background-color: #ffffffcc; padding: 5px; border-radius: 5px; font-weight: bold;"></div>
+
+    <div class="container">
+        <h1 class="text-center" id="pageTitle">Random URL Picker</h1>
+
+        <!-- Theme Toggle -->
+        <div class="text-end mb-3">
+            <button class="btn btn-secondary" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                <i class="fas fa-moon"></i> Dark Mode
+            </button>
+        </div>
+
+        <!-- Help Modal Trigger -->
+        <div class="text-end mb-3">
+            <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#helpModal" title="Help">
+                <i class="fas fa-question-circle"></i> Help
+            </button>
+        </div>
+
+        <div class="input-container">
+            <label class="form-label">URL Prefix:</label>
+            <input type="text" class="form-control" id="urlPrefix" placeholder="Enter URL Prefix" title="Add a prefix to all URLs">
+            <label class="form-label">URL Suffix:</label>
+            <input type="text" class="form-control" id="urlSuffix" placeholder="Enter URL Suffix" title="Add a suffix to all URLs">
+            <button class="btn btn-secondary mt-2" onclick="saveUrlPrefixSuffix()" title="Save URL Prefix and Suffix">
+                Save URL Prefix/Suffix
+            </button>
+        </div>
+
+        <div class="input-container">
+            <label class="form-label">Default Frequency:</label>
+            <div class="input-group">
+                <input type="number" class="form-control" id="defaultFrequency" value="1" min="1" disabled title="Set default frequency for new items">
+                <button class="btn btn-secondary" onclick="toggleDefaultFrequency()" title="Edit Default Frequency">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn btn-primary" onclick="saveDefaultFrequency()" title="Save Default Frequency">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <label for="probSlider" class="form-label">Adjust Probabilities:</label>
+            <input type="range" class="form-range" id="probSlider" min="0" max="100" value="33" oninput="updateProbabilities()" title="Adjust the probability of selecting from Bucket 1">
+            <div class="slider-label">
+                <span>Bucket 1: <span id="probBucket1">33%</span></span>
+                <span>Bucket 2: <span id="probBucket2">67%</span></span>
+            </div>
+        </div>
+
+        <!-- Lucky Button -->
+        <button
+          class="btn btn-warning btn-draw"
+          id="feelingLuckyBtn"
+          onclick="imFeelingLucky()"
+          style="transform: scale(3); display:block; margin-bottom:20px;"
+        >
+          I'm Feeling Lucky®
+        </button>
+
+        <!-- Draw from Bucket 3 -->
+        <button class="btn btn-info btn-draw" onclick="drawFromBucket3()" title="Draw from Bucket 3">
+            <i class="fas fa-arrow-down"></i> Draw from Bucket 3
+        </button>
+        <!-- Normal Draw from Buckets 1 & 2 -->
+        <button class="btn btn-primary btn-draw" onclick="pickRandom()" title="Draw a random URL">
+            <i class="fas fa-random"></i> Draw and Open URL
+        </button>
+        <button class="btn btn-warning btn-draw" onclick="undoLastDraw()" title="Undo the last draw">
+            <i class="fas fa-undo"></i> Undo Last Draw
+        </button>
+
+        <!-- Generate Session -->
+        <button class="btn btn-success btn-draw" onclick="generateSession()" title="Generate a session in Bucket 3">
+            <i class="fas fa-play"></i> Generate Session
+        </button>
+
+        <!-- Review Gauges -->
+        <div class="gauge-container">
+            <label for="review1Gauge" class="form-label">Review1 (Unique Bucket1 Items / Initial Bucket2 Total):</label>
+            <progress id="review1Gauge" class="form-range w-100" value="0" max="100" aria-label="Review1 Gauge"></progress>
+            <div class="text-center">
+                <span id="review1Text">0%</span>
+            </div>
+        </div>
+
+        <div class="gauge-container">
+            <label for="review2Gauge" class="form-label">Review2 (Initial Bucket2 Total - Unique Bucket1 Items):</label>
+            <progress id="review2Gauge" class="form-range w-100" value="100" max="100" aria-label="Review2 Gauge"></progress>
+            <div class="text-center">
+                <span id="review2Text">100%</span>
+            </div>
+        </div>
+
+        <!-- Buckets Display -->
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Bucket 1 Total Frequency: <span id="bucket1Freq">0</span></h5>
+                <ul class="list-group bucket-list" id="bucket1List" aria-label="Bucket 1 Items"></ul>
+            </div>
+            <div class="col-md-6">
+                <h5>Bucket 2 Total Frequency: <span id="bucket2Freq">0</span></h5>
+                <ul class="list-group bucket-list" id="bucket2List" aria-label="Bucket 2 Items"></ul>
+            </div>
+        </div>
+
+        <!-- Bucket 3 progress bar -->
+        <div class="mt-4">
+            <label for="bucket3Progress" class="form-label"><strong>Bucket 3 Session Progress:</strong></label>
+            <progress id="bucket3Progress" class="form-range w-100" value="0" max="100" data-bucket3-max="0"></progress>
+        </div>
+
+        <!-- Show/Hide Bucket 3 -->
+        <div class="mt-4">
+            <span class="me-2">Show Bucket 3?</span>
+            <input type="radio" name="showBucket3" id="showBucket3Radio" value="show" onclick="toggleBucket3Visibility()" />
+            <label for="showBucket3Radio" class="me-3">Yes</label>
+            <input type="radio" name="showBucket3" id="hideBucket3Radio" value="hide" onclick="toggleBucket3Visibility()" checked />
+            <label for="hideBucket3Radio">No</label>
+        </div>
+
+        <!-- Bucket 3 container, hidden by default -->
+        <div id="bucket3Container" class="row mt-4 hidden">
+            <div class="col-12">
+                <h5>Bucket 3 (Session)</h5>
+                <ul class="list-group bucket-list" id="bucket3List" aria-label="Bucket 3 Items" style="max-height:400px; overflow-y:auto;"></ul>
+            </div>
+        </div>
+
+        <!-- Draw History -->
+        <div class="mt-4">
+            <h5>Draw History (Last 5):</h5>
+            <ul class="list-group history-list" id="historyList" aria-label="Draw History"></ul>
+        </div>
+
+        <!-- Default Session Cards -->
+        <div class="input-container">
+            <label class="form-label">Default Session Cards:</label>
+            <div class="input-group">
+                <input type="number" class="form-control" id="defaultSessionCards" placeholder="Number of cards per session" />
+                <button class="btn btn-primary" onclick="saveDefaultSessionCards()" title="Save Default Session Cards">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </div>
+
+        <!-- Fun Card fields -->
+        <div class="input-container">
+            <label class="form-label">Fun Card #1:</label>
+            <input type="text" class="form-control" id="funCard1" />
+            <label class="form-label">Fun Card #2:</label>
+            <input type="text" class="form-control" id="funCard2" />
+            <label class="form-label">Fun Card #3:</label>
+            <input type="text" class="form-control" id="funCard3" />
+            <label class="form-label">Fun Card #4:</label>
+            <input type="text" class="form-control" id="funCard4" />
+            <label class="form-label">Fun Card #5:</label>
+            <input type="text" class="form-control" id="funCard5" />
+            <button class="btn btn-secondary mt-2" onclick="saveFunCards()" title="Save Fun Card URLs">
+                Save Fun Cards
+            </button>
+        </div>
+
+        <!-- Export/Import/Reset Actions -->
+        <div class="text-center mt-4">
+            <button class="btn btn-secondary btn-export" onclick="exportState()" title="Export current target state as JSON">
+                <i class="fas fa-file-export"></i> Export State
+            </button>
+            <button class="btn btn-secondary btn-export" onclick="importState()" title="Import state for this target from a JSON file">
+                <i class="fas fa-file-import"></i> Import State
+            </button>
+            <button class="btn btn-danger btn-export" onclick="resetState()" title="Reset this target's settings and state">
+                <i class="fas fa-trash-alt"></i> Reset State
+            </button>
+        </div>
+
+        <!-- Toast Container -->
+        <div aria-live="polite" aria-atomic="true" class="position-relative">
+            <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                <!-- Toasts appended here -->
+            </div>
+        </div>
+
+        <!-- Help Modal -->
+        <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="helpModalLabel">Help & Instructions</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <h6>Overview</h6>
+                        <p>This application allows you to randomly select URLs from a predefined list with customizable settings.</p>
+                        <h6>Features</h6>
+                        <ul>
+                            <li><strong>URL Prefix/Suffix:</strong> Add prefixes or suffixes to all URLs before they open.</li>
+                            <li><strong>Default Frequency:</strong> Set the default frequency for new items.</li>
+                            <li><strong>Adjust Probabilities:</strong> Control the likelihood of selecting from Bucket1 or Bucket2.</li>
+                            <li><strong>Draw History:</strong> Log of the last 5 drawn URLs.</li>
+                            <li><strong>Undo Last Draw:</strong> Revert the last draw action.</li>
+                            <li><strong>Import/Export State:</strong> Save/load your current state using JSON.</li>
+                            <li><strong>Dark Mode:</strong> Toggle a dark theme.</li>
+                            <li><strong>Fun Cards & Session:</strong> Up to 5 “Fun Cards” for Bucket3 sessions.</li>
+                            <li><strong>Bucket 3 Session Progress:</strong> See how many session cards remain at any time.</li>
+                        </ul>
+                        <h6>How to Use</h6>
+                        <ol>
+                            <li><strong>Set URL Prefix/Suffix</strong> and click "Save URL Prefix/Suffix".</li>
+                            <li><strong>Default Frequency</strong>: "Edit" → enter a positive integer → "Save".</li>
+                            <li><strong>Probabilities</strong>: Use the slider for Bucket1 vs Bucket2.</li>
+                            <li><strong>Generate Session</strong>: Fill Bucket3 with a random blend of study/fun items.</li>
+                            <li><strong>Draw from Bucket3</strong>: Removes next card from session, opening it in a new tab.</li>
+                            <li><strong>Default Session Cards</strong>: How many draws to generate for each session.</li>
+                            <li><strong>Define Fun Cards</strong>: 1–5 custom fun URLS. Blank fields are ignored.</li>
+                            <li><strong>Draw & Undo</strong>: Draw from Bucket1/Bucket2, or revert with "Undo Last Draw".</li>
+                            <li><strong>Import/Export/Reset</strong>: Manage your state with these controls.</li>
+                            <li><strong>Dark Mode</strong>: Toggle the dark theme at any time.</li>
+                            <li><strong>I’m Feeling Lucky®</strong>: Randomly picks between Bucket3 or Bucket1/Bucket2, and also changes its own button color distinctly from the page background.</li>
+                        </ol>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bootstrap JS and dependencies -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+                integrity="sha384-wpsYrgENSMwvWDnK+0hqyc+8zhu+uZdzsOCS8KQmS1b2y2lZjY0Chvh6e+GD44G"
+                crossorigin="anonymous"></script>
+    </div>
 </body>
 </html>
