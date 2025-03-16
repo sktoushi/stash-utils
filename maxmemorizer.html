@@ -27,7 +27,6 @@
   </style>
 </head>
 <body class="bg-light">
-
 <div class="container my-5">
   <h1 class="text-center mb-4">Sentence Reconstruction</h1>
 
@@ -323,32 +322,32 @@
     // Articles, conjunctions, and auxiliary verbs
     'a','an','the','is','are','was','were','am','be','been','being',
     'and','or','but','nor','so','yet','for',
-    
+
     // Prepositions
     'of','in','to','by','with','from','at','on','into','onto','upon',
     'about','above','below','under','over','between','among','around','through',
     'before','after','during','since','until',
-    
+
     // Pronouns
     'i','me','my','mine','you','your','yours','he','him','his','she','her','hers',
     'it','its','we','us','our','ours','they','them','their','theirs',
     'this','that','these','those',
-    
+
     // Question words
     'who','whom','whose','which','what','when','where','how','why',
-    
+
     // Common verbs and modals (reducing noise from auxiliary/helping verbs)
     'do','does','did','done','doing',
     'have','has','had','having',
     'can','could','shall','should','will','would','may','might','must',
     'let','lets','make','makes','made','making',
     'go','goes','went','gone','going','get','gets','got','gotten','getting',
-    
+
     // Common adverbs and determiners (often non-essential in learning contexts)
     'just','only','even','also','too','very','much','more','most','some','any',
     'every','all','no','none','not','never','always','sometimes','often','rarely',
     'perhaps','maybe','quite','rather','almost','already','soon','yet','still',
-    
+
     // Redundant filler words and transitions
     'then','out','up','down','over','again','like','such','same',
     'whether','though','although','because','since','unless','instead',
@@ -362,6 +361,62 @@
   let currentGuessIndex = 0;
   let sanitizedText = '';
 
+  // NEW: We'll store Pantone data globally after first fetch
+  let pantoneDataGlobal = null;
+
+  /**
+   * NEW: Function to fetch pantone-colors.json (if not fetched yet) and then
+   * choose distinct random colors for background and buttons.
+   */
+  async function updateColorsPantone() {
+    try {
+      if (!pantoneDataGlobal) {
+        // fetch the JSON once
+        const resp = await fetch("pantone-colors.json");
+        if (!resp.ok) throw new Error("Cannot fetch pantone-colors.json");
+        pantoneDataGlobal = await resp.json();
+      }
+      const { names, values } = pantoneDataGlobal;
+      if (!names || !values || names.length !== values.length) {
+        throw new Error("Invalid pantone-colors.json format");
+      }
+
+      // pick random index for background
+      const bgIndex = Math.floor(getSecureRandomNumber() * names.length);
+      let buttonIndex = Math.floor(getSecureRandomNumber() * names.length);
+
+      // ensure button color != background color
+      while (buttonIndex === bgIndex) {
+        buttonIndex = Math.floor(getSecureRandomNumber() * names.length);
+      }
+
+      const bgColor = values[bgIndex];
+      const btnColor = values[buttonIndex];
+
+      // set background color of body
+      document.body.style.backgroundColor = bgColor;
+
+      // set all relevant buttons to a different color
+      const allButtons = document.querySelectorAll('button');
+      allButtons.forEach((btn) => {
+        // We'll do a simple approach: button color is distinct from background
+        btn.style.backgroundColor = btnColor;
+        // if you'd like to ensure contrast, you could set text color conditionally
+        btn.style.color = "#000";
+      });
+
+    } catch (err) {
+      console.warn("Pantone color fetch error:", err);
+      // fallback: do nothing or set defaults
+      document.body.style.backgroundColor = "#ffffff";
+      const allButtons = document.querySelectorAll('button');
+      allButtons.forEach((btn) => {
+        btn.style.backgroundColor = "#ccc";
+        btn.style.color = "#000";
+      });
+    }
+  }
+
   window.addEventListener("load", async () => {
     // 1) open the DB
     await openDatabase();
@@ -370,8 +425,17 @@
     const rawCardId = getUrlParameter("cardId").trim();
     const rawSide = getUrlParameter("side").trim().toLowerCase();
 
-    // Set random colors for the tool buttons each time the page is visited
-    setRandomColorsForToolButtons();
+    // NEW: We'll call updateColorsPantone once on load
+    await updateColorsPantone();
+
+    // Then attach the same color update on every button click
+    const allButtons = document.querySelectorAll('button');
+    allButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        // update to new random pantone colors
+        await updateColorsPantone();
+      });
+    });
 
     // If we do, load the text from DB and start the game automatically
     if (rawCardId && rawSide && (rawSide === "front" || rawSide === "back")) {
@@ -669,33 +733,6 @@
    ********************************************************************/
 
   /**
-   * Random color generator for the tool buttons
-   */
-  function getRandomColorHex() {
-    // random rgb
-    const r = Math.floor(getSecureRandomNumber() * 256);
-    const g = Math.floor(getSecureRandomNumber() * 256);
-    const b = Math.floor(getSecureRandomNumber() * 256);
-    return `rgb(${r},${g},${b})`;
-  }
-
-  function setRandomColorsForToolButtons() {
-    const colors = [
-      getRandomColorHex(),
-      getRandomColorHex(),
-      getRandomColorHex(),
-      getRandomColorHex(),
-      getRandomColorHex()
-    ];
-    // We have 5 tool buttons
-    chatGPTBtn.style.backgroundColor = colors[0];
-    summarizeBtn.style.backgroundColor = colors[1];
-    quickQuizBtn.style.backgroundColor = colors[2];
-    fourChanBtn.style.backgroundColor = colors[3];
-    readAloudBtn.style.backgroundColor = colors[4];
-  }
-
-  /**
    * Open ChatGPT with the current text area contents in a new tab
    */
   function searchChatGPT() {
@@ -769,7 +806,6 @@
     const utter = new SpeechSynthesisUtterance(sanitizedForTTS);
     speechSynthesis.speak(utter);
   }
-
 </script>
 </body>
 </html>
