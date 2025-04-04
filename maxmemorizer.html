@@ -72,9 +72,9 @@
       Generate Quick Quiz
     </button>
 
-    <!-- 4Chan Button -->
+    <!-- Matthew Henry Commentary on: Button -->
     <button id="fourChanBtn" class="btn btn-info me-2 mb-2" onclick="fourChanExplain()">
-      4chan
+      Matthew Henry Commentary on:
     </button>
 
     <!-- Read Aloud (TTS) -->
@@ -730,10 +730,10 @@
   function fourChanExplain() {
     const textVal = userInput.value.trim();
     if (!textVal) {
-      alert("No text found for 4chan explanation!");
+      alert("No text found for Matthew Henry Commentary on: explanation!");
       return;
     }
-    const prefixed = "4chan: explain this, full tokens " + textVal;
+    const prefixed = "Matthew Henry Commentary on:: explain this, full tokens " + textVal;
     const encoded = encodeURIComponent(prefixed);
     const url = `https://chat.openai.com/?q=${encoded}`;
     window.open(url, "_blank");
