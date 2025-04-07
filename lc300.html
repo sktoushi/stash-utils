@@ -106,6 +106,23 @@
         <i class="fas fa-question-circle"></i> Help
       </button>
     </div>
+	
+    <!-- (4) Review Gauges, Buckets, History, Export/Import/Reset -->
+    <div class="gauge-container">
+      <label for="review1Gauge" class="form-label">Review1 (Unique Bucket1 Items / Total Cards):</label>
+      <progress id="review1Gauge" class="form-range w-100" value="0" max="100" aria-label="Review1 Gauge"></progress>
+      <div class="text-center">
+        <span id="review1Text">0%</span>
+      </div>
+    </div>
+
+    <div class="gauge-container">
+      <label for="review2Gauge" class="form-label">Remaining (100% - Review1):</label>
+      <progress id="review2Gauge" class="form-range w-100" value="100" max="100" aria-label="Review2 Gauge"></progress>
+      <div class="text-center">
+        <span id="review2Text">100%</span>
+      </div>
+    </div>
 
     <!-- (1) Text Input Area at the Top -->
     <div class="mb-4">
@@ -263,23 +280,6 @@
     </div>
 
     <hr />
-
-    <!-- (4) Review Gauges, Buckets, History, Export/Import/Reset -->
-    <div class="gauge-container">
-      <label for="review1Gauge" class="form-label">Review1 (Unique Bucket1 Items / Total Cards):</label>
-      <progress id="review1Gauge" class="form-range w-100" value="0" max="100" aria-label="Review1 Gauge"></progress>
-      <div class="text-center">
-        <span id="review1Text">0%</span>
-      </div>
-    </div>
-
-    <div class="gauge-container">
-      <label for="review2Gauge" class="form-label">Remaining (100% - Review1):</label>
-      <progress id="review2Gauge" class="form-range w-100" value="100" max="100" aria-label="Review2 Gauge"></progress>
-      <div class="text-center">
-        <span id="review2Text">100%</span>
-      </div>
-    </div>
 
     <!-- Bucket Lists -->
     <div class="row">
