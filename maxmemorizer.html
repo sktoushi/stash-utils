@@ -76,6 +76,11 @@
     <button id="fourChanBtn" class="btn btn-info me-2 mb-2" onclick="fourChanExplain()">
       Matthew Henry Commentary on:
     </button>
+	
+    <!-- 4chan: Button -->
+    <button id="realFourChanBtn" class="btn btn-info me-2 mb-2" onclick="realFourChanExplain()">
+      Matthew Henry Commentary on:
+    </button>
 
     <!-- Read Aloud (TTS) -->
     <button id="readAloudBtn" class="btn btn-info mb-2" onclick="readAloudText()">
@@ -317,6 +322,7 @@
   const summarizeBtn = document.getElementById("summarizeBtn");
   const quickQuizBtn = document.getElementById("quickQuizBtn");
   const fourChanBtn = document.getElementById("fourChanBtn");
+  const realFourChanBtn = document.getElementById("realFourChanBtn");
   const readAloudBtn = document.getElementById("readAloudBtn");
 
   // Enhanced common “filler” words to skip
@@ -734,6 +740,18 @@
       return;
     }
     const prefixed = "Matthew Henry Commentary on:: explain this, full tokens " + textVal;
+    const encoded = encodeURIComponent(prefixed);
+    const url = `https://chat.openai.com/?q=${encoded}`;
+    window.open(url, "_blank");
+  }
+  
+  function realFourChanExplain() {
+    const textVal = userInput.value.trim();
+    if (!textVal) {
+      alert("No text found for 4chan explanation!");
+      return;
+    }
+    const prefixed = "4chan:: explain this, full tokens " + textVal;
     const encoded = encodeURIComponent(prefixed);
     const url = `https://chat.openai.com/?q=${encoded}`;
     window.open(url, "_blank");
