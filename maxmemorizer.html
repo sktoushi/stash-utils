@@ -327,9 +327,41 @@
 
   // Enhanced common “filler” words to skip
   const skipWordsSet = new Set([
-    // ...
-    // (unchanged list)
-    // ...
+    // Articles, conjunctions, and auxiliary verbs
+    'a','an','the','is','are','was','were','am','be','been','being',
+    'and','or','but','nor','so','yet','for',
+
+    // Prepositions
+    'of','in','to','by','with','from','at','on','into','onto','upon',
+    'about','above','below','under','over','between','among','around','through',
+    'before','after','during','since','until',
+
+    // Pronouns
+    'i','me','my','mine','you','your','yours','he','him','his','she','her','hers',
+    'it','its','we','us','our','ours','they','them','their','theirs',
+    'this','that','these','those',
+
+    // Question words
+    'who','whom','whose','which','what','when','where','how','why',
+
+    // Common verbs and modals (reducing noise from auxiliary/helping verbs)
+    'do','does','did','done','doing',
+    'have','has','had','having',
+    'can','could','shall','should','will','would','may','might','must',
+    'let','lets','make','makes','made','making',
+    'go','goes','went','gone','going','get','gets','got','gotten','getting',
+
+    // Common adverbs and determiners (often non-essential in learning contexts)
+    'just','only','even','also','too','very','much','more','most','some','any',
+    'every','all','no','none','not','never','always','sometimes','often','rarely',
+    'perhaps','maybe','quite','rather','almost','already','soon','yet','still',
+
+    // Redundant filler words and transitions
+    'then','out','up','down','over','again','like','such','same',
+    'whether','though','although','because','since','unless','instead',
+    'either','neither','both','while','meanwhile','otherwise',
+    'further','furthermore','moreover','besides','however','therefore',
+    'thus','hence','indeed','anyway','anyhow'
   ]);
 
   let tokenData = [];
