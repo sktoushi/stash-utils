@@ -195,7 +195,7 @@ function pickRowByWeight(rows) {
  */
 async function processRows(rows, recursionDepth = 0) {
   // Basic safeguard against unexpected infinite loops
-  if (recursionDepth > 20) {
+  if (recursionDepth > 2000) {
     document.body.textContent = 'Error: Exceeded maximum CSV nesting depth.';
     return;
   }
