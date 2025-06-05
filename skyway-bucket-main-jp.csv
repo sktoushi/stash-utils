@@ -1,3 +1,7 @@
+variable,publicRepoEnding=3991
+variable,stashEnding=4569
+variable,stash2Ending=3774
+variable,stash2Starting=3019
 csv,11,skyway-modifiable-redirect0915-133-stash-of-stashes.csv
 link,11,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-pse-2502-recent2quarters
 csv,11,skyway-modifiable-redirect0915-144-japanese-learning-alloc.csv
