@@ -71,6 +71,8 @@ function shuffle(array) {
 /* ------------------------------------------------------------------ */
 /*  4.  VARIABLE SUPPORT                                              */
 /* ------------------------------------------------------------------ */
+/** Global variable store shared across nested CSVs. */
+const globalVariables = {};
 /**
  * Removes rows that begin with “variable” and returns a version of the
  * data where occurrences of `{key}` are replaced with the corresponding
@@ -80,7 +82,6 @@ function shuffle(array) {
  * @returns {string[][]}     Rows ready for normal processing
  */
 function applyVariables(rows) {
-  const variables = {};
   const keptRows = [];
 
   /* Pass 1 – extract variable definitions */
@@ -90,7 +91,7 @@ function applyVariables(rows) {
       if (keyPart && rest.length) {
         const key = keyPart.trim();
         const value = rest.join('=').trim(); // allows '=' in value
-        variables[key] = value;
+        globalVariables[key] = value;
       }
     } else {
       keptRows.push(r);
@@ -101,7 +102,9 @@ function applyVariables(rows) {
   const placeholderRE = /\{([^}]+)}/g;
   const replacedRows = keptRows.map(row => row.map(cell =>
     cell.replace(placeholderRE, (match, p1) =>
-      Object.prototype.hasOwnProperty.call(variables, p1) ? variables[p1] : match
+      Object.prototype.hasOwnProperty.call(globalVariables, p1)
+        ? globalVariables[p1]
+        : match
     )
   ));
 
@@ -246,6 +249,12 @@ async function processRows(rows, recursionDepth = 0) {
 /*  8.  MAIN ENTRY POINT                                              */
 /* ------------------------------------------------------------------ */
 async function main() {
+  // Reset global variables for a fresh run
+  for (const key in globalVariables) {
+    if (Object.prototype.hasOwnProperty.call(globalVariables, key)) {
+      delete globalVariables[key];
+    }
+  }
   const urlParams = new URLSearchParams(window.location.search);
   const target = urlParams.get('target');
 
