@@ -1,4 +1,8 @@
-link,1,"https://sktoushi.github.io/stash-utils/stash-randomizer.html?modes=random,random,random,yearly,scaled,random-1-2-3-4-5-6-7-8-7-6-5-4-3-2-1,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-6-10-12-15-22-35&usernameRepoList=cjcaf1995_public-repo_1_3991&allocation=1"
-link,2,"https://sktoushi.github.io/stash-utils/stash-randomizer.html?modes=random,random,random,yearly,scaled,random-1-2-3-4-5-6-7-8-7-6-5-4-3-2-1,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-6-10-12-15-22-35&usernameRepoList=cjcaf1995_stash_1_4569&allocation=1"
-link,5,"https://sktoushi.github.io/stash-utils/stash-randomizer.html?modes=random,random,random,yearly,scaled,random-1-2-3-4-5-6-7-8-7-6-5-4-3-2-1,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-6-10-12-15-22-35&usernameRepoList=sktoushi_stash2_1_3774&allocation=1"
-link,null,"https://sktoushi.github.io/stash-utils/stash-randomizer.html?modes=random,random,random,yearly,scaled,random-1-2-3-4-5-6-7-8-7-6-5-4-3-2-1,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-6-10-12-15-22-35&usernameRepoList=sktoushi_stash2_3019_3774&allocation=1"
+variable,publicRepoEnding=2
+variable,stashEnding=2
+variable,stash2Starting=1
+variable,stash2Ending=2
+link,1,"https://sktoushi.github.io/stash-utils/stash-randomizer.html?modes=random,random,random,yearly,scaled,random-1-2-3-4-5-6-7-8-7-6-5-4-3-2-1,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-6-10-12-15-22-35&usernameRepoList=cjcaf1995_public-repo_1_{publicRepoEnding}&allocation=1"
+link,2,"https://sktoushi.github.io/stash-utils/stash-randomizer.html?modes=random,random,random,yearly,scaled,random-1-2-3-4-5-6-7-8-7-6-5-4-3-2-1,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-6-10-12-15-22-35&usernameRepoList=cjcaf1995_stash_1_{stashEnding}&allocation=1"
+link,5,"https://sktoushi.github.io/stash-utils/stash-randomizer.html?modes=random,random,random,yearly,scaled,random-1-2-3-4-5-6-7-8-7-6-5-4-3-2-1,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-6-10-12-15-22-35&usernameRepoList=sktoushi_stash2_1_{stash2Ending}&allocation=1"
+link,null,"https://sktoushi.github.io/stash-utils/stash-randomizer.html?modes=random,random,random,yearly,scaled,random-1-2-3-4-5-6-7-8-7-6-5-4-3-2-1,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-8-7-6-5-4-3-2-1-2-3-4-5-6-7-8,random-6-10-12-15-22-35&usernameRepoList=sktoushi_stash2_{stash2Starting}_{stash2Ending}&allocation=1"
