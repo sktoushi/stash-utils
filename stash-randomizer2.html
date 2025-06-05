@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Redirect</title>
+    <script>
+        // Secure random number generator function
+        function getSecureRandomNumber() {
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return array[0] / (0xFFFFFFFF + 1);
+        }
+
+        // Weighted random pick with simple recency bias
+        function weightedRandomPickWithRecency(items, weights) {
+            const now = Date.now();
+            const hour = 60 * 60 * 1000;
+
+            const adjusted = items.map((item, idx) => {
+                const base = (typeof weights[idx] === 'number' && weights[idx] > 0) ? weights[idx] : 1;
+                const key = `stash-r2-${item}-last`;
+                const last = parseInt(localStorage.getItem(key) || '0', 10);
+                const elapsed = (now - last) / hour;
+                const factor = Math.min(5, 1 + elapsed);
+                return { item, weight: base * factor, key };
+            });
+
+            let total = 0;
+            adjusted.forEach(a => total += a.weight);
+
+            let rand = getSecureRandomNumber() * total;
+            for (const a of adjusted) {
+                if (rand < a.weight) {
+                    localStorage.setItem(a.key, String(now));
+                    return a.item;
+                }
+                rand -= a.weight;
+            }
+            const fallback = adjusted[adjusted.length - 1];
+            localStorage.setItem(fallback.key, String(now));
+            return fallback.item;
+        }
+
+        (function() {
+            // Grab the full query string (e.g. ?modes=...&usernameRepoList=...&allocation=...)
+            const paramsString = window.location.search;
+
+            // Parse it using URLSearchParams
+            const searchParams = new URLSearchParams(paramsString);
+
+            // Extract the 'modes' parameter and split into array
+            const modesParam = searchParams.get('modes') || '';
+            const modesArray = modesParam.split(',').filter(item => item);
+
+            // Extract the 'usernameRepoList' parameter and split into array
+            const userRepoParam = searchParams.get('usernameRepoList') || '';
+            const userRepoArray = userRepoParam.split(',').filter(item => item);
+
+            // Extract the 'allocation' parameter and convert to array of numbers
+            // Each weight corresponds to the same index in userRepoArray
+            const allocationParam = searchParams.get('allocation') || '';
+            const allocationArray = allocationParam
+                .split(',')
+                .map(str => Number(str))
+                .filter(num => !isNaN(num));
+
+            // If allocationArray doesn't match userRepoArray length or is invalid,
+            // fall back to equal likelihood for each item
+            let validWeights = false;
+            if (allocationArray.length === userRepoArray.length && allocationArray.length > 0) {
+                validWeights = allocationArray.every(weight => weight >= 0);
+            }
+
+            // Randomly pick a mode (unweighted, as before)
+            const randomMode = modesArray[Math.floor(getSecureRandomNumber() * modesArray.length)];
+
+            // Randomly pick one item from userRepoArray (weighted if valid, otherwise uniform)
+            let randomUserRepo;
+            if (validWeights) {
+                randomUserRepo = weightedRandomPickWithRecency(userRepoArray, allocationArray);
+            } else {
+                // Fallback to uniform selection if weights are missing/invalid
+                const uniform = new Array(userRepoArray.length).fill(1);
+                randomUserRepo = weightedRandomPickWithRecency(userRepoArray, uniform);
+            }
+
+            // Split the selected user/repo record by underscore
+            const userRepoParts = randomUserRepo.split('_');
+            // userRepoParts[0] -> element1 (username)
+            // userRepoParts[1] -> element2 (repository)
+            // userRepoParts[2] -> element3 (startIndex)
+            // userRepoParts[3] -> element4 (endIndex)
+
+            // Build the final redirect URL
+            const redirectUrl = [
+                'https://sktoushi.github.io/stash-utils/redirect0915-',
+                encodeURIComponent(randomMode),
+                '.html?username=',
+                encodeURIComponent(userRepoParts[0] || ''),
+                '&repository=',
+                encodeURIComponent(userRepoParts[1] || ''),
+                '&startIndex=',
+                encodeURIComponent(userRepoParts[2] || ''),
+                '&endIndex=',
+                encodeURIComponent(userRepoParts[3] || '')
+            ].join('');
+
+            // Finally, redirect the user
+            window.location.href = redirectUrl;
+        })();
+    </script>
+</head>
+<body>
+    <!-- Bare-bones HTML: no content necessary -->
+</body>
+</html>
