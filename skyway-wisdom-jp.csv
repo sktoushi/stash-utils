@@ -4,7 +4,7 @@ variable,publicRepoEnding=3991
 variable,stashEnding=4569
 variable,stash2Ending=3833
 variable,stash2Starting=3067
-link,1,https://sktoushi.github.io/stash-utils/skyway-replica-202506.html?target=chatgpt-cookbook.csv
+link,1,https://sktoushi.github.io/stash-utils/skyway.html?target=chatgpt-cookbook.csv
 link,2,https://sktoushi.github.io/stash-utils/lc300.html?target=indexedDb-jp-sentences.csv
 csv,2,skyway-wisdom.csv
 link,2,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-pmbok-2025
