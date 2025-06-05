@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Random CSV Redirect (Weighted + Nested + Variables)</title>
+  <title>Random CSV Redirect (Weighted + Nested + Variables + Math)</title>
 </head>
 <body>
 <script>
@@ -17,9 +17,13 @@ function getSecureRandomNumber() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  0A.  GLOBAL VARIABLE STORE (persists across every CSV)            */
+/* ------------------------------------------------------------------ */
+const globalVariables = Object.create(null);
+
+/* ------------------------------------------------------------------ */
 /*  1.  STRING HELPERS                                                */
 /* ------------------------------------------------------------------ */
-/** Trim whitespace and strip leading / trailing single or double quotes. */
 function cleanCell(cell) {
   cell = cell.trim();
   return cell.replace(/^["']+|["']+$/g, '');
@@ -35,13 +39,12 @@ function parseCsvLine(line) {
 
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
-
     if (c === '"') {
       if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
-        curCell += '"';          // Escaped quote
+        curCell += '"';
         i++;
       } else {
-        inQuotes = !inQuotes;    // Toggle quoted state
+        inQuotes = !inQuotes;
       }
     } else if (c === ',' && !inQuotes) {
       result.push(curCell);
@@ -69,39 +72,91 @@ function shuffle(array) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  4.  VARIABLE SUPPORT                                              */
+/*  4.  VARIABLE SUPPORT  (WITH  MATH)                                */
 /* ------------------------------------------------------------------ */
 /**
- * Removes rows that begin with “variable” and returns a version of the
- * data where occurrences of `{key}` are replaced with the corresponding
- * value collected from those rows.
+ * Removes “variable” rows, updates the global store (incl. math eval),
+ * then substitutes {placeholders} in the remaining rows.
  *
- * @param {string[][]} rows  Parsed CSV rows (already cleaned)
- * @returns {string[][]}     Rows ready for normal processing
+ * @param {string[][]} rows
+ * @param {object}     store – usually `globalVariables`
+ * @returns {string[][]} rows ready for normal processing
  */
-function applyVariables(rows) {
-  const variables = {};
-  const keptRows = [];
+function applyVariables(rows, store) {
+  const keptRows     = [];
+  const variableRows = [];
 
-  /* Pass 1 – extract variable definitions */
+  /* 4.1  Separate variable rows from normal rows */
   rows.forEach(r => {
     if (r[0].trim() === 'variable' && r.length >= 2) {
-      const [keyPart, ...rest] = r[1].split('=');
-      if (keyPart && rest.length) {
-        const key = keyPart.trim();
-        const value = rest.join('=').trim(); // allows '=' in value
-        variables[key] = value;
-      }
+      variableRows.push(r);
     } else {
       keptRows.push(r);
     }
   });
 
-  /* Pass 2 – placeholder replacement */
-  const placeholderRE = /\{([^}]+)}/g;
+  /* 4.2  Resolve variables (allowing inter-dependencies + math) */
+  const PLACEHOLDER_RE = /\{([^}]+)}/g;
+  let iterations       = 0;
+
+  while (variableRows.length && iterations < 25) {
+    iterations++;
+
+    for (let i = variableRows.length - 1; i >= 0; i--) {
+      const [keyPart, ...rest] = variableRows[i][1].split('=');
+      if (!keyPart || rest.length === 0) {
+        variableRows.splice(i, 1);          // malformed → drop
+        continue;
+      }
+      const key   = keyPart.trim();
+      let  expr   = rest.join('=').trim();  // allow '=' inside value
+
+      /* Substitute already-known variables */
+      expr = expr.replace(PLACEHOLDER_RE, (m, p1) =>
+        Object.prototype.hasOwnProperty.call(store, p1) ? store[p1] : m
+      );
+
+      /* If unresolved placeholders remain, try next iteration */
+      if (PLACEHOLDER_RE.test(expr)) continue;
+
+      /* Allow only safe characters: digits, + - * / ( ) whitespace */
+      if (!/^[\d+\-*/().\s]+$/.test(expr)) {
+        console.warn(`Unsafe expression in variable ${key}: ${expr}`);
+        variableRows.splice(i, 1);
+        continue;
+      }
+
+      /* Evaluate & round up (Math.ceil) */
+      let value;
+      try {
+        value = Function('"use strict"; return (' + expr + ');')();
+        if (typeof value !== 'number' || !isFinite(value)) {
+          throw new Error('NaN/Inf');
+        }
+        value = Math.ceil(value);            // always round up
+      } catch {
+        console.warn(`Failed to evaluate expression for ${key}: ${expr}`);
+        variableRows.splice(i, 1);
+        continue;
+      }
+
+      store[key] = String(value);
+      variableRows.splice(i, 1);             // resolved → remove
+    }
+  }
+
+  /* Any still-unresolved variable rows: stash their raw value */
+  variableRows.forEach(r => {
+    const [keyPart, ...rest] = r[1].split('=');
+    if (keyPart && rest.length && !Object.prototype.hasOwnProperty.call(store, keyPart.trim())) {
+      store[keyPart.trim()] = rest.join('=').trim();
+    }
+  });
+
+  /* 4.3  Substitute {vars} in remaining rows */
   const replacedRows = keptRows.map(row => row.map(cell =>
-    cell.replace(placeholderRE, (match, p1) =>
-      Object.prototype.hasOwnProperty.call(variables, p1) ? variables[p1] : match
+    cell.replace(PLACEHOLDER_RE, (m, p1) =>
+      Object.prototype.hasOwnProperty.call(store, p1) ? store[p1] : m
     )
   ));
 
@@ -111,11 +166,7 @@ function applyVariables(rows) {
 /* ------------------------------------------------------------------ */
 /*  5.  FETCH AND PARSE A CSV FILE                                    */
 /* ------------------------------------------------------------------ */
-/**
- * @param {string} csvFilename
- * @returns {Promise<string[][]>}
- */
-async function fetchCSV(csvFilename) {
+async function fetchCSV(csvFilename, store = globalVariables) {
   console.log(`Attempting to fetch CSV: ${csvFilename}`);
 
   try {
@@ -134,13 +185,13 @@ async function fetchCSV(csvFilename) {
       parseCsvLine(line).map(cell => cleanCell(cell))
     );
 
-    /* === NEW STEP: variable extraction / substitution ============ */
-    const resolvedRows = applyVariables(parsedRows);
+    /* Variable extraction / substitution (with math) */
+    const resolvedRows = applyVariables(parsedRows, store);
 
-    /* Shuffle rows (weight math is preserved because values remain) */
+    /* Shuffle (weights are preserved) */
     shuffle(resolvedRows);
-
     return resolvedRows;
+
   } catch (error) {
     throw new Error('Error fetching CSV: ' + error.message);
   }
@@ -156,8 +207,7 @@ function pickRowByWeight(rows) {
     return { row: r, weight: w };
   });
 
-  let totalWeight = 0;
-  for (const wr of weightedRows) totalWeight += wr.weight;
+  const totalWeight = weightedRows.reduce((s, x) => s + x.weight, 0);
 
   if (totalWeight <= 0) {
     console.warn('Total weight ≤ 0 – falling back to uniform choice.');
@@ -230,7 +280,7 @@ async function processRows(rows, recursionDepth = 0) {
     }
     console.log('Nested CSV – fetching:', nestedCsv);
     try {
-      const nestedRows = await fetchCSV(nestedCsv);   // fetchCSV already applies variables
+      const nestedRows = await fetchCSV(nestedCsv, globalVariables);
       await processRows(nestedRows, recursionDepth + 1);
     } catch (error) {
       document.body.textContent = error.message;
@@ -247,7 +297,7 @@ async function processRows(rows, recursionDepth = 0) {
 /* ------------------------------------------------------------------ */
 async function main() {
   const urlParams = new URLSearchParams(window.location.search);
-  const target = urlParams.get('target');
+  const target    = urlParams.get('target');
 
   if (!target) {
     document.body.textContent = 'No "target" parameter found (use ?target=file.csv).';
@@ -255,9 +305,9 @@ async function main() {
   }
 
   try {
-    let rows = await fetchCSV(target);
+    let rows = await fetchCSV(target, globalVariables);
 
-    /* ---------- (unchanged weight-normalisation for "null") ------- */
+    /* ---- Weight normalisation for explicit "null" cells ---------- */
     const nonNullVals = rows
       .map(r => (r[1] !== 'null' ? parseInt(r[1], 10) : NaN))
       .filter(v => !isNaN(v));
