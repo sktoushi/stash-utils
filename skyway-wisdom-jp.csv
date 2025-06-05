@@ -1,5 +1,5 @@
 variable,logEnding=3991
-redirect0915Ending=219
+variable,redirect0915Ending=219
 variable,publicRepoEnding=3991
 variable,stashEnding=4569
 variable,stash2Ending=3774
