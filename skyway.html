@@ -6,6 +6,19 @@
 </head>
 <body>
 <script>
+let configValues = {};
+async function loadConfig() {
+  if (Object.keys(configValues).length) return configValues;
+  try {
+    const resp = await fetch('config/values.json');
+    if (resp.ok) {
+      configValues = await resp.json();
+    }
+  } catch (err) {
+    console.error('Failed to load config:', err);
+  }
+  return configValues;
+}
 /**
  * Returns a cryptographically secure random number between 0 (inclusive) and 1 (exclusive).
  */
@@ -96,6 +109,17 @@ function shuffle(array) {
   return array;
 }
 
+function applyConfigPlaceholders(rows) {
+  const re = /\{([^}]+)}/g;
+  return rows.map(row => row.map(cell =>
+    cell.replace(re, (m, p1) =>
+      Object.prototype.hasOwnProperty.call(configValues, p1)
+        ? configValues[p1]
+        : m
+    )
+  ));
+}
+
 /**
  * Fetch and parse a CSV file, returning an array of rows.
  * Each row is an array of "cleaned" cells, respecting quoted fields.
@@ -105,6 +129,8 @@ function shuffle(array) {
  */
 async function fetchCSV(csvFilename) {
   console.log(`Attempting to fetch CSV: ${csvFilename}`);
+
+  await loadConfig();
 
   try {
     const response = await fetch(csvFilename);
@@ -122,10 +148,12 @@ async function fetchCSV(csvFilename) {
     console.log('Raw lines:', lines);
 
     // For each line, parse properly, then clean each cell
-    const rows = lines.map(line => {
+    let rows = lines.map(line => {
       const parsedCells = parseCsvLine(line);
       return parsedCells.map(cell => cleanCell(cell));
     });
+
+    rows = applyConfigPlaceholders(rows);
 
     console.log('Parsed rows (with cleaned cells):', rows);
 
@@ -282,6 +310,7 @@ async function processRows(rows, recursionDepth = 0) {
  * 4. Process rows
  */
 async function main() {
+  await loadConfig();
   const urlParams = new URLSearchParams(window.location.search);
   const target = urlParams.get('target');
 

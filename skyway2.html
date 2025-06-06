@@ -6,6 +6,19 @@
 </head>
 <body>
 <script>
+let configValues = {};
+async function loadConfig() {
+  if (Object.keys(configValues).length) return configValues;
+  try {
+    const resp = await fetch('config/values.json');
+    if (resp.ok) {
+      configValues = await resp.json();
+    }
+  } catch (err) {
+    console.error('Failed to load config:', err);
+  }
+  return configValues;
+}
 /* ------------------------------------------------------------------ */
 /*  0.  SECURE RNG                                                    */
 /* ------------------------------------------------------------------ */
@@ -271,6 +284,8 @@ async function main() {
       delete globalVariables[key];
     }
   }
+  await loadConfig();
+  Object.assign(globalVariables, configValues);
   const urlParams = new URLSearchParams(window.location.search);
   const target = urlParams.get('target');
 

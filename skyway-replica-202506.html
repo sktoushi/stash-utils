@@ -6,6 +6,19 @@
 </head>
 <body>
 <script>
+let configValues = {};
+async function loadConfig() {
+  if (Object.keys(configValues).length) return configValues;
+  try {
+    const resp = await fetch('config/values.json');
+    if (resp.ok) {
+      configValues = await resp.json();
+    }
+  } catch (err) {
+    console.error('Failed to load config:', err);
+  }
+  return configValues;
+}
 /* ------------------------------------------------------------------ */
 /*  0.  SECURE RNG                                                    */
 /* ------------------------------------------------------------------ */
@@ -80,7 +93,7 @@ function shuffle(array) {
  * @returns {string[][]}     Rows ready for normal processing
  */
 function applyVariables(rows) {
-  const variables = {};
+  const variables = Object.assign({}, configValues);
   const keptRows = [];
 
   /* Pass 1 – extract variable definitions */
@@ -117,6 +130,8 @@ function applyVariables(rows) {
  */
 async function fetchCSV(csvFilename) {
   console.log(`Attempting to fetch CSV: ${csvFilename}`);
+
+  await loadConfig();
 
   try {
     const response = await fetch(csvFilename);
@@ -246,6 +261,7 @@ async function processRows(rows, recursionDepth = 0) {
 /*  8.  MAIN ENTRY POINT                                              */
 /* ------------------------------------------------------------------ */
 async function main() {
+  await loadConfig();
   const urlParams = new URLSearchParams(window.location.search);
   const target = urlParams.get('target');
 
