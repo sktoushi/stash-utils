@@ -22,12 +22,12 @@ function getSecureRandomNumber() {
 function cleanCell(cell) {
   cell = cell.trim();
   // Remove leading/trailing quotes (single or double)
-  cell = cell.replace(/^["']+|["']+$/g, '');
+  cell = cell.replace(/^['"]+|['"]+$/g, '');
   return cell;
 }
 
 /**
- * Parses a single CSV line into an array of cell strings, 
+ * Parses a single CSV line into an array of cell strings,
  * respecting double quotes so commas inside quotes are not split.
  *
  * Example line:
@@ -121,16 +121,18 @@ async function fetchCSV(csvFilename) {
 
     console.log('Raw lines:', lines);
 
-    // For each line, parse properly, then clean each cell
-    const rows = lines.map(line => {
-      const parsedCells = parseCsvLine(line);
-      return parsedCells.map(cell => cleanCell(cell));
-    });
+    // Parse → clean → filter
+    const rows = lines
+      .map(line => {
+        const parsedCells = parseCsvLine(line);
+        return parsedCells.map(cell => cleanCell(cell));
+      })
+      // NEW: ignore any row that starts with "variable"
+      .filter(cells => cells.length && cells[0].trim().toLowerCase() !== 'variable');
 
-    console.log('Parsed rows (with cleaned cells):', rows);
+    console.log('Parsed rows (with cleaned cells, "variable" rows removed):', rows);
 
-    // Jumble the rows each time (maintaining frequency weights is unaffected, 
-    // since weighting is still handled inside pickRowByWeight).
+    // Jumble the rows each time (maintaining frequency weights is unaffected)
     shuffle(rows);
 
     return rows;
@@ -212,6 +214,12 @@ async function processRows(rows, recursionDepth = 0) {
   console.log('Selected row:', selectedRow);
 
   const rowType = selectedRow[0].trim();
+
+  // Extra guard: if somehow a "variable" row slipped through, pick again
+  if (rowType.toLowerCase() === 'variable') {
+    await processRows(rows, recursionDepth);
+    return;
+  }
 
   if (rowType === 'link') {
     // Format: link,<weight>,<url>
