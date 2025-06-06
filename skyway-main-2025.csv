@@ -1,7 +1,3 @@
-variable,publicRepoEnding=3991
-variable,stashEnding=4569
-variable,stash2Ending=3774
-variable,stash2Starting=3019
 link,1,https://sktoushi.github.io/stash-utils/mental-games-2025.html
 csv,2,skyway-main-202502.csv
 csv,3,skyway-main-202503.csv
