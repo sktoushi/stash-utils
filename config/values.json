@@ -1,12 +1,12 @@
 {
   "redirect0915Ending": "220",
+  "logStarting": "9",
+  "logEnding": "20",
   "publicRepoEnding": "3991",
   "stashEnding": "4569",
   "stash1p5Starting": "1",
   "stash1p5Ending": "265",
   "stash2EightyPercent": "3019",
   "stash2NinetyPercent": "3397",
-  "stash2Ending": "3774",
-  "placeholder------------------": "0",
-  "wisdomLever": "2000"
+  "stash2Ending": "3774"
 }
