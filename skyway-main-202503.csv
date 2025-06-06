@@ -1,7 +1,3 @@
-variable,publicRepoEnding=3991
-variable,stashEnding=4569
-variable,stash2Ending=3774
-variable,stash2Starting=3019
 csv,null,skyway-mkultra.csv
 link,null,https://sktoushi.github.io/stash-utils/lc300.html
 csv,null,skyway-bucket-finer-things-in-life.csv
