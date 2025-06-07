@@ -13,7 +13,8 @@
     "baseURL": "https://sktoushi.github.io/ref2506/dbviewer.html?db=",
     "files": [
       "japanese_grammar_explanation.db",
-      "low_key_mafia.db"
+      "low_key_mafia.db", 
+      "learning_retention_strategy.db" 
     ]
   }
 }
