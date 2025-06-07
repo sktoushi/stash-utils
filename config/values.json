@@ -16,7 +16,8 @@
       "low_key_mafia.db", 
       "learning_retention_strategy.db", 
       "ecclesiastes_commentary.db", 
-      "nietzsche_amplified.db"
+      "nietzsche_amplified.db", 
+      "ecclesiastes_5_18_commentary.db" 
     ]
   }
 }
