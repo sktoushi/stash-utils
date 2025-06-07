@@ -22,7 +22,7 @@
   "skyway-lever-reviewer-2506": "35",
   "skyway-lever-japanese-2506": "10",
   "skyway-lever-wisdom-2506": "10",
-  "skyway-lever-management-2506": "10",
+  "skyway-lever-management-2506": "25",
   "skyway-lever-utilities-2506": "5",
   "redirect0915Ending": "221",
   "logStarting": "9",
@@ -49,7 +49,7 @@
       "language_insecurity_perspective.db", 
       "wisdom_dialogue.db", 
       "game_theory_memes.db",
-      "assistant_paragraphs_0607.db" 
+      "assistant_paragraphs_0607.db"
     ]
   }
 }
