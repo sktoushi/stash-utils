@@ -5,212 +5,133 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Random DB Viewer</title>
 
-  <!-- GitHub-ish Dark Mode Styles -->
+  <!-- --- GitHub-dark-mode look & feel --- -->
   <style>
-    :root {
-      --bg:       #0d1117;
-      --panel:    #161b22;
-      --border:   #30363d;
-      --text:     #c9d1d9;
-      --text-sub: #8b949e;
-      --accent:   #238636;
-      --btn-bg:   #21262d;
-      --btn-hover:#30363d;
+    :root{
+      --bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#c9d1d9;
+      --text-sub:#8b949e;--accent:#238636;--btn:#21262d;--btn-hov:#30363d;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+    *{box-sizing:border-box}
+    body{
+      margin:0;background:var(--bg);color:var(--text);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.5;display:flex;flex-direction:column;min-height:100vh;
     }
-    header {
-      padding: 1rem 2rem;
-      border-bottom: 1px solid var(--border);
-      font-weight: 600;
-      font-size: 1.1rem;
+    header{padding:1rem 2rem;border-bottom:1px solid var(--border);font-weight:600;font-size:1.1rem}
+    main{flex:1;max-width:760px;width:100%;margin:2rem auto;display:flex;flex-direction:column;gap:1.5rem}
+    .card{
+      background:var(--panel);border:1px solid var(--border);border-radius:6px;
+      padding:1.5rem;overflow-x:auto;word-break:break-word
     }
-    main {
-      flex: 1;
-      width: 100%;
-      max-width: 760px;
-      margin: 2rem auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
+    .row-id{font-weight:600;color:var(--accent);margin-bottom:0.25rem}
+    table{width:100%;border-collapse:collapse;margin-top:.5rem}
+    th,td{padding:.35rem .6rem;border:1px solid var(--border)}
+    th{background:#1e242c;color:var(--text-sub);font-weight:500;text-align:left}
+    button{
+      align-self:flex-start;padding:.55rem 1rem;font-size:.95rem;cursor:pointer;
+      background:var(--btn);border:1px solid var(--border);border-radius:6px;color:var(--text);
+      transition:background .15s
     }
-    .issue-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 1.5rem;
-      overflow-x: auto;
-      word-break: break-word;
-    }
-    .issue-id {
-      font-weight: 600;
-      color: var(--accent);
-    }
-    .issue-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 0.5rem;
-    }
-    .issue-table th,
-    .issue-table td {
-      padding: 0.35rem 0.6rem;
-      border: 1px solid var(--border);
-    }
-    .issue-table th {
-      background: #1e242c;
-      text-align: left;
-      color: var(--text-sub);
-      font-weight: 500;
-    }
-    button {
-      align-self: flex-start;
-      padding: 0.55rem 1rem;
-      color: var(--text);
-      background: var(--btn-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: background 0.15s;
-    }
-    button:hover { background: var(--btn-hover); }
-    footer {
-      text-align: center;
-      padding: 1rem 0 2rem;
-      font-size: 0.8rem;
-      color: var(--text-sub);
-      border-top: 1px solid var(--border);
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    button:hover{background:var(--btn-hov)}
+    footer{text-align:center;padding:1rem 0 2rem;font-size:.8rem;color:var(--text-sub);border-top:1px solid var(--border)}
+    a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
   </style>
 
-  <!-- sql.js (WASM) -->
+  <!-- sql.js (WebAssembly) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.9.0/sql-wasm.js"></script>
 </head>
 <body>
-  <header>📚 Random DB Viewer</header>
+<header>📚 Random DB Viewer</header>
 
-  <main>
-    <button id="newEntryBtn" disabled>🔄 Draw Another Random Entry</button>
-    <article id="issueContainer" class="issue-card">
-      <p>Loading database …</p>
-    </article>
-  </main>
+<main>
+  <button id="drawBtn" disabled>🔄 Draw Another Random Entry</button>
+  <article id="card" class="card"><p>Loading database…</p></article>
+</main>
 
-  <footer>
-    Powered by <a href="https://github.com/sql-js/sql.js" target="_blank" rel="noopener">sql.js</a>
-  </footer>
+<footer>Powered by <a href="https://github.com/sql-js/sql.js" target="_blank" rel="noopener">sql.js</a></footer>
 
-  <script>
-    (async function () {
-      /*******************
-       * 1) URL Helpers  *
-       *******************/
-      const params   = new URLSearchParams(location.search);
-      const dbFile   = params.get('db') || 'memo_20250607-1.db';   // default file
-      const tableParam = params.get('table'); // optional override of table name
+<script>
+(async function () {
+  /* ───────────────── URL params ───────────────── */
+  const params      = new URLSearchParams(location.search);
+  const dbFile      = params.get('db')    || 'memo_20250607-1.db';
+  const forcedTable = params.get('table');            // optional ?table=name
 
-      // DOM elements
-      const issueContainer = document.getElementById('issueContainer');
-      const newEntryBtn    = document.getElementById('newEntryBtn');
+  /* ───────────────── DOM refs ─────────────────── */
+  const card   = document.getElementById('card');
+  const btn    = document.getElementById('drawBtn');
 
-      /***********************
-       * 2) Load sql.js WASM *
-       ***********************/
-      const SQL = await initSqlJs({
-        locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.9.0/${f}`
-      });
+  /* ───────────────── Load sql.js WASM ─────────── */
+  const SQL = await initSqlJs({
+    locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.9.0/${f}`
+  });
 
-      /********************************
-       * 3) Fetch & open the database *
-       ********************************/
-      let db;
-      try {
-        const response   = await fetch(dbFile, { cache: 'no-store' });
-        if (!response.ok) throw new Error(`Network error: ${response.status} ${response.statusText}`);
-        const buf        = await response.arrayBuffer();
-        db               = new SQL.Database(new Uint8Array(buf));
-      } catch (err) {
-        issueContainer.innerHTML = `<p style="color:#f85149"><strong>Error loading DB:</strong> ${err.message}</p>`;
-        console.error(err);
-        return;
+  /* ───────────────── Fetch DB file ────────────── */
+  let db;
+  try{
+    const res = await fetch(dbFile,{cache:'no-store'});
+    if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const buf = await res.arrayBuffer();
+    db        = new SQL.Database(new Uint8Array(buf));
+  }catch(e){
+    card.innerHTML = `<p style="color:#f85149"><strong>Error loading DB:</strong> ${e.message}</p>`;
+    console.error(e); return;
+  }
+
+  /* ───────────────── Decide which table to use ───────────────── */
+  let table = forcedTable;
+  if(!table){
+    const tRes = db.exec(`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';`);
+    if(!tRes.length){
+      card.innerHTML='<p>No user tables found.</p>'; return;
+    }
+    const names = tRes[0].values.map(v=>v[0]);
+    // choose the table with the largest row-count
+    let best   = names[0], bestCnt = -1;
+    for(const n of names){
+      try{
+        const cnt = db.exec(`SELECT COUNT(*) AS c FROM "${n}";`)[0].values[0][0];
+        if(cnt > bestCnt){bestCnt = cnt; best = n;}
+      }catch(e){console.warn('Count failed for table',n,e)}
+    }
+    table = best;
+  }
+
+  /* ───────────────── Helper: render one random row ───────────── */
+  const escapeHtml = s => s
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+
+  function drawRandom(){
+    let rowSet;
+    try{
+      rowSet = db.exec(`SELECT * FROM "${table}" ORDER BY RANDOM() LIMIT 1;`);
+      if(!rowSet.length || !rowSet[0].values.length){
+        card.innerHTML='<p>No rows in this table.</p>';return;
       }
+    }catch(e){
+      card.innerHTML = `<p style="color:#f85149"><strong>Query error:</strong> ${e.message}</p>`;
+      console.error(e); return;
+    }
+    const cols = rowSet[0].columns, vals = rowSet[0].values[0];
 
-      /****************************
-       * 4) Determine table name  *
-       ****************************/
-      let tableName = tableParam;
-      if (!tableName) {
-        try {
-          const tables = db.exec(`SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';`);
-          if (!tables.length) throw new Error('No user tables found in DB.');
-          tableName = tables[0].values[0][0];
-        } catch (e) {
-          issueContainer.innerHTML = `<p style="color:#f85149"><strong>Error:</strong> ${e.message}</p>`;
-          console.error(e);
-          return;
-        }
-      }
+    /* build HTML */
+    let html  = '';
+    const idIndex = cols.findIndex(c=>/id$/i.test(c));
+    const idVal   = idIndex!==-1? vals[idIndex]: vals[0];
+    html += `<div class="row-id">#${escapeHtml(String(idVal))}</div>`;
+    html += '<table><thead><tr>';
+    cols.forEach(c=>html+=`<th>${escapeHtml(c)}</th>`); html+='</tr></thead><tbody><tr>';
+    vals.forEach(v=>html+=`<td>${escapeHtml(String(v))}</td>`); html+='</tr></tbody></table>';
+    card.innerHTML = html;
+  }
 
-      // Enable the button now that DB is ready
-      newEntryBtn.disabled = false;
-      newEntryBtn.addEventListener('click', renderRandomRow);
+  /* ───────────────── Wire up button & initial render ─────────── */
+  btn.disabled = false;
+  btn.addEventListener('click', drawRandom);
+  drawRandom();                      // initial row on page-load
 
-      /*****************************
-       * 5) Render a random entry  *
-       *****************************/
-      function renderRandomRow () {
-        let row;
-        try {
-          const result = db.exec(`SELECT * FROM "${tableName}" ORDER BY RANDOM() LIMIT 1;`);
-          if (!result.length || !result[0].values.length) {
-            issueContainer.innerHTML = '<p>No data found in this table.</p>';
-            return;
-          }
-          row = result[0];
-        } catch (e) {
-          issueContainer.innerHTML = `<p style="color:#f85149"><strong>Query failed:</strong> ${e.message}</p>`;
-          console.error(e);
-          return;
-        }
-
-        const cols = row.columns;
-        const vals = row.values[0];
-
-        // Build HTML table
-        let html  = `<div class="issue-id">#${vals[0]}</div>`;
-        html     += '<table class="issue-table"><thead><tr>';
-        cols.forEach(col => { html += `<th>${col}</th>`; });
-        html     += '</tr></thead><tbody><tr>';
-        vals.forEach(val => { html += `<td>${escapeHtml(String(val))}</td>`; });
-        html     += '</tr></tbody></table>';
-
-        issueContainer.innerHTML = html;
-      }
-
-      // Helper for escaping HTML
-      function escapeHtml (unsafe) {
-        return unsafe
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-      }
-
-      // Initial draw
-      renderRandomRow();
-    })();
-  </script>
+})();
+</script>
 </body>
 </html>
