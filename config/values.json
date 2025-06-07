@@ -48,7 +48,8 @@
       "ecclesiastes_5_18_commentary.db", 
       "language_insecurity_perspective.db", 
       "wisdom_dialogue.db", 
-      "game_theory_memes.db" 
+      "game_theory_memes.db",
+      "assistant_paragraphs_0607.db" 
     ]
   }
 }
