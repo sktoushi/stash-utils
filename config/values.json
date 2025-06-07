@@ -6,9 +6,9 @@
   "stashEnding": "4569",
   "stash1p5Starting": "1",
   "stash1p5Ending": "265",
-  "stash2EightyPercent": "3130",
-  "stash2NinetyPercent": "3522",
-  "stash2Ending": "3915",
+  "stash2EightyPercent": "3200",
+  "stash2NinetyPercent": "3600",
+  "stash2Ending": "4000",
   "dbviewerLinks": {
     "baseURL": "https://sktoushi.github.io/ref2506/dbviewer.html?db=",
     "files": [
