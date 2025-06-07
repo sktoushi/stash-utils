@@ -8,5 +8,12 @@
   "stash1p5Ending": "265",
   "stash2EightyPercent": "3130",
   "stash2NinetyPercent": "3522",
-  "stash2Ending": "3913"
+  "stash2Ending": "3913",
+  "dbviewerLinks": {
+    "baseURL": "https://sktoushi.github.io/ref2506/dbviewer.html?db=",
+    "files": [
+      "japanese_grammar_explanation.db",
+      "low_key_mafia.db"
+    ]
+  }
 }
