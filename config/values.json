@@ -38,9 +38,9 @@
   "stash1p5Starting": "1",
   "stash1p5Ending": "265",
   "stash2Starting": "1",
-  "stash2EightyPercent": "3440",
-  "stash2NinetyPercent": "3870",
-  "stash2Ending": "4300",
+  "stash2EightyPercent": "3464",
+  "stash2NinetyPercent": "3897",
+  "stash2Ending": "4330",
   "dbviewerLinks": {
     "baseURL": "https://sktoushi.github.io/ref2506/dbviewer.html?db=",
     "files": [
@@ -53,7 +53,7 @@
       "language_insecurity_perspective.db",
       "wisdom_dialogue.db",
       "game_theory_memes.db",
-      "assistant_paragraphs_0607.db", 
+      "assistant_paragraphs_0607.db",
       "psychological_warfare_analysis.db"
     ]
   }
