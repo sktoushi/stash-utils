@@ -19,334 +19,167 @@ async function loadConfig() {
   }
   return configValues;
 }
-/**
- * Returns a cryptographically secure random number between 0 (inclusive) and 1 (exclusive).
- */
+/** Returns a cryptographically secure random number between 0 (inclusive) and 1 (exclusive). */
 function getSecureRandomNumber() {
   const array = new Uint32Array(1);
   window.crypto.getRandomValues(array);
   return array[0] / (0xFFFFFFFF + 1);
 }
-
-/**
- * Strips leading/trailing quotes from a string. Also trims whitespace.
- * Example: "\"https://www.youtube.com\"" => "https://www.youtube.com"
- */
+/** Strips leading/trailing quotes and trims whitespace. */
 function cleanCell(cell) {
   cell = cell.trim();
-  // Remove leading/trailing quotes (single or double)
   cell = cell.replace(/^["']+|["']+$/g, '');
   return cell;
 }
-
-/**
- * Parses a single CSV line into an array of cell strings, 
- * respecting double quotes so commas inside quotes are not split.
- *
- * Example line:
- *   link,1,"https://example.com/some?query=1,2,3"
- * Should parse to:
- *   ["link", "1", "https://example.com/some?query=1,2,3"]
- *
- * This handles escaped quotes inside a quoted cell by doubling them: ""
- */
+/** CSV line parser that respects quoted commas and escaped quotes. */
 function parseCsvLine(line) {
   const result = [];
   let curCell = '';
   let inQuotes = false;
-
   for (let i = 0; i < line.length; i++) {
     const c = line[i];
-
     if (c === '"') {
-      // Look ahead for another quote => escaped double-quote
       if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
-        // Add a literal quote to the current cell
-        curCell += '"';
-        i++;
+        curCell += '"'; i++;
       } else {
-        // Toggle the inQuotes flag
         inQuotes = !inQuotes;
       }
-    }
-    else if (c === ',' && !inQuotes) {
-      // Split point
-      result.push(curCell);
-      curCell = '';
-    }
-    else {
-      // Normal character
+    } else if (c === ',' && !inQuotes) {
+      result.push(curCell); curCell = '';
+    } else {
       curCell += c;
     }
   }
-
-  // Push the last cell
   result.push(curCell);
-
   return result;
 }
-
-/**
- * Fisher-Yates shuffle (using the same secure RNG).
- * This shuffles an array in-place.
- */
+/** Fisher–Yates shuffle (secure RNG). */
 function shuffle(array) {
   let currentIndex = array.length;
-  let randomIndex;
-
-  // While there remain elements to shuffle...
   while (currentIndex !== 0) {
-    // Pick a remaining element.
-    randomIndex = Math.floor(getSecureRandomNumber() * currentIndex);
+    const randomIndex = Math.floor(getSecureRandomNumber() * currentIndex);
     currentIndex--;
-
-    // Swap it with the current element.
-    [array[currentIndex], array[randomIndex]] = [
-      array[randomIndex], array[currentIndex]
-    ];
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
   }
-
   return array;
 }
-
 function applyConfigPlaceholders(rows) {
   const re = /\{([^}]+)}/g;
   return rows.map(row => row.map(cell =>
     cell.replace(re, (m, p1) =>
-      Object.prototype.hasOwnProperty.call(configValues, p1)
-        ? configValues[p1]
-        : m
+      Object.prototype.hasOwnProperty.call(configValues, p1) ? configValues[p1] : m
     )
   ));
 }
-
-/**
- * Fetch and parse a CSV file, returning an array of rows.
- * Each row is an array of "cleaned" cells, respecting quoted fields.
- *
- * @param {string} csvFilename The CSV filename to fetch (relative path)
- * @returns {Promise<string[][]>} The parsed CSV rows
- */
+/** Fetch & parse CSV, return array-of-rows. */
 async function fetchCSV(csvFilename) {
   console.log(`Attempting to fetch CSV: ${csvFilename}`);
-
   await loadConfig();
-
   try {
     const response = await fetch(csvFilename);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch CSV file: ${response.status} ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Failed to fetch CSV file: ${response.status} ${response.statusText}`);
     const csvText = await response.text();
-
-    // Split text into lines, filtering out blank lines
-    const lines = csvText
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-
-    console.log('Raw lines:', lines);
-
-    // For each line, parse properly, then clean each cell
-    let rows = lines.map(line => {
-      const parsedCells = parseCsvLine(line);
-      return parsedCells.map(cell => cleanCell(cell));
-    });
-
+    const lines = csvText.split('\n').map(l => l.trim()).filter(l => l.length);
+    let rows = lines.map(line => parseCsvLine(line).map(cleanCell));
     rows = applyConfigPlaceholders(rows);
-
-    console.log('Parsed rows (with cleaned cells):', rows);
-
-    // Jumble the rows each time (maintaining frequency weights is unaffected, 
-    // since weighting is still handled inside pickRowByWeight).
     shuffle(rows);
-
     return rows;
   } catch (error) {
     throw new Error('Error fetching CSV: ' + error.message);
   }
 }
-
-/**
- * Picks one row based on integer weight in the second cell of each row.
- *   row[0] = type
- *   row[1] = weight (integer >= 1)
- *   row[2..] = other data
- *
- * If totalWeight <= 0 (all invalid or zero), we fall back to uniform random.
- *
- * @param {string[][]} rows
- * @returns {string[]} The selected row
- */
+/** Weighted row picker (weight in column 1). */
 function pickRowByWeight(rows) {
   const weightedRows = rows.map(r => {
     let w = parseInt(r[1], 10);
-    // Default weight to 1 if it's invalid or < 1
-    if (isNaN(w) || w < 1) {
-      w = 1;
-    }
+    if (isNaN(w) || w < 1) w = 1;
     return { row: r, weight: w };
   });
-
-  let totalWeight = 0;
-  for (const wr of weightedRows) {
-    totalWeight += wr.weight;
-  }
-
-  // If totalWeight is 0, fall back to uniform random
+  let totalWeight = weightedRows.reduce((acc, wr) => acc + wr.weight, 0);
   if (totalWeight <= 0) {
-    console.warn('Total weight is zero or invalid. Falling back to uniform random choice.');
     const randomIndex = Math.floor(getSecureRandomNumber() * rows.length);
     return rows[randomIndex];
   }
-
-  // Generate a random number in [0, totalWeight)
   let rand = getSecureRandomNumber() * totalWeight;
-
-  // Find which row corresponds to this random value
   for (const wr of weightedRows) {
-    if (rand < wr.weight) {
-      return wr.row;
-    }
+    if (rand < wr.weight) return wr.row;
     rand -= wr.weight;
   }
-
-  // Fallback (due to floating-point rounding, etc.)
   return weightedRows[weightedRows.length - 1].row;
 }
-
-/**
- * Processes rows by picking one (weighted) and acting according to its type.
- *
- * @param {string[][]} rows Parsed CSV rows
- * @param {number} recursionDepth Avoid infinite recursion on nested CSV references
- */
+/** Core processor */
 async function processRows(rows, recursionDepth = 0) {
-  // Basic safeguard against unexpected infinite loops
-  if (recursionDepth > 2000) {
-    document.body.textContent = 'Error: Exceeded maximum CSV nesting depth.';
-    return;
-  }
+  if (recursionDepth > 2000) { document.body.textContent = 'Error: Exceeded maximum CSV nesting depth.'; return; }
+  if (!rows.length) { document.body.textContent = 'CSV is empty or could not be parsed.'; return; }
 
-  if (!rows.length) {
-    document.body.textContent = 'CSV is empty or could not be parsed.';
-    return;
+  /* ──────────────── 🆕 AUTO-WEIGHT PATCH ──────────────── */
+  for (const r of rows) {
+    if (r[0].trim() === 'csv' && parseInt(r[1], 10) === 0) {
+      try {
+        const nested = await fetchCSV(r[2]);          // fetch once
+        r[1] = nested.length.toString();              // weight = inner row count
+      } catch (err) {
+        console.error('Auto-weight failed:', err);
+        r[1] = '1';                                   // graceful fallback
+      }
+    }
   }
+  /* ──────────────── END PATCH ──────────────── */
 
-  // Weighted selection
   const selectedRow = pickRowByWeight(rows);
-
   console.log('All rows:', rows);
   console.log('Selected row:', selectedRow);
-
   const rowType = selectedRow[0].trim();
 
   if (rowType === 'link') {
-    // Format: link,<weight>,<url>
-    const url = selectedRow[2];
-    console.log('Redirecting to link:', url);
-    window.location.href = url;
-  }
-  else if (rowType === 'git-specific') {
-    // Format: git-specific,<weight>,username=xxxx,repository=yyyy,issueNumbers=1_2_3
+    window.location.href = selectedRow[2];
+  } else if (rowType === 'git-specific') {
     const username = selectedRow[2].split('=')[1];
     const repository = selectedRow[3].split('=')[1];
-    const issueNumbersStr = selectedRow[4].split('=')[1];
-    const issueNumbersArr = issueNumbersStr.split('_');
-
-    const randIdx = Math.floor(getSecureRandomNumber() * issueNumbersArr.length);
-    const chosenIssue = issueNumbersArr[randIdx];
-    const finalUrl = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
-
-    console.log('Redirecting to git-specific issue:', finalUrl);
-    window.location.href = finalUrl;
-  }
-  else if (rowType === 'git-range') {
-    // Format: git-range,<weight>,username=xxxx,repository=yyyy,issueNumbers=min_max
+    const issueNumbersArr = selectedRow[4].split('=')[1].split('_');
+    const chosenIssue = issueNumbersArr[Math.floor(getSecureRandomNumber() * issueNumbersArr.length)];
+    window.location.href = `https://github.com/${username}/${repository}/issues/${chosenIssue}`;
+  } else if (rowType === 'git-range') {
     const username = selectedRow[2].split('=')[1];
     const repository = selectedRow[3].split('=')[1];
-    const rangeStr = selectedRow[4].split('=')[1];
-    const [minStr, maxStr] = rangeStr.split('_');
-    const min = parseInt(minStr, 10);
-    const max = parseInt(maxStr, 10);
-
-    if (isNaN(min) || isNaN(max)) {
-      document.body.textContent = 'Invalid range in "git-range" row.';
-      return;
-    }
-
+    const [min, max] = selectedRow[4].split('=')[1].split('_').map(s => parseInt(s, 10));
+    if (isNaN(min) || isNaN(max)) { document.body.textContent = 'Invalid range in "git-range" row.'; return; }
     const randomVal = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
-    const finalUrl = `https://github.com/${username}/${repository}/issues/${randomVal}`;
-
-    console.log('Redirecting to git-range issue:', finalUrl);
-    window.location.href = finalUrl;
-  }
-  else if (rowType === 'csv') {
-    // Format: csv,<weight>,<another-file.csv>
+    window.location.href = `https://github.com/${username}/${repository}/issues/${randomVal}`;
+  } else if (rowType === 'csv') {
     const nestedCsv = selectedRow[2];
-    if (!nestedCsv) {
-      document.body.textContent = 'CSV type found but no filename specified.';
-      return;
-    }
-    console.log('Nested CSV found. Fetching:', nestedCsv);
-
+    if (!nestedCsv) { document.body.textContent = 'CSV type found but no filename specified.'; return; }
     try {
       const nestedRows = await fetchCSV(nestedCsv);
       await processRows(nestedRows, recursionDepth + 1);
     } catch (error) {
       document.body.textContent = error.message;
     }
-  }
-  else {
+  } else {
     document.body.textContent = 'Unknown row type: ' + rowType;
   }
 }
-
-/**
- * Main entry point:
- * 1. Read "target" param from URL (?target=filename.csv)
- * 2. Fetch/parse CSV
- * 3. Handle any "null" values in the second column by assigning random integers from the min/max of valid second-column values
- * 4. Process rows
- */
+/** Main entry */
 async function main() {
   await loadConfig();
   const urlParams = new URLSearchParams(window.location.search);
   const target = urlParams.get('target');
-
-  if (!target) {
-    document.body.textContent = 'No "target" parameter found. Use ?target=filename.csv';
-    return;
-  }
+  if (!target) { document.body.textContent = 'No "target" parameter found. Use ?target=filename.csv'; return; }
 
   try {
     const rows = await fetchCSV(target);
-
-    // Find all valid (non-null) second-column integer values
-    const nonNullValues = rows
-      .map(r => (r[1] !== 'null' ? parseInt(r[1], 10) : NaN))
-      .filter(val => !isNaN(val));
-
-    // If we have any valid numbers at all, proceed
-    if (nonNullValues.length > 0) {
-      const minVal = Math.min(...nonNullValues);
-      const maxVal = Math.max(...nonNullValues);
-
-      // Assign random values between minVal and maxVal (inclusive) where second column is "null"
+    const nonNull = rows.map(r => (r[1] !== 'null' ? parseInt(r[1], 10) : NaN)).filter(v => !isNaN(v));
+    if (nonNull.length) {
+      const minVal = Math.min(...nonNull), maxVal = Math.max(...nonNull);
       for (let i = 0; i < rows.length; i++) {
-        if (rows[i][1] === 'null') {
-          const randomVal = Math.floor(getSecureRandomNumber() * (maxVal - minVal + 1)) + minVal;
-          rows[i][1] = String(randomVal);
-        }
+        if (rows[i][1] === 'null') rows[i][1] = String(Math.floor(getSecureRandomNumber() * (maxVal - minVal + 1)) + minVal);
       }
     }
-
     await processRows(rows, 0);
   } catch (error) {
     document.body.textContent = 'Failed to process CSV: ' + error.message;
   }
 }
-
 window.onload = main;
 </script>
 </body>
