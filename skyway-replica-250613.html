@@ -1,219 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Skyway Randomizer</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>skyway.html – multi-mode randomizer (weighted / uniform / distribution)</title>
 </head>
 <body>
 <script>
-/*──────────────────────────────────
-  0. CONFIG LOADER
-──────────────────────────────────*/
-let CONFIG = {};
-async function loadConfig () {
-  if (Object.keys(CONFIG).length) return CONFIG;
+/* ──────────────── URL PARAMS ──────────────── */
+const params     = new URLSearchParams(location.search);
+const targetCsv  = params.get('target');          // required
+const randomMode = (params.get('randomMode') || 'weighted').toLowerCase();
+//  ▸  "weighted"     - current default behaviour (rows may be shuffled; weight column used).
+//  ▸  "uniform"      - every row has equal chance, ignoring weight column.
+//  ▸  "distribution" - sequential-range weight selection (order preserved; no row shuffle).
+
+/* ──────────────── CONFIG HANDLING ──────────────── */
+let configValues = {};
+async function loadConfig() {
+  if (Object.keys(configValues).length) return configValues;
   try {
-    const res = await fetch('config/values.json');
-    if (res.ok) CONFIG = await res.json();
-  } catch (e) { console.error('config load error:', e); }
-  return CONFIG;
+    const resp = await fetch('config/values.json');
+    if (resp.ok) configValues = await resp.json();
+  } catch (err) {
+    console.error('Failed to load config:', err);
+  }
+  return configValues;
 }
 
-/*──────────────────────────────────
-  1. RNG HELPERS
-──────────────────────────────────*/
-const secureRand = () => {
+/* ──────────────── RANDOM HELPERS ──────────────── */
+function getSecureRandomNumber() {
   const a = new Uint32Array(1);
   crypto.getRandomValues(a);
   return a[0] / (0xFFFFFFFF + 1);
-};
-const randomInt = (min, max) =>
-  Math.floor(secureRand() * (max - min + 1)) + min;
-const pickIndexByFreq = arr => {
-  const sum = arr.reduce((a, b) => a + b, 0);
-  let r = Math.floor(secureRand() * sum);
-  for (let i = 0; i < arr.length; i++) {
-    if (r < arr[i]) return i;
-    r -= arr[i];
-  }
-  return arr.length - 1;
-};
+}
 
-/*──────────────────────────────────
-  2. CSV UTILITIES
-──────────────────────────────────*/
-const strip = s => s.trim().replace(/^["']+|["']+$/g, '');
-function parseLine (line) {
-  const out = [];
-  let cell = '', inQ = false;
+/* ──────────────── CSV UTILITIES ──────────────── */
+function cleanCell(c) { return c.trim().replace(/^["']+|["']+$/g, ''); }
+
+function parseCsvLine(line) {
+  const out = []; let cell = '', inQ = false;
   for (let i = 0; i < line.length; i++) {
     const ch = line[i];
     if (ch === '"') {
-      if (inQ && line[i + 1] === '"') { cell += '"'; i++; }
+      if (inQ && i + 1 < line.length && line[i + 1] === '"') { cell += '"'; i++; }
       else inQ = !inQ;
     } else if (ch === ',' && !inQ) { out.push(cell); cell = ''; }
     else cell += ch;
   }
   out.push(cell);
-  return out.map(strip);
+  return out;
 }
-function shuffle (arr) {
+
+function shuffle(arr) {              // Fisher-Yates, cryptographically seeded
   for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(secureRand() * (i + 1));
+    const j = Math.floor(getSecureRandomNumber() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
 }
 
-/*──────────────────────────────────
-  3. PLACEHOLDER + EXPRESSION SUBST
-──────────────────────────────────*/
-const tryEval = expr => {
-  if (!/^[0-9+\-*/ ().]+$/.test(expr)) return expr;
+/* ────────── NUMERIC-EXPR + PLACEHOLDER SUBSTITUTION ────────── */
+function tryEvalNumericExpression(str) {
+  if (!/^[0-9+\-*/ ().]+$/.test(str)) return str;
   try {
     // eslint-disable-next-line no-new-func
-    const v = Function('"use strict";return(' + expr + ')')();
-    return Number.isFinite(v) ? String(v) : expr;
-  } catch { return expr; }
-};
-function substitute (rows) {
+    const val = Function('"use strict";return (' + str + ')')();
+    return Number.isFinite(val) ? String(val) : str;
+  } catch { return str; }
+}
+
+function applyConfigPlaceholders(rows) {
   const re = /\{([^}]+)}/g;
-  return rows.map(r => r.map(c => tryEval(
-    c.replace(re, (_, k) => (k in CONFIG ? CONFIG[k] : `{${k}}`))
-  )));
+  return rows.map(r => r.map(cell => {
+    const substituted = cell.replace(re, (m, p1) =>
+      Object.prototype.hasOwnProperty.call(configValues, p1) ? configValues[p1] : m
+    );
+    return tryEvalNumericExpression(substituted);
+  }));
 }
 
-/*──────────────────────────────────
-  4. FETCH CSV
-──────────────────────────────────*/
-async function fetchCSV (file) {
+/* ──────────────── FETCH CSV (respect randomMode) ──────────────── */
+async function fetchCSV(name) {
   await loadConfig();
-  const txt = await (await fetch(file)).text();
-  const rows = txt.split('\n').map(l => l.trim()).filter(Boolean).map(parseLine);
-  return shuffle(substitute(rows));
+  try {
+    const res = await fetch(name);
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const lines = res.text ? (await res.text()).split('\n') : [];
+    let rows = lines.map(l => l.trim()).filter(Boolean)
+                    .map(l => parseCsvLine(l).map(cleanCell));
+    rows = applyConfigPlaceholders(rows);
+
+    // Only shuffle for modes that do NOT rely on original order.
+    if (randomMode !== 'distribution') shuffle(rows);
+    return rows;
+  } catch (e) {
+    throw new Error('Error fetching "' + name + '": ' + e.message);
+  }
 }
 
-/*──────────────────────────────────
-  5. AUTO-WEIGHT PATCH
-──────────────────────────────────*/
-async function ensureWeights (rows) {
+/* ──────────────── ROW-PICKING STRATEGIES ──────────────── */
+function pickRowUniform(rows) {
+  return rows[Math.floor(getSecureRandomNumber() * rows.length)];
+}
+
+function pickRowWeighted(rows) {
+  const wr = rows.map(r => ({ row: r, w: Math.max(1, parseInt(r[1], 10) || 1) }));
+  const total = wr.reduce((s, x) => s + x.w, 0);
+  let rand = getSecureRandomNumber() * total;
+  for (const x of wr) { if (rand < x.w) return x.row; rand -= x.w; }
+  return wr[wr.length - 1].row;        // fallback (shouldn’t reach)
+}
+
+// Sequential “distribution” — order preserved, weight forms contiguous blocks
+function pickRowDistribution(rows) {
+  const total = rows.reduce((s, r) => s + Math.max(1, parseInt(r[1], 10) || 1), 0);
+  let rand = Math.floor(getSecureRandomNumber() * total) + 1; // 1-based
   for (const r of rows) {
-    if (r[0] === 'csv' && +r[1] === 0) {
+    const w = Math.max(1, parseInt(r[1], 10) || 1);
+    if (rand <= w) return r;
+    rand -= w;
+  }
+  return rows[rows.length - 1];        // fallback (shouldn’t reach)
+}
+
+function pickRow(rows) {
+  switch (randomMode) {
+    case 'uniform':      return pickRowUniform(rows);
+    case 'distribution': return pickRowDistribution(rows);
+    case 'weighted':
+    default:             return pickRowWeighted(rows);
+  }
+}
+
+/* ──────────────── MAIN PROCESSOR ──────────────── */
+async function processRows(rows, depth = 0) {
+  if (depth > 2000) return document.body.textContent = 'Max CSV nesting depth exceeded.';
+  if (!rows.length)  return document.body.textContent = 'CSV empty.';
+
+  /* Auto-weight patch: if a row’s weight is zero, replace with child-CSV length */
+  for (const r of rows) {
+    if (r[0].trim() === 'csv' && parseInt(r[1], 10) === 0) {
       try { r[1] = (await fetchCSV(r[2])).length.toString(); }
-      catch { r[1] = '1'; }
-    }
-  }
-  return rows;
-}
-
-/*──────────────────────────────────
-  6. PICKER
-    Modes:
-      weighted (default) – respect column-1 weight
-      uniform           – ignore weight, equal chance per row
-      sequence          – uniform across *all* inner rows in order,
-                           optionally skewed by &distribution=...
-──────────────────────────────────*/
-function pickRow (rows, mode, seqLock, distArr) {
-  if (seqLock !== null)          // already locked to a 1-based inner idx
-    return { row: rows[seqLock - 1], inner: null };
-
-  if (mode === 'uniform') {      // simple equal chance per row
-    return { row: rows[Math.floor(secureRand() * rows.length)], inner: null };
-  }
-
-  if (mode === 'sequence') {
-    const counts = rows.map(r => Math.max(1, +r[1] || 1));
-    const total  = counts.reduce((a, b) => a + b, 0);
-
-    /* choose a global position 1…total */
-    let globalIdx;
-    if (distArr.length) {
-      /* split the [1..total] span into distArr.length regions */
-      const base = Math.floor(total / distArr.length);
-      const rem  = total % distArr.length;
-      const reg  = pickIndexByFreq(distArr);
-      const start = reg * base + Math.min(reg, rem) + 1;
-      const end   = start + base - 1 + (reg < rem ? 1 : 0);
-      globalIdx = randomInt(start, end);
-    } else {
-      globalIdx = randomInt(1, total);
-    }
-
-    for (let i = 0; i < rows.length; i++) {
-      if (globalIdx <= counts[i])
-        return { row: rows[i], inner: globalIdx };
-      globalIdx -= counts[i];
+      catch (e) { console.error(e); r[1] = '1'; }
     }
   }
 
-  /* weighted (fallback / default) */
-  const weights = rows.map(r => Math.max(1, +r[1] || 1));
-  const sumW = weights.reduce((a, b) => a + b, 0);
-  let pick = secureRand() * sumW;
-  for (let i = 0; i < rows.length; i++) {
-    if (pick < weights[i]) return { row: rows[i], inner: null };
-    pick -= weights[i];
+  const sel  = pickRow(rows);
+  const type = sel[0].trim();
+
+  if (type === 'link') {
+    location.href = sel[2];
+    return;
   }
-  return { row: rows[rows.length - 1], inner: null };
-}
-
-/*──────────────────────────────────
-  7. CORE RECURSOR
-──────────────────────────────────*/
-async function go (rows, depth, mode, seqLock, distArr) {
-  if (depth > 2000)   return document.body.textContent = 'Max depth reached';
-  rows = await ensureWeights(rows);
-
-  const { row, inner } = pickRow(rows, mode, seqLock, distArr);
-  const type = row[0].trim();
-
-  if (type === 'link')
-    return location.href = row[2];
 
   if (type === 'git-specific') {
-    const user = row[2].split('=')[1],
-          repo = row[3].split('=')[1],
-          list = row[4].split('=')[1].split('_'),
-          chosen = list[Math.floor(secureRand() * list.length)];
-    return location.href = `https://github.com/${user}/${repo}/issues/${chosen}`;
+    const user = sel[2].split('=')[1],
+          repo = sel[3].split('=')[1],
+          list = sel[4].split('=')[1].split('_'),
+          issue = list[Math.floor(getSecureRandomNumber() * list.length)];
+    location.href = `https://github.com/${user}/${repo}/issues/${issue}`;
+    return;
   }
 
   if (type === 'git-range') {
-    const user = row[2].split('=')[1],
-          repo = row[3].split('=')[1],
-          [lo, hi] = row[4].split('=')[1].split('_').map(Number),
-          n = randomInt(lo, hi);
-    return location.href = `https://github.com/${user}/${repo}/issues/${n}`;
+    const user     = sel[2].split('=')[1],
+          repo     = sel[3].split('=')[1],
+          [min,max]= sel[4].split('=')[1].split('_').map(Number);
+    if (isNaN(min) || isNaN(max))
+      return document.body.textContent = 'Bad git-range row (min/max missing).';
+    const num = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
+    location.href = `https://github.com/${user}/${repo}/issues/${num}`;
+    return;
   }
 
   if (type === 'csv') {
-    const next = await fetchCSV(row[2]);
-    return go(next, depth + 1, mode, inner, distArr);
+    try { return processRows(await fetchCSV(sel[2]), depth + 1); }
+    catch (e){ return document.body.textContent = e.message; }
   }
 
-  document.body.textContent = 'Unknown row type';
+  document.body.textContent = 'Unknown row type: ' + type;
 }
 
-/*──────────────────────────────────
-  8. ENTRY
-──────────────────────────────────*/
+/* ──────────────── ENTRY POINT ──────────────── */
 window.onload = async () => {
+  if (!targetCsv) {
+    document.body.textContent = 'Missing ?target=... URL parameter.';
+    return;
+  }
   try {
-    const qs = new URLSearchParams(location.search);
-    const target = qs.get('target');
-    if (!target) { document.body.textContent = 'Missing ?target='; return; }
-
-    /* randomMode = weighted | uniform | sequence */
-    const mode = (qs.get('randomMode') || 'weighted').toLowerCase();
-
-    /* optional distribution (e.g. 1,1,2,4) for sequence mode */
-    const dist = (qs.get('distribution') || '')
-      .split(',').map(x => +x).filter(x => x > 0);
-
-    const topRows = await fetchCSV(target);
-    await go(topRows, 0, mode, null, dist);
+    await processRows(await fetchCSV(targetCsv));
   } catch (e) {
     document.body.textContent = e.message;
   }
