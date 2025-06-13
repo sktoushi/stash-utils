@@ -2,5 +2,5 @@ csv,{stashSequenceProbability1},skyway-stash1p5.csv
 csv,{stashSequenceProbability2},skyway-public-repo.csv
 csv,{stashSequenceProbability3},skyway-stash.csv
 csv,{stashSequenceProbability4},skyway-stash2.csv
-csv,{stashSequenceProbability5},skyway-stash3.csv
+link,{stashSequenceProbability5},https://sktoushi.github.io/stash-utils/skyway.html?target=skyway-stash3.csv&modeWeights={defaultRandomModeWeights}
 csv,{stashSequenceProbability6},skyway-stash3-recent20percent.csv
