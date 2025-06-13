@@ -2,72 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>skyway.html – Hierarchical Multi-Mode Randomizer</title>
+  <title>skyway.html – Hierarchical Multi-Mode Randomizer (robust)</title>
 </head>
 <body>
 <script>
 /**********************************************************************
- *  HIGH-LEVEL OVERVIEW
- *  ─────────────────────
- *  1.  ?modeWeights=weighted:3,uniform:1,contiguous:2,segments:4
- *      → first chooses a **randomMode** by the given weights.
- *  2.  ?randomMode=uniform                                                   (optional fallback)
- *  3.  ?distribution=1-2-3-2-1                                               (enables segments mode)
- *
- *  Final precedence (highest → lowest):
- *    a) modeWeights (weighted selector)          ← NEW
- *    b) distribution → forces “segments”
- *    c) randomMode   → manual override
- *    d) default      → “weighted”
+ *  HIERARCHICAL CHOICE ORDER
+ *  1) modeWeights → chooses the randomMode (by weight) **FIRST**.
+ *  2) distribution → if present → forces “segments” mode.
+ *  3) randomMode   → manual override when (1) & (2) absent.
+ *  4) default      → “weighted”.
  **********************************************************************/
 
 /* ──────────────── URL PARAMS ──────────────── */
-const urlParams     = new URLSearchParams(location.search);
-const targetCsv     = urlParams.get('target');                       // required
+const urlParams   = new URLSearchParams(location.search);
+const targetCsv   = urlParams.get('target');                        // required
 
-// -------------- parse distribution string --------------
-const distributionStr   = urlParams.get('distribution');
-let   distributionArr   = null;
+/* —— distribution parsing (e.g. 1-2-3-2-1) —— */
+let   distributionArr = null;
+const distributionStr = urlParams.get('distribution');
 if (distributionStr) {
   distributionArr = distributionStr
-      .split(/[-,]/)
+      .split(/[-,]/)                                                // allow hyphen or comma
       .map(x => parseInt(x.trim(), 10))
       .filter(x => !isNaN(x) && x > 0);
 }
 
-// -------------- parse randomMode (initial) --------------
+/* —— randomMode fallback —— */
 let randomMode = (urlParams.get('randomMode') || 'weighted').toLowerCase();
 
-// -------------- parse modeWeights (highest precedence) --------------
-const modeWeightsStr = urlParams.get('modeWeights');  // e.g.  weighted:3,uniform:1,contiguous:2,segments:4
+/* —— modeWeights parsing —— */
+const modeWeightsStr = urlParams.get('modeWeights');                // e.g. weighted:3,segments:4
 if (modeWeightsStr) {
   const allowed = new Set(['weighted','uniform','contiguous','segments']);
-  const pairs   = modeWeightsStr.split(/[;,]/);       // allow comma or semicolon
-  const modes   = [];
-
-  for (const p of pairs) {
-    const [modeRaw,wRaw] = p.split(/[:=|-]/);         // allow :, =, -, |
-    if (!modeRaw || !wRaw) continue;
-    const mode = modeRaw.trim().toLowerCase();
-    const w    = parseInt(wRaw.trim(), 10);
-    if (allowed.has(mode) && w > 0) modes.push({mode, w});
+  const entries = modeWeightsStr.split(/[;,]/);                     // comma or semicolon
+  const list    = [];
+  for (const e of entries) {
+    const [k,v] = e.split(/[:=|]/);                                 // :, |, =
+    if (!k || !v) continue;
+    const mode = k.trim().toLowerCase();
+    const w    = parseInt(v.trim(), 10);
+    if (allowed.has(mode) && w > 0) list.push({mode,w});
   }
-  if (modes.length) {
-    const total = modes.reduce((s,m)=>s+m.w,0);
-    let   r     = Math.floor(getSecureRandomNumber()*total)+1;
-    for (const m of modes) {
-      if (r <= m.w) { randomMode = m.mode; break; }
-      r -= m.w;
-    }
+  if (list.length) {
+    const total = list.reduce((s,m)=>s+m.w,0);
+    let   rnd   = randInt(1,total);
+    for (const m of list) { if (rnd <= m.w) { randomMode = m.mode; break; } rnd -= m.w; }
   }
 }
 
-// -------------- distribution still forces “segments” --------------
+/* —— distribution forces segments —— */
 if (distributionArr && distributionArr.length) randomMode = 'segments';
-
-// ——— Debug aid (remove if not wanted) ———
-console.log('Chosen randomMode →', randomMode);
-/* ──────────────────────────────────────── */
 
 /* ──────────────── CONFIG HANDLING ──────────────── */
 let configValues = {};
@@ -86,42 +71,40 @@ function getSecureRandomNumber() {
   crypto.getRandomValues(a);
   return a[0] / (0xFFFFFFFF + 1);
 }
-function randInt(min, max) {             // inclusive
-  return Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
-}
-function pickIdxByWeights(freq) {
+function randInt(min, max) { return Math.floor(getSecureRandomNumber()*(max-min+1))+min; }
+function pickIdxByWeights(freq){
   const total = freq.reduce((s,v)=>s+v,0);
   let r = randInt(1,total);
-  for (let i=0;i<freq.length;i++){ if(r<=freq[i]) return i; r-=freq[i]; }
+  for(let i=0;i<freq.length;i++){ if(r<=freq[i]) return i; r-=freq[i]; }
   return freq.length-1;
 }
 
 /* ──────────────── CSV UTILITIES ──────────────── */
-function cleanCell(c) { return c.trim().replace(/^["']+|["']+$/g,''); }
-function parseCsvLine(line){
+function cleanCell(c){ return c.trim().replace(/^["']+|["']+$/g,''); }
+function parseCsvLine(l){
   const out=[];let cell='',inQ=false;
-  for(let i=0;i<line.length;i++){
-    const ch=line[i];
-    if(ch==='"'){ if(inQ && line[i+1] === '"'){cell+='"';i++;} else inQ=!inQ; }
-    else if(ch===',' && !inQ){ out.push(cell); cell=''; }
+  for(let i=0;i<l.length;i++){
+    const ch=l[i];
+    if(ch==='"'){ if(inQ && l[i+1]==='"'){cell+='"';i++;} else inQ=!inQ; }
+    else if(ch===','&&!inQ){ out.push(cell); cell=''; }
     else cell+=ch;
   }
   out.push(cell); return out;
 }
-function shuffle(arr){
-  for(let i=arr.length-1;i>0;i--){
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
     const j=Math.floor(getSecureRandomNumber()*(i+1));
-    [arr[i],arr[j]]=[arr[j],arr[i]];
+    [a[i],a[j]]=[a[j],a[i]];
   }
-  return arr;
+  return a;
 }
 
-/* ───── placeholder + numeric-expr substitution ───── */
+/* ───── placeholder + expression substitution ───── */
 function tryEvalExpr(str){
   if(!/^[0-9+\-*/ ().]+$/.test(str)) return str;
   try{ const v=Function('"use strict";return ('+str+')')();
        return Number.isFinite(v)?String(v):str;
-  }catch{ return str; }
+  }catch{return str;}
 }
 function applyConfig(rows){
   const re=/\{([^}]+)}/g;
@@ -135,96 +118,102 @@ function applyConfig(rows){
 async function fetchCSV(name){
   await loadConfig();
   try{
-    const res=await fetch(name);
+    const res = await fetch(name);
     if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    const lines=(await res.text()).split('\n').map(l=>l.trim()).filter(Boolean);
-    let rows  = lines.map(l=>parseCsvLine(l).map(cleanCell));
+    const raw = (await res.text()).split('\n').map(l=>l.trim()).filter(Boolean);
+    let rows  = raw.map(l=>parseCsvLine(l).map(cleanCell));
     rows = applyConfig(rows);
     if(!['contiguous','segments'].includes(randomMode)) shuffle(rows);
     return rows;
-  }catch(e){ throw new Error('Error fetching "'+name+'": '+e.message);}
+  }catch(e){ throw new Error('Error fetching "'+name+'": '+e.message); }
 }
 
-/* ──────────────── ROW-SELECTION MODES ──────────────── */
+/* ──────────────── ROW-SELECTION STRATEGIES ──────────────── */
 function pickUniform(rows){ return rows[randInt(0,rows.length-1)]; }
 function pickWeighted(rows){
   const list=rows.map(r=>({r,w:Math.max(1,parseInt(r[1],10)||1)}));
-  const tot=list.reduce((s,x)=>s+x.w,0); let rand=getSecureRandomNumber()*tot;
-  for(const x of list){ if(rand<x.w) return x.r; rand-=x.w; }
+  const tot = list.reduce((s,x)=>s+x.w,0); let rnd=getSecureRandomNumber()*tot;
+  for(const x of list){ if(rnd<x.w) return x.r; rnd-=x.w; }
   return list[list.length-1].r;
 }
 function pickContiguous(rows){
   const tot=rows.reduce((s,r)=>s+Math.max(1,parseInt(r[1],10)||1),0);
-  let rand=randInt(1,tot);
+  let rnd=randInt(1,tot);
   for(const r of rows){
     const w=Math.max(1,parseInt(r[1],10)||1);
-    if(rand<=w) return r;
-    rand-=w;
+    if(rnd<=w) return r; rnd-=w;
   }
   return rows[rows.length-1];
 }
 function pickSegments(rows){
   if(!distributionArr||!distributionArr.length) return pickUniform(rows);
-  const nReg=distributionArr.length;
-  const nRows=rows.length;
-  const base=Math.floor(nRows/nReg);
-  let rem=nRows%nReg;
-  const regions=[]; let start=0;
-  for(let i=0;i<nReg;i++){
-    const size=base+(i<rem?1:0);
-    regions.push([start,start+size-1]);
-    start+=size;
+  const nRows = rows.length;
+  let freq = [...distributionArr];
+
+  // If frequency array exceeds row count, merge extras into last slot
+  if(freq.length > nRows){
+    const extra = freq.slice(nRows).reduce((s,v)=>s+v,0);
+    freq = freq.slice(0, nRows);
+    freq[nRows-1] += extra;
   }
-  const regIdx=pickIdxByWeights(distributionArr);
-  const [l,r]=regions[Math.min(regIdx,regions.length-1)];
+  const nReg = freq.length;
+  const base = Math.floor(nRows / nReg);
+  let   rem  = nRows % nReg;
+  const boundaries=[]; let start=0;
+  for(let i=0;i<nReg;i++){
+    const sz = base + (i<rem?1:0);                       // ensures every region ≥1
+    boundaries.push([start,start+sz-1]);
+    start += sz;
+  }
+  const regIdx = pickIdxByWeights(freq);
+  const [l,r]  = boundaries[regIdx];
   return rows[randInt(l,r)];
 }
 function pickRow(rows){
   switch(randomMode){
-    case 'uniform'    : return pickUniform(rows);
-    case 'contiguous' : return pickContiguous(rows);
-    case 'segments'   : return pickSegments(rows);
-    case 'weighted'   :
-    default           : return pickWeighted(rows);
+    case 'uniform'   : return pickUniform(rows);
+    case 'contiguous': return pickContiguous(rows);
+    case 'segments'  : return pickSegments(rows);
+    case 'weighted'  :
+    default          : return pickWeighted(rows);
   }
 }
 
 /* ──────────────── MAIN PROCESSOR ──────────────── */
 async function processRows(rows,depth=0){
   if(depth>2000) return document.body.textContent='Max CSV nesting depth exceeded.';
-  if(!rows.length) return document.body.textContent='CSV empty.';
-  // auto-weight rows whose weight==0
+  if(!rows.length)  return document.body.textContent='CSV empty.';
+  // auto-weight (csv,0,child.csv → weight = child length)
   for(const r of rows){
     if(r[0].trim()==='csv' && parseInt(r[1],10)===0){
       try{ r[1]=(await fetchCSV(r[2])).length.toString(); }
       catch(e){ console.error(e); r[1]='1'; }
     }
   }
-  const sel=pickRow(rows);
-  const type=sel[0].trim();
+  const sel  = pickRow(rows);
+  const type = sel[0].trim();
 
-  if(type==='link'){ location.href=sel[2]; return; }
+  if(type==='link'){  location.href=sel[2]; return; }
+
   if(type==='git-specific'){
     const user=sel[2].split('=')[1], repo=sel[3].split('=')[1];
     const list=sel[4].split('=')[1].split('_');
-    const issue=list[randInt(0,list.length-1)];
-    location.href=`https://github.com/${user}/${repo}/issues/${issue}`; return;
+    location.href=`https://github.com/${user}/${repo}/issues/${list[randInt(0,list.length-1)]}`; return;
   }
   if(type==='git-range'){
     const user=sel[2].split('=')[1], repo=sel[3].split('=')[1];
     const [min,max]=sel[4].split('=')[1].split('_').map(Number);
     if(isNaN(min)||isNaN(max)) return document.body.textContent='Bad git-range row';
-    const num=randInt(min,max);
-    location.href=`https://github.com/${user}/${repo}/issues/${num}`; return;
+    location.href=`https://github.com/${user}/${repo}/issues/${randInt(min,max)}`; return;
   }
   if(type==='csv'){
-    try{ return processRows(await fetchCSV(sel[2]),depth+1);}
-    catch(e){ return document.body.textContent=e.message;}
+    try{ return processRows(await fetchCSV(sel[2]),depth+1); }
+    catch(e){ return document.body.textContent=e.message; }
   }
   document.body.textContent='Unknown row type: '+type;
 }
 
-/* ──────────────── ENTRY ──────────────── */
+/* ──────────────── ENTRY POINT ──────────────── */
 window.onload = async ()=>{
   if(!targetCsv){ document.body.textContent='Missing ?target=…'; return; }
   try{ await processRows(await fetchCSV(targetCsv)); }
