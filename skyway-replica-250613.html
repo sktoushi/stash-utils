@@ -2,17 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>skyway.html – multi-mode randomizer (weighted / uniform / distribution)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>skyway.html – multi-mode randomizer (weighted / uniform / distribution + custom distribution string)</title>
 </head>
 <body>
 <script>
 /* ──────────────── URL PARAMS ──────────────── */
-const params     = new URLSearchParams(location.search);
-const targetCsv  = params.get('target');          // required
-const randomMode = (params.get('randomMode') || 'weighted').toLowerCase();
-//  ▸  "weighted"     - current default behaviour (rows may be shuffled; weight column used).
-//  ▸  "uniform"      - every row has equal chance, ignoring weight column.
-//  ▸  "distribution" - sequential-range weight selection (order preserved; no row shuffle).
+const params                = new URLSearchParams(location.search);
+const targetCsv             = params.get('target');                       // required
+const randomMode            = (params.get('randomMode') || 'weighted').toLowerCase();
+const distributionParamRaw  = params.get('distribution') || '';
+
+//  ▸  "weighted"     – current default behaviour (rows may be shuffled; weight column used).
+//  ▸  "uniform"      – every row has equal chance, ignoring weight column.
+//  ▸  "distribution" – sequential-range selection. If &distribution=1-2-3… is supplied, the custom
+//                        frequency string skews the selection toward left / centre / right depending
+//                        on the pattern.
 
 /* ──────────────── CONFIG HANDLING ──────────────── */
 let configValues = {};
@@ -35,7 +40,7 @@ function getSecureRandomNumber() {
 }
 
 /* ──────────────── CSV UTILITIES ──────────────── */
-function cleanCell(c) { return c.trim().replace(/^["']+|["']+$/g, ''); }
+function cleanCell(c) { return c.trim().replace(/^(["']+)|(["']+)$/g, ''); }
 
 function parseCsvLine(line) {
   const out = []; let cell = '', inQ = false;
@@ -51,7 +56,7 @@ function parseCsvLine(line) {
   return out;
 }
 
-function shuffle(arr) {              // Fisher-Yates, cryptographically seeded
+function shuffle(arr) {                // Fisher-Yates, cryptographically seeded
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(getSecureRandomNumber() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -61,7 +66,7 @@ function shuffle(arr) {              // Fisher-Yates, cryptographically seeded
 
 /* ────────── NUMERIC-EXPR + PLACEHOLDER SUBSTITUTION ────────── */
 function tryEvalNumericExpression(str) {
-  if (!/^[0-9+\-*/ ().]+$/.test(str)) return str;
+  if (!/^[-+*/0-9 ().]+$/.test(str)) return str;
   try {
     // eslint-disable-next-line no-new-func
     const val = Function('"use strict";return (' + str + ')')();
@@ -79,13 +84,52 @@ function applyConfigPlaceholders(rows) {
   }));
 }
 
+/* ──────────────── DISTRIBUTION PARAM PARSING ──────────────── */
+const distributionArray = distributionParamRaw
+  .split(/[-,]/)                       // accept 1-2-3 or 1,2,3
+  .map(n => parseInt(n.trim(), 10))
+  .filter(n => !isNaN(n) && n > 0);
+
+function getRandomIndexByFrequency(freqArr) {
+  const total = freqArr.reduce((s, x) => s + x, 0);
+  let r = getSecureRandomNumber() * total;
+  for (let i = 0; i < freqArr.length; i++) {
+    if (r < freqArr[i]) return i;
+    r -= freqArr[i];
+  }
+  return freqArr.length - 1;           // fallback
+}
+
+function pickRowDistributionCustom(rows, freqArr) {
+  const totalRows   = rows.length;
+  const regionCount = freqArr.length;
+  if (regionCount === 0 || totalRows === 0) return rows[0];
+
+  // Split rows into contiguous regions as evenly as possible
+  const baseSize  = Math.floor(totalRows / regionCount);
+  const remainder = totalRows % regionCount;
+  const boundaries = [];
+  let currentStart = 0;
+  for (let i = 0; i < regionCount; i++) {
+    const size = baseSize + (i < remainder ? 1 : 0);
+    const regionEnd = currentStart + size - 1;
+    boundaries.push([currentStart, regionEnd]);
+    currentStart = regionEnd + 1;
+  }
+
+  // Choose region using the supplied frequency array
+  const chosenRegion = boundaries[getRandomIndexByFrequency(freqArr)];
+  const idx = chosenRegion[0] + Math.floor(getSecureRandomNumber() * (chosenRegion[1] - chosenRegion[0] + 1));
+  return rows[idx];
+}
+
 /* ──────────────── FETCH CSV (respect randomMode) ──────────────── */
 async function fetchCSV(name) {
   await loadConfig();
   try {
     const res = await fetch(name);
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    const lines = res.text ? (await res.text()).split('\n') : [];
+    const lines = res.text ? (await res.text()).split(/\r?\n/) : [];
     let rows = lines.map(l => l.trim()).filter(Boolean)
                     .map(l => parseCsvLine(l).map(cleanCell));
     rows = applyConfigPlaceholders(rows);
@@ -108,11 +152,11 @@ function pickRowWeighted(rows) {
   const total = wr.reduce((s, x) => s + x.w, 0);
   let rand = getSecureRandomNumber() * total;
   for (const x of wr) { if (rand < x.w) return x.row; rand -= x.w; }
-  return wr[wr.length - 1].row;        // fallback (shouldn’t reach)
+  return wr[wr.length - 1].row;        // fallback
 }
 
-// Sequential “distribution” — order preserved, weight forms contiguous blocks
-function pickRowDistribution(rows) {
+// Original sequential distribution (contiguous weight blocks, order preserved)
+function pickRowDistributionClassic(rows) {
   const total = rows.reduce((s, r) => s + Math.max(1, parseInt(r[1], 10) || 1), 0);
   let rand = Math.floor(getSecureRandomNumber() * total) + 1; // 1-based
   for (const r of rows) {
@@ -120,15 +164,19 @@ function pickRowDistribution(rows) {
     if (rand <= w) return r;
     rand -= w;
   }
-  return rows[rows.length - 1];        // fallback (shouldn’t reach)
+  return rows[rows.length - 1];        // fallback
 }
 
 function pickRow(rows) {
   switch (randomMode) {
-    case 'uniform':      return pickRowUniform(rows);
-    case 'distribution': return pickRowDistribution(rows);
+    case 'uniform':
+      return pickRowUniform(rows);
+    case 'distribution':
+      if (distributionArray.length) return pickRowDistributionCustom(rows, distributionArray);
+      return pickRowDistributionClassic(rows);
     case 'weighted':
-    default:             return pickRowWeighted(rows);
+    default:
+      return pickRowWeighted(rows);
   }
 }
 
@@ -146,7 +194,7 @@ async function processRows(rows, depth = 0) {
   }
 
   const sel  = pickRow(rows);
-  const type = sel[0].trim();
+  const type = sel[0].trim().toLowerCase();
 
   if (type === 'link') {
     location.href = sel[2];
@@ -154,28 +202,37 @@ async function processRows(rows, depth = 0) {
   }
 
   if (type === 'git-specific') {
-    const user = sel[2].split('=')[1],
-          repo = sel[3].split('=')[1],
-          list = sel[4].split('=')[1].split('_'),
-          issue = list[Math.floor(getSecureRandomNumber() * list.length)];
+    const user  = sel[2].split('=')[1],
+          repo  = sel[3].split('=')[1],
+          list  = sel[4].split('=')[1].split('_');
+    const issue = list[Math.floor(getSecureRandomNumber() * list.length)];
     location.href = `https://github.com/${user}/${repo}/issues/${issue}`;
     return;
   }
 
   if (type === 'git-range') {
-    const user     = sel[2].split('=')[1],
-          repo     = sel[3].split('=')[1],
-          [min,max]= sel[4].split('=')[1].split('_').map(Number);
+    const user      = sel[2].split('=')[1],
+          repo      = sel[3].split('=')[1],
+          [min,max] = sel[4].split('=')[1].split('_').map(Number);
     if (isNaN(min) || isNaN(max))
       return document.body.textContent = 'Bad git-range row (min/max missing).';
-    const num = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
-    location.href = `https://github.com/${user}/${repo}/issues/${num}`;
+
+    // If a distribution array is supplied, skew the selection within the range
+    let chosen;
+    if (distributionArray.length) {
+      const fullRange = [];
+      for (let i = min; i <= max; i++) fullRange.push(i);
+      chosen = pickRowDistributionCustom(fullRange.map(x => [x]), distributionArray)[0];
+    } else {
+      chosen = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
+    }
+    location.href = `https://github.com/${user}/${repo}/issues/${chosen}`;
     return;
   }
 
   if (type === 'csv') {
     try { return processRows(await fetchCSV(sel[2]), depth + 1); }
-    catch (e){ return document.body.textContent = e.message; }
+    catch (e) { return document.body.textContent = e.message; }
   }
 
   document.body.textContent = 'Unknown row type: ' + type;
