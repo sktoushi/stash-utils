@@ -64,7 +64,8 @@
       "game_theory_memes.db",
       "assistant_paragraphs_0607.db",
       "psychological_warfare_analysis.db",
-      "control_schedule_case_studies.db"
+      "control_schedule_case_studies.db", 
+      "ev_trajectory_cases.db" 
     ]
   }
 }
