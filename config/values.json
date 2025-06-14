@@ -79,7 +79,7 @@
     },
     {
       "name": "250614-secure-33-percent-allocation-for-stashes",
-      "distributionWeight": "300000",
+      "distributionWeight": 3,
       "skyway-lever-reviewer-2506": "100000",
     },
     {
