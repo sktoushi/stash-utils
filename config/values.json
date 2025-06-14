@@ -43,9 +43,9 @@
   "stash2NinetyPercent": "4050",
   "stash2Ending": "4500",
   "stash3Starting": "1",
-  "stash3EightyPercent": "138",
-  "stash3NinetyPercent": "155",
-  "stash3Ending": "173",
+  "stash3EightyPercent": "202",
+  "stash3NinetyPercent": "227",
+  "stash3Ending": "252",
   "theSnackbarStarting": "1",
   "theSnackbarEnding": "33",
   "imgStarting": "1",
@@ -64,7 +64,7 @@
       "game_theory_memes.db",
       "assistant_paragraphs_0607.db",
       "psychological_warfare_analysis.db",
-      "control_schedule_case_studies.db" 
+      "control_schedule_case_studies.db"
     ]
   }
 }
