@@ -53,9 +53,9 @@
     {
       "name": "ALL-uniform-formula",
       "distributionWeight": 1,
-      "skyway-all-coefficient": 100000,
+      "skyway-all-coefficient": "100000",
       "defaultRandomModeWeights": "=weighted:1,uniform:1&distributions=1-1-1:1",
-      "currentFormula-random": "1",
+      "currentFormula-random": "100000",
       "currentFormula-yearly": "1",
       "currentFormula-scaled": "1",
       "currentFormula-random-centerHigh-1-2-3-4-5-6-7-8-7-6-5-4-3-2-1": "1",
