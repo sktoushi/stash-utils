@@ -276,3 +276,9 @@ link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-world-of
 link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-world-of-the-favorite-tr-p22
 link,1,https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-zackdfilms-202502
 link,1,https://sktoushi.github.io/stash-utils/bucket.html?targets=bucket-Effective-Executive-drucker
+csv,47,skyway-stash1p5.csv
+link,47,https://sktoushi.github.io/stash-utils/skyway.html?target=skyway-stashf.csv&modeWeights={defaultRandomModeWeights}
+csv,47,skyway-public-repo.csv
+csv,47,skyway-stash.csv
+csv,47,skyway-stash2.csv
+link,47,https://sktoushi.github.io/stash-utils/skyway.html?target=skyway-stash3.csv&modeWeights={defaultRandomModeWeights}
