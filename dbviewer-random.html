@@ -15,10 +15,23 @@
 
     async function redirectRandom() {
       try {
-        // Fetch the config JSON (same origin, so CORS-safe on GitHub Pages)
+        // Fetch base and patch config, merging one patch randomly
         const res = await fetch('config/values.json', { cache: 'no-cache' });
         if (!res.ok) throw new Error(`HTTP ${res.status} while loading JSON`);
-        const cfg = await res.json();
+        const raw = await res.json();
+        const base = raw.base || {};
+        let patch = {};
+        if (Array.isArray(raw.patches) && raw.patches.length) {
+          const weights = raw.patches.map(p => Number(p.distributionWeight) || 1);
+          const tot = weights.reduce((a, b) => a + b, 0);
+          let rnd = Math.random() * tot;
+          for (let i = 0; i < raw.patches.length; i++) {
+            if (rnd < weights[i]) { patch = { ...raw.patches[i] }; break; }
+            rnd -= weights[i];
+          }
+          delete patch.distributionWeight;
+        }
+        const cfg = Object.assign({}, base, patch);
 
         const { baseURL, files } = cfg.dbviewerLinks || {};
         if (!baseURL || !Array.isArray(files) || files.length === 0) {
