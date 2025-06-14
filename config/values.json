@@ -19,12 +19,12 @@
   "currentFormula-random-rightLeaning-6-10-12-15-22-35": "1",
   "currentFormula-random-leftLeaning-35-22-15-12-10-6": "1",
   "stashSequenceProbability1": "1",
-  "stashSequenceProbability2": "2",
-  "stashSequenceProbability3": "3",
-  "stashSequenceProbability4": "4",
-  "stashSequenceProbability5": "5",
-  "stashSequenceProbability6": "4",
-  "stashSequenceProbability7": "5",
+  "stashSequenceProbability2": "1",
+  "stashSequenceProbability3": "1",
+  "stashSequenceProbability4": "1",
+  "stashSequenceProbability5": "1",
+  "stashSequenceProbability6": "1",
+  "stashSequenceProbability7": "1",
   "skyway-lever-generator-2506": "23",
   "skyway-lever-reviewer-2506": "23",
   "skyway-lever-japanese-2506": "7",
@@ -64,9 +64,9 @@
       "game_theory_memes.db",
       "assistant_paragraphs_0607.db",
       "psychological_warfare_analysis.db",
-      "control_schedule_case_studies.db", 
-      "ev_trajectory_cases.db", 
-      "develop_schedule_case_studies.db" 
+      "control_schedule_case_studies.db",
+      "ev_trajectory_cases.db",
+      "develop_schedule_case_studies.db"
     ]
   }
 }
