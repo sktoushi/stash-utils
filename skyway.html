@@ -83,7 +83,22 @@ async function loadConfig() {
   if (Object.keys(configValues).length) return configValues;
   try {
     const resp = await fetch('config/values.json');
-    if (resp.ok) configValues = await resp.json();
+    if (resp.ok) {
+      const raw = await resp.json();
+      const base = raw.base || {};
+      let patch = {};
+      if (Array.isArray(raw.patches) && raw.patches.length) {
+        const weights = raw.patches.map(p => Number(p.distributionWeight) || 1);
+        const tot = weights.reduce((a, b) => a + b, 0);
+        let rnd = Math.random() * tot;
+        for (let i = 0; i < raw.patches.length; i++) {
+          if (rnd < weights[i]) { patch = { ...raw.patches[i] }; break; }
+          rnd -= weights[i];
+        }
+        delete patch.distributionWeight;
+      }
+      configValues = Object.assign({}, base, patch);
+    }
   } catch (err) { console.error('Config load failed:', err); }
   return configValues;
 }
