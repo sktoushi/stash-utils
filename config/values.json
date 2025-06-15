@@ -51,6 +51,11 @@
   },
   "patches": [
     {
+      "name": "legacy-gsheets-allocator",
+      "distributionWeight": 1,
+      "skyway-gsheets-coefficient": "100000"
+    },
+    {
       "name": "ALL-uniform-formula",
       "distributionWeight": 1,
       "skyway-all-coefficient": "100000",
