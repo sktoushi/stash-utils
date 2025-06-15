@@ -90,7 +90,7 @@
     },
     {
       "name": "250613-stable-right-leaning-formula",
-      "distributionWeight": 3,
+      "distributionWeight": 4,
       "currentFormula-random": "3",
       "currentFormula-yearly": "1",
       "currentFormula-scaled": "1",
