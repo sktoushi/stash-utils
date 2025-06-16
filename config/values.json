@@ -48,6 +48,7 @@
         "develop_schedule_case_studies.db"
       ]
     },
+    "skyway-recent5-coefficient": "1",
     "recent5Settings": [
       {
         "username": "cjcaf1995",
@@ -147,6 +148,11 @@
       "skyway-lever-management-2506": "35",
       "skyway-lever-utilities-2506": "1",
       "skyway-lever-executive-2506": "8"
+    },
+    {
+      "name": "250616-skyway-recent5percent.html",
+      "distributionWeight": 2,
+      "skyway-recent5-coefficient": "100000"
     }
   ]
 }
