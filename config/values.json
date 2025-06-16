@@ -47,7 +47,14 @@
         "ev_trajectory_cases.db",
         "develop_schedule_case_studies.db"
       ]
-    }
+    },
+    "recent5Settings": [
+      {
+        "username": "cjcaf1995",
+        "repository": "stash3",
+        "csvUrl": "skyway-stash3.csv"
+      }
+    ]
   },
   "patches": [
     {
