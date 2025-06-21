@@ -94,14 +94,42 @@ async function updateAfterPick(db, id, oldRec) {
  |  MAIN FLOW                                          |
  *─────────────────────────────────────────────────────*/
 (async () => {
+  const injectionItems = [];
+  const injectionWeights = [];
+  try {
+    const resp = await fetch('config/injections.csv');
+    const txt = await resp.text();
+    txt.trim().split(/\r?\n/).forEach(line => {
+      const [w,u] = line.split(',');
+      if (w && u) {
+        injectionItems.push(u.trim());
+        injectionWeights.push(Number(w));
+      }
+    });
+  } catch {}
   /*—— parse query string ——*/
   const qs     = new URLSearchParams(location.search);
   const modes  = (qs.get('modes')            || '').split(',').filter(Boolean);
-  const pairs  = (qs.get('usernameRepoList') || '').split(',').filter(Boolean);
-  const alloc  = (qs.get('allocation')       || '').split(',').map(Number);
+  let pairs  = (qs.get('usernameRepoList') || '').split(',').filter(Boolean);
+  let alloc  = (qs.get('allocation')       || '').split(',').map(Number);
 
-  const validW = alloc.length === pairs.length && alloc.every(n => n >= 0);
-  const baseW  = validW ? alloc : Array(pairs.length).fill(1);
+  let baseW;
+  if (alloc.length === pairs.length && alloc.length > 0 && alloc.every(n => n >= 0)) {
+    baseW = alloc;
+  } else {
+    baseW = Array(pairs.length).fill(1);
+  }
+
+  const baseTotal = baseW.reduce((a, b) => a + b, 0);
+  const injTotal = injectionWeights.reduce((a, b) => a + b, 0);
+  let scaledInj = injectionWeights.slice();
+  if (injTotal > baseTotal && baseTotal > 0) {
+    const factor = baseTotal / injTotal;
+    scaledInj = injectionWeights.map(w => w * factor);
+  }
+
+  const combinedItems = pairs.concat(injectionItems);
+  const combinedWeights = baseW.concat(scaledInj);
 
   /*—— open db (fallback to localStorage if IDB fails) ——*/
   let db = null;
@@ -110,9 +138,9 @@ async function updateAfterPick(db, id, oldRec) {
   const now   = Date.now();
   const scores = [];
 
-  for (let i = 0; i < pairs.length; i++) {
-    const id   = pairs[i];
-    const base = baseW[i] ?? 1;
+  for (let i = 0; i < combinedItems.length; i++) {
+    const id   = combinedItems[i];
+    const base = combinedWeights[i] ?? 1;
     let rec    = null;
 
     if (db)  rec = await idbGet(db, id);
@@ -130,22 +158,29 @@ async function updateAfterPick(db, id, oldRec) {
   for (const o of scores) { if ((r -= o.w) <= 0) { pick = o; break; } }
 
   /*—— save SRS update ——*/
-  if (db) {
-    await updateAfterPick(db, pick.id, pick.rec);
-  } else {
-    // localStorage mini-SRS fallback
-    const rec = pick.rec ?? { reps: 0, ease: DEFAULT_EASE, intH: MIN_INT_H, last: now };
-    rec.reps += 1;
-    rec.ease  = Math.max(1.3, rec.ease - 0.05 + 0.1 * RAND());
-    rec.intH  = nextInterval(rec);
-    rec.last  = now;
-    localStorage.setItem('ls-' + pick.id, JSON.stringify(rec));
+  if (!pick.id.startsWith('http')) {
+    if (db) {
+      await updateAfterPick(db, pick.id, pick.rec);
+    } else {
+      // localStorage mini-SRS fallback
+      const rec = pick.rec ?? { reps: 0, ease: DEFAULT_EASE, intH: MIN_INT_H, last: now };
+      rec.reps += 1;
+      rec.ease  = Math.max(1.3, rec.ease - 0.05 + 0.1 * RAND());
+      rec.intH  = nextInterval(rec);
+      rec.last  = now;
+      localStorage.setItem('ls-' + pick.id, JSON.stringify(rec));
+    }
   }
 
   /*—— choose mode (uniform) ——*/
   const mode = modes.length ? modes[Math.floor(RAND() * modes.length)] : 'default';
 
   /*—— build & go ——*/
+  if (pick.id.startsWith('http')) {
+    location.href = pick.id;
+    return;
+  }
+
   const [user, repo, start, end] = pick.id.split('_');
   const url = [
     'https://sktoushi.github.io/stash-utils/redirect0915-',

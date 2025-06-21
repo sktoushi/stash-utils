@@ -72,21 +72,40 @@ function nextSM2(rec, q){
 
 /*──────────────── MAIN ───────────────*/
 (async()=>{
+const injectionItems=[];
+const injectionWeights=[];
+try{
+  const resp=await fetch('config/injections.csv');
+  const txt=await resp.text();
+  txt.trim().split(/\r?\n/).forEach(l=>{const [w,u]=l.split(',');if(w&&u){injectionItems.push(u.trim());injectionWeights.push(Number(w));}});
+}catch{}
 /*— parse params —*/
 const qs    = new URLSearchParams(location.search);
 const modes = (qs.get('modes')||'').split(',').filter(Boolean);
-const items = (qs.get('usernameRepoList')||'').split(',').filter(Boolean);
-const alloc = (qs.get('allocation')||'').split(',').map(Number);
-const baseW = (alloc.length===items.length&&alloc.every(n=>n>=0))
-              ? alloc : Array(items.length).fill(1);
+let items = (qs.get('usernameRepoList')||'').split(',').filter(Boolean);
+let alloc = (qs.get('allocation')||'').split(',').map(Number);
+let baseW;
+if(alloc.length===items.length && alloc.length>0 && alloc.every(n=>n>=0))
+  baseW = alloc; else baseW = Array(items.length).fill(1);
+
+const baseTotal=baseW.reduce((a,b)=>a+b,0);
+const injTotal=injectionWeights.reduce((a,b)=>a+b,0);
+let scaledInj=injectionWeights.slice();
+if(injTotal>baseTotal && baseTotal>0){
+  const factor=baseTotal/injTotal;
+  scaledInj=injectionWeights.map(w=>w*factor);
+}
+
+const combinedItems = items.concat(injectionItems);
+const combinedWeights = baseW.concat(scaledInj);
 
 /*— init DB —*/
 let db=null; try{db=await openDB();}catch{/*fallback*/}
 
 /*— build score list —*/
 const scored=[];
-for(let i=0;i<items.length;i++){
-  const id=items[i], base=baseW[i];
+for(let i=0;i<combinedItems.length;i++){
+  const id=combinedItems[i], base=combinedWeights[i];
   let rec=null;
   if(db) rec=await idbGet(db,id);
   else{
@@ -110,15 +129,21 @@ try{
 
 /*— update record —*/
 const now=Date.now();
-let rec=pick.rec||{id:pick.id,reps:0,ease:INIT_EASE,intH:24,last:now};
-Object.assign(rec, nextSM2(rec,q), {last:now});
-if(db) await idbPut(db,rec);
-else   localStorage.setItem('sm2-'+rec.id, JSON.stringify(rec));
+if(!pick.id.startsWith('http')){
+  let rec=pick.rec||{id:pick.id,reps:0,ease:INIT_EASE,intH:24,last:now};
+  Object.assign(rec, nextSM2(rec,q), {last:now});
+  if(db) await idbPut(db,rec);
+  else   localStorage.setItem('sm2-'+rec.id, JSON.stringify(rec));
+}
 
 /*— choose mode —*/
 const mode=modes.length?modes[Math.floor(rnd()*modes.length)]:'default';
 
 /*— redirect —*/
+if(pick.id.startsWith('http')){
+  location.href = pick.id;
+  return;
+}
 const [user,repo,s,e]=pick.id.split('_');
 location.href=
   'https://sktoushi.github.io/stash-utils/redirect0915-'
