@@ -49,6 +49,7 @@
       ]
     },
     "skyway-recent5-coefficient": "1",
+    "skyway-lever-japanese-listening-2506": "1",
     "recent5Settings": [
       {
         "username": "cjcaf1995",
@@ -152,8 +153,13 @@
     },
     {
       "name": "250616-skyway-recent5percent.html",
-      "distributionWeight": 2,
+      "distributionWeight": 3,
       "skyway-recent5-coefficient": "100000"
+    },
+    {
+      "name": "250621-skyway-jp-listening-drill-youtube.csv",
+      "distributionWeight": 4,
+      "skyway-lever-japanese-listening-2506": "100000"
     }
   ]
 }
