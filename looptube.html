@@ -13,34 +13,17 @@
 </head>
 <body class="text-center">
 <div class="container">
-  <h1 class="h3">LoopTube</h1>
-  <div id="globalStats" class="small mb-3"></div>
   <div class="input-group mb-3">
     <input id="urlInput" type="text" class="form-control" placeholder="YouTube URL">
     <button id="loadBtn" class="btn btn-primary">Load</button>
   </div>
   <div class="ratio ratio-16x9 mb-3" id="player"></div>
-  <div class="progress mb-2" style="height:8px;">
-    <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width:100%"></div>
-  </div>
-  <div id="statsInfo" class="mb-2 small"></div>
-  <div id="srsButtons" class="btn-group mb-3" style="display:none;">
-    <button class="btn btn-secondary" data-rating="2">Very Hard</button>
-    <button class="btn btn-warning"  data-rating="3">Hard</button>
-    <button class="btn btn-primary"  data-rating="4">Medium</button>
-    <button class="btn btn-success"  data-rating="5">Easy</button>
-  </div>
-  <button id="nextSegment" class="btn btn-info mb-3" style="display:none;">View Next Video Based on SRS Algorithm</button>
   <div id="controls" class="btn-group mb-3" role="group">
     <button id="setStart" class="btn btn-secondary">Set A</button>
     <button id="setEnd" class="btn btn-secondary">Set B</button>
     <button id="toggleLoop" class="btn btn-secondary">Start Loop</button>
     <button id="randomSeg" class="btn btn-secondary">Random Segment</button>
     <button id="shareBtn" class="btn btn-success">Share</button>
-  </div>
-  <div class="mb-3">
-    <button id="exportBtn" class="btn btn-outline-secondary btn-sm">Export CSV</button>
-    <input type="file" id="importFile" accept=".csv" class="form-control form-control-sm" style="display:inline-block;width:auto">
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -102,234 +85,28 @@ let player;
 let startTime=0;
 let endTime=0;
 let loopActive=false;
-let segmentId='';
-let currentRec=null;
-let awaitingNext=false;
-
-// ==== IndexedDB ==== //
-const DB_NAME='looptubeHistory';
-const STORE='segments';
-let dbPromise=null;
-function openDB(){
-  if(dbPromise) return dbPromise;
-  dbPromise=new Promise((res,rej)=>{
-    const req=indexedDB.open(DB_NAME,1);
-    req.onupgradeneeded=e=>{
-      const db=e.target.result;
-      if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE,{keyPath:'id'});
-    };
-    req.onsuccess=e=>res(e.target.result);
-    req.onerror=e=>rej(e.target.error);
-  });
-  return dbPromise;
-}
-async function getSeg(id){
-  const db=await openDB();
-  return new Promise((res,rej)=>{
-    const req=db.transaction(STORE,'readonly').objectStore(STORE).get(id);
-    req.onsuccess=()=>res(req.result||{id,views:0,totalSecs:0,reps:0,ease:2.5,intervalH:24,last:0,next:0});
-    req.onerror=()=>rej(req.error);
-  });
-}
-async function putSeg(rec){
-  const db=await openDB();
-  return new Promise((res,rej)=>{
-    const req=db.transaction(STORE,'readwrite').objectStore(STORE).put(rec);
-    req.onsuccess=()=>res();
-    req.onerror=()=>rej(req.error);
-  });
-}
-async function getAllSeg(){
-  const db=await openDB();
-  return new Promise((res,rej)=>{
-    const req=db.transaction(STORE,'readonly').objectStore(STORE).getAll();
-    req.onsuccess=()=>res(req.result||[]);
-    req.onerror=()=>rej(req.error);
-  });
-}
-
-async function setupSegment(){
-  segmentId = extractVideoId(player.getVideoUrl())+'_'+Math.round(startTime)+'-'+Math.round(endTime);
-  currentRec = await getSeg(segmentId);
-  await putSeg(currentRec);
-  await updateStatsDisplay();
-  await updateGlobalStats();
-  awaitingNext=false;
-  hideNextBtn();
-  document.getElementById('progressBar').style.width='100%';
-}
-
-async function updateStatsDisplay(){
-  if(!currentRec) return;
-  const all = await getAllSeg();
-  const total = all.reduce((s,r)=>s+r.totalSecs,0);
-  const pct = total? ((currentRec.totalSecs/total)*100).toFixed(2) : '0';
-  const minutes = currentRec.totalSecs/60;
-  const timeStr = minutes < 60 ? `${minutes.toFixed(1)} minutes` : `${(minutes/60).toFixed(1)} hours`;
-  document.getElementById('statsInfo').innerHTML = `You've viewed this ${currentRec.views} times for a total of ${timeStr}!<br>Among all the videos you've viewed, this segment comprises ${pct}% of the whole!`;
-}
-
-async function updateGlobalStats(){
-  const all = await getAllSeg();
-  if(!all.length){
-    document.getElementById('globalStats').textContent='';
-    return;
-  }
-  const totalSecs = all.reduce((s,r)=>s+r.totalSecs,0);
-  const minutes = totalSecs/60;
-  const timeStr = minutes < 60 ? `${minutes.toFixed(1)} minutes` : `${(minutes/60).toFixed(1)} hours`;
-  const earliest = all.reduce((m,r)=> (r.last>0 && (m===0||r.last<m))?r.last:m,0);
-  const dateStr = earliest? new Date(earliest).toLocaleDateString(): 'N/A';
-  document.getElementById('globalStats').textContent = `total: ${all.length} segments viewed in ${timeStr} since ${dateStr}`;
-}
-
-function showSrsButtons(){
-  document.getElementById('srsButtons').style.display='block';
-}
-function hideSrsButtons(){
-  document.getElementById('srsButtons').style.display='none';
-}
-function showNextBtn(){
-  document.getElementById('nextSegment').style.display='block';
-}
-function hideNextBtn(){
-  document.getElementById('nextSegment').style.display='none';
-}
-
-async function findNextSegment(){
-  const all = await getAllSeg();
-  if(!all.length) return null;
-  all.sort((a,b)=>(a.next||0)-(b.next||0));
-  return all[0];
-}
-
-function segToUrl(rec){
-  const [vid,s,e] = rec.id.split('_');
-  const u = new URL(location.pathname, location.origin);
-  u.searchParams.set('video',vid);
-  u.searchParams.set('start',s);
-  u.searchParams.set('end',e);
-  return u.toString();
-}
-
-function sm2Ease(ease,q){
-  const newEase = ease + 0.1 - (5-q)*(0.08+(5-q)*0.02);
-  return Math.max(1.3,newEase);
-}
-
-async function onSegmentEnd(){
-  const segLen=endTime-startTime;
-  currentRec.views+=1;
-  currentRec.totalSecs+=segLen;
-  await putSeg(currentRec);
-  await updateStatsDisplay();
-  await updateGlobalStats();
-  if(!awaitingNext) hideNextBtn();
-  showSrsButtons();
-  if(!awaitingNext){
-    player.seekTo(startTime,true);
-    player.playVideo();
-    requestAnimationFrame(checkLoop);
-  }
-}
-
-async function rateQuality(q){
-  currentRec = await getSeg(segmentId); // refresh
-  if(q<3){
-    currentRec.reps=0;
-    currentRec.intervalH=24;
-  }else{
-    currentRec.reps=(currentRec.reps||0)+1;
-    if(currentRec.reps===1) currentRec.intervalH=24;
-    else if(currentRec.reps===2) currentRec.intervalH=144;
-    else currentRec.intervalH=Math.round(currentRec.intervalH*currentRec.ease);
-  }
-  currentRec.ease = sm2Ease(currentRec.ease,q);
-  currentRec.last=Date.now();
-  currentRec.next=currentRec.last+currentRec.intervalH*3600000;
-  await putSeg(currentRec);
-  await updateGlobalStats();
-  awaitingNext=true;
-  hideSrsButtons();
-  showNextBtn();
-  player.pauseVideo();
-  loopActive=false;
-}
-
-document.querySelectorAll('#srsButtons button').forEach(btn=>{
-  btn.addEventListener('click',()=>rateQuality(parseInt(btn.dataset.rating,10)));
-});
-
-document.getElementById('nextSegment').onclick=async()=>{
-  const rec = await findNextSegment();
-  if(rec) location.href = segToUrl(rec);
-  else alert('No history available');
-};
-
-document.getElementById('exportBtn').onclick=async()=>{
-  const recs=await getAllSeg();
-  let csv='id,views,totalSecs,reps,ease,intervalH,last,next\n';
-  for(const r of recs){
-    csv+=`${r.id},${r.views},${r.totalSecs},${r.reps},${r.ease},${r.intervalH},${r.last},${r.next}\n`;
-  }
-  const blob=new Blob([csv],{type:'text/csv'});
-  const link=document.createElement('a');
-  link.href=URL.createObjectURL(blob);
-  link.download='looptube_history.csv';
-  link.click();
-};
-
-document.getElementById('importFile').onchange=async(e)=>{
-  const f=e.target.files[0];
-  if(!f) return;
-  const text=await f.text();
-  const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
-  for(const line of lines.slice(1)){
-    const [id,v,t,r,ease,intH,last,next]=line.split(',');
-    if(!id) continue;
-    const rec={id,views:+v,totalSecs:+t,reps:+r,ease:+ease,intervalH:+intH,last:+last,next:+next};
-    await putSeg(rec);
-  }
-  alert('Import complete');
-  await updateGlobalStats();
-};
 function onYouTubeIframeAPIReady(){ createPlayer(initialVideoId()); }
 function createPlayer(id){ if(player) player.destroy(); player=new YT.Player('player',{height:'100%',width:'100%',videoId:id,events:{onReady:onPlayerReady}}); }
-async function onPlayerReady(){
+function onPlayerReady(){
   const s=parseFloat(urlParams.get('start'));
   const e=parseFloat(urlParams.get('end'));
   const segCount=parseInt(urlParams.get('segments')||'0',10);
   if(!isNaN(s) && !isNaN(e)){
-    startTime=s; endTime=e;
+    startTime=s; endTime=e; player.seekTo(startTime,true); loopActive=true; checkLoop();
   } else if(segCount>1){
-    const ok = await pickRandomSegment(segCount);
-    if(ok) return;
+    pickRandomSegment(segCount);
   } else {
-    startTime=0;
-    endTime=await waitForDuration();
+    endTime=player.getDuration();
   }
-  await setupSegment();
-  player.seekTo(startTime,true);
-  player.playVideo();
-  loopActive=true;
-  checkLoop();
 }
 function initialVideoId(){ const direct=urlParams.get('video'); if(direct) return extractVideoId(direct); return ''; }
 function extractVideoId(url){ const m=url.match(/[?&]v=([^&]+)/); if(m) return m[1]; const m2=url.match(/youtu\.be\/([^?]+)/); if(m2) return m2[1]; return url; }
 function loadVideo(){ const url=document.getElementById('urlInput').value.trim(); if(!url) return; const id=extractVideoId(url); createPlayer(id); }
 document.getElementById('loadBtn').onclick=loadVideo;
-
-async function waitForDuration(){
-  return new Promise(res=>{
-    const check=()=>{ const d=player.getDuration(); if(d) res(d); else setTimeout(check,100); };
-    check();
-  });
-}
-
 document.getElementById('setStart').onclick=()=>{ if(player){ startTime=player.getCurrentTime(); }};
 document.getElementById('setEnd').onclick=()=>{ if(player){ endTime=player.getCurrentTime(); }};
 document.getElementById('toggleLoop').onclick=()=>{ loopActive=!loopActive; if(loopActive) checkLoop(); };
-document.getElementById('randomSeg').onclick=async()=>{ if(player){ const n=parseInt(prompt('Segments?'),10); if(n>1) await pickRandomSegment(n); }};
+document.getElementById('randomSeg').onclick=()=>{ if(player){ const n=parseInt(prompt('Segments?'),10); if(n>1) pickRandomSegment(n); }};
 document.getElementById('shareBtn').onclick=async()=>{
   await loadConfig();
   const repo=(configValues.stashUsername&&configValues.stashRepository)?
@@ -344,39 +121,11 @@ document.getElementById('shareBtn').onclick=async()=>{
   try{ await navigator.clipboard.writeText(u.toString()); }catch(e){ console.error('copy failed',e); }
   location.href=`https://github.com/${repo}/issues/new/choose`;
 };
-async function pickRandomSegment(n){
-  let dur=player.getDuration();
-  if(!dur) dur = await waitForDuration();
-  if(!dur) return false;
-  const segLen=dur/n;
-  const idx=randInt(0,n-1);
-  startTime=idx*segLen;
-  endTime=(idx+1)*segLen;
-  await setupSegment();
-  player.seekTo(startTime,true);
-  player.playVideo();
-  loopActive=true;
-  checkLoop();
-  return true;
-}
-function checkLoop(){
-  if(!loopActive) return;
-  const t = player.getCurrentTime();
-  const len = endTime - startTime;
-  if(len>0){
-    const rem = Math.max(0, endTime - t);
-    document.getElementById('progressBar').style.width = (rem/len*100)+'%';
-  }
-  if(t >= endTime){
-    onSegmentEnd();
-    return;
-  }
-  requestAnimationFrame(checkLoop);
-}
+function pickRandomSegment(n){ const dur=player.getDuration(); if(!dur) return; const segLen=dur/n; const idx=randInt(0,n-1); startTime=idx*segLen; endTime=(idx+1)*segLen; player.seekTo(startTime,true); loopActive=true; checkLoop(); }
+function checkLoop(){ if(!loopActive) return; if(player.getCurrentTime()>=endTime){ player.seekTo(startTime,true); } requestAnimationFrame(checkLoop); }
 window.addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); if(player.getPlayerState()==YT.PlayerState.PLAYING) player.pauseVideo(); else player.playVideo(); } else if(e.key==='a'){ if(player) startTime=player.getCurrentTime(); } else if(e.key==='b'){ if(player) endTime=player.getCurrentTime(); } else if(e.key==='l'){ loopActive=!loopActive; if(loopActive) checkLoop(); } });
 window.onload=async ()=>{
   await loadConfig();
-  await updateGlobalStats();
   if(targetCsv){
     try{ await processRows(await fetchCSV(targetCsv)); }
     catch(e){ document.body.textContent=e.message; }
