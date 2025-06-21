@@ -1,46 +1,28 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Private-PDF Viewer</title>
-  <style>html,body,iframe{margin:0;height:100%;width:100%;border:0}</style>
-</head>
-<body>
-  <iframe id="pdf"></iframe>
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Drive-private PDF</title>
+		<style>
+			html,body,iframe{margin:0;height:100%;width:100%;border:0}
+		</style>
+	</head>
+	<body>
+		<iframe id="pdf"></iframe>
+		<script>
+			const FILE   = '1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc';   // Drive file-ID
+			const PROXY  = 'https://script.google.com/macros/s/AKfycbytkiXBOTvT7PeMY_TxscYjDPubn8KWVZ6On0IATYY2XBB--w-TT5LPeYyneT9FJIRiew/exec'; // new URL
+			const PAGE   = 1;                                      // start page
 
-  <script>
-    /*  ---- CONFIG --------------------------------------------------- */
-    const FILE_ID = "1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc";                          // the Drive file
-    const PROXY   = "https://script.google.com/macros/s/AKfycbxwvHTix9S0R1lxjHCoJXqa4PDW7w1-fk7GOKzlsUP0MKbc6w_mAAfuD2MhILnTmEskeg/exec";
-    const PAGE    = 11;                                   // ?page jump
-
-    /*  ---- IndexedDB tiny cache ------------------------------------ */
-    const openDB = () => new Promise(r => {
-      const req = indexedDB.open('pdfCache', 1);
-      req.onupgradeneeded = () => req.result.createObjectStore('files');
-      req.onsuccess       = () => r(req.result);
-    });
-
-    (async () => {
-      const db   = await openDB();
-      const hit  = await new Promise(res => {
-        const tx  = db.transaction('files', 'readonly');
-        const get = tx.objectStore('files').get(FILE_ID);
-        get.onsuccess = () => res(get.result || null);
-      });
-
-      let blob = hit;
-      if (!blob) {
-        const b64 = await fetch(`${PROXY}?id=${FILE_ID}`).then(r => r.text());
-        const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-        blob = new Blob([bytes], {type: 'application/pdf'});
-        const txw = db.transaction('files', 'readwrite');
-        txw.objectStore('files').put(blob, FILE_ID);
-      }
-
-      const url = URL.createObjectURL(blob);
-      document.getElementById('pdf').src = `${url}#page=${PAGE}`;
-    })();
-  </script>
-</body>
+			fetch(`${PROXY}?id=${FILE}`)
+			  .then(r => r.text())
+			  .then(b64 => {
+			    const bin  = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+			    const blob = new Blob([bin], {type:'application/pdf'});
+			    document.getElementById('pdf').src =
+			      `${URL.createObjectURL(blob)}#page=${PAGE}`;
+			  })
+			  .catch(err => document.body.textContent = '💥 ' + err);
+		</script>
+	</body>
 </html>
