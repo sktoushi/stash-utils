@@ -93,26 +93,62 @@ function updateSRS(item) {
 }
 
 /* ---------- MAIN IIFE ---------- */
-(function () {
+(async function () {
+  const injectionItems = [];
+  const injectionWeights = [];
+  try {
+    const resp = await fetch('config/injections.csv');
+    const txt = await resp.text();
+    txt.trim().split(/\r?\n/).forEach(line => {
+      const [w,u] = line.split(',');
+      if (w && u) {
+        injectionItems.push(u.trim());
+        injectionWeights.push(Number(w));
+      }
+    });
+  } catch {}
+
   const qs = new URLSearchParams(location.search);
 
   /* -------- parameter parsing (unchanged) -------- */
   const modes = (qs.get('modes') || '')
       .split(',').filter(Boolean);
-  const pairs = (qs.get('usernameRepoList') || '')
+  let pairs = (qs.get('usernameRepoList') || '')
       .split(',').filter(Boolean);
-  const alloc = (qs.get('allocation') || '')
+  let alloc = (qs.get('allocation') || '')
       .split(',').map(Number).filter(n => !isNaN(n));
 
-  const validW = alloc.length === pairs.length && alloc.every(n => n >= 0);
-  const weights = validW ? alloc : new Array(pairs.length).fill(1);
+  let baseW;
+  if (alloc.length === pairs.length && alloc.length > 0 && alloc.every(n => n >= 0)) {
+    baseW = alloc;
+  } else {
+    baseW = new Array(pairs.length).fill(1);
+  }
+
+  const baseTotal = baseW.reduce((a, b) => a + b, 0);
+  const injTotal = injectionWeights.reduce((a, b) => a + b, 0);
+  let scaledInj = injectionWeights.slice();
+  if (injTotal > baseTotal && baseTotal > 0) {
+    const factor = baseTotal / injTotal;
+    scaledInj = injectionWeights.map(w => w * factor);
+  }
+
+  const combinedItems = pairs.concat(injectionItems);
+  const combinedWeights = baseW.concat(scaledInj);
 
   /* -------- SRS-powered pick -------- */
-  const pickedPair = pickItem(pairs, weights);
-  updateSRS(pickedPair);
+  const pickedPair = pickItem(combinedItems, combinedWeights);
+  if (!pickedPair.startsWith('http')) {
+    updateSRS(pickedPair);
+  }
 
   /* -------- random mode (uniform) -------- */
   const mode = modes[Math.floor(secureRand() * modes.length)] || 'default';
+
+  if (pickedPair.startsWith('http')) {
+    location.href = pickedPair;
+    return;
+  }
 
   /* -------- build redirect URL -------- */
   const [user, repo, start, end] = pickedPair.split('_');

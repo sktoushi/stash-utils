@@ -26,17 +26,35 @@
             let rand = getSecureRandomNumber() * total;
             for (const a of adjusted) {
                 if (rand < a.weight) {
-                    localStorage.setItem(a.key, String(now));
+                    if (!a.item.startsWith('http')) {
+                        localStorage.setItem(a.key, String(now));
+                    }
                     return a.item;
                 }
                 rand -= a.weight;
             }
             const fallback = adjusted[adjusted.length - 1];
-            localStorage.setItem(fallback.key, String(now));
+            if (!fallback.item.startsWith('http')) {
+                localStorage.setItem(fallback.key, String(now));
+            }
             return fallback.item;
         }
 
-        (function() {
+        (async function() {
+            const injectionItems = [];
+            const injectionWeights = [];
+            try {
+                const resp = await fetch('config/injections.csv');
+                const txt = await resp.text();
+                txt.trim().split(/\r?\n/).forEach(line => {
+                    const [w,u] = line.split(',');
+                    if (w && u) {
+                        injectionItems.push(u.trim());
+                        injectionWeights.push(Number(w));
+                    }
+                });
+            } catch (e) { /* ignore */ }
+
             // Grab the full query string (e.g. ?modes=...&usernameRepoList=...&allocation=...)
             const paramsString = window.location.search;
 
@@ -49,34 +67,46 @@
 
             // Extract the 'usernameRepoList' parameter and split into array
             const userRepoParam = searchParams.get('usernameRepoList') || '';
-            const userRepoArray = userRepoParam.split(',').filter(item => item);
+            let userRepoArray = userRepoParam.split(',').filter(item => item);
 
             // Extract the 'allocation' parameter and convert to array of numbers
             // Each weight corresponds to the same index in userRepoArray
             const allocationParam = searchParams.get('allocation') || '';
-            const allocationArray = allocationParam
+            let allocationArray = allocationParam
                 .split(',')
                 .map(str => Number(str))
                 .filter(num => !isNaN(num));
 
-            // If allocationArray doesn't match userRepoArray length or is invalid,
-            // fall back to equal likelihood for each item
-            let validWeights = false;
-            if (allocationArray.length === userRepoArray.length && allocationArray.length > 0) {
-                validWeights = allocationArray.every(weight => weight >= 0);
+            // Determine base weights for main items
+            let baseWeights;
+            if (allocationArray.length === userRepoArray.length && allocationArray.length > 0 && allocationArray.every(w => w >= 0)) {
+                baseWeights = allocationArray;
+            } else {
+                baseWeights = new Array(userRepoArray.length).fill(1);
             }
+
+            // Balance injection weights if they outweigh the base pool
+            const baseTotal = baseWeights.reduce((a, b) => a + b, 0);
+            const injTotal = injectionWeights.reduce((a, b) => a + b, 0);
+            let scaledInj = injectionWeights.slice();
+            if (injTotal > baseTotal && baseTotal > 0) {
+                const factor = baseTotal / injTotal;
+                scaledInj = injectionWeights.map(w => w * factor);
+            }
+
+            // Append injection items and weights
+            const combinedItems = userRepoArray.concat(injectionItems);
+            const combinedWeights = baseWeights.concat(scaledInj);
 
             // Randomly pick a mode (unweighted, as before)
             const randomMode = modesArray[Math.floor(getSecureRandomNumber() * modesArray.length)];
 
-            // Randomly pick one item from userRepoArray (weighted if valid, otherwise uniform)
-            let randomUserRepo;
-            if (validWeights) {
-                randomUserRepo = weightedRandomPickWithRecency(userRepoArray, allocationArray);
-            } else {
-                // Fallback to uniform selection if weights are missing/invalid
-                const uniform = new Array(userRepoArray.length).fill(1);
-                randomUserRepo = weightedRandomPickWithRecency(userRepoArray, uniform);
+            // Randomly pick one item from the combined pool
+            const randomUserRepo = weightedRandomPickWithRecency(combinedItems, combinedWeights);
+
+            if (randomUserRepo.startsWith('http')) {
+                window.location.href = randomUserRepo;
+                return;
             }
 
             // Split the selected user/repo record by underscore
