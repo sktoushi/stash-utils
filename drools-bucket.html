@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="common/random-utils.js"></script>
     <meta charset="UTF-8">
     <title>Random URL Picker with Customizable Settings</title>
     <!-- Bootstrap CSS -->
@@ -44,11 +45,6 @@
         let urlPrefix = ''; // URL Prefix
         let urlSuffix = ''; // URL Suffix
 
-        function getSecureRandomNumber() {
-            const array = new Uint32Array(1);
-            window.crypto.getRandomValues(array);
-            return array[0] / (0xFFFFFFFF + 1);
-        }
 
         // Constants for repetitive parts of the URLs
         const BASE_URL = "https://docs.drools.org/8.44.0.Final/drools-docs/";

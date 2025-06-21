@@ -308,7 +308,7 @@
         ];
 
         document.getElementById('fetch-record').addEventListener('click', () => {
-            const randomIndex = Math.floor(Math.random() * csvData.length);
+            const randomIndex = Math.floor(getSecureRandomNumber() * csvData.length);
             const randomRecord = csvData[randomIndex];
             document.getElementById('record').textContent = randomRecord;
         });

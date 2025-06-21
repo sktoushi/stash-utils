@@ -74,7 +74,7 @@
     function getRandomInt(min, max) {
         min = Math.ceil(min);
         max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
+        return Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
     }
 
     // Initialize the numbers
@@ -99,7 +99,7 @@
     document.getElementById('revealBtn').addEventListener('click', function() {
         if (!answerRevealed) {
             // Randomly decide the division direction: true for number1 / number2, false for number2 / number1
-            const divideFirstBySecond = Math.random() < 0.5;
+            const divideFirstBySecond = getSecureRandomNumber() < 0.5;
 
             let division;
             if (divideFirstBySecond) {

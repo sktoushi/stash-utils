@@ -236,7 +236,7 @@
         const neighbors = getUnvisitedNeighbors(currentCell);
         if (neighbors.length > 0) {
           // choose random neighbor
-          const randIndex = Math.floor(Math.random() * neighbors.length);
+          const randIndex = Math.floor(getSecureRandomNumber() * neighbors.length);
           const nextCell = neighbors[randIndex];
 
           // push currentCell onto stack

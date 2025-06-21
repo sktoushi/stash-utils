@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="common/random-utils.js"></script>
   <meta charset="UTF-8">
   <title>Random CSV Redirect (Weighted + Nested CSV + Proper Quoted CSV Parsing)</title>
 </head>
@@ -20,11 +21,6 @@ async function loadConfig() {
 }
 
 /* ──────────────── RANDOM HELPERS ──────────────── */
-function getSecureRandomNumber() {
-  const a = new Uint32Array(1);
-  crypto.getRandomValues(a);
-  return a[0] / (0xFFFFFFFF + 1);
-}
 
 /* ──────────────── CSV UTILITIES ──────────────── */
 function cleanCell(c) { return c.trim().replace(/^["']+|["']+$/g, ''); }

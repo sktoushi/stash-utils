@@ -21,7 +21,7 @@
         // Function to pick a random QnA and display it
         function randomQnA() {
             const keys = Object.keys(qnaSet);
-            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const randomKey = keys[Math.floor(getSecureRandomNumber() * keys.length)];
             const randomValue = qnaSet[randomKey];
             alert(randomKey);
             alert(randomValue);

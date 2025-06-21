@@ -196,8 +196,8 @@
       // 2) Place mines randomly
       let minesToPlace = MINES;
       while (minesToPlace > 0) {
-        const randRow = Math.floor(Math.random() * ROWS);
-        const randCol = Math.floor(Math.random() * COLS);
+        const randRow = Math.floor(getSecureRandomNumber() * ROWS);
+        const randCol = Math.floor(getSecureRandomNumber() * COLS);
         if (!board[randRow][randCol].mine) {
           board[randRow][randCol].mine = true;
           minesToPlace--;

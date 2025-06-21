@@ -24,7 +24,7 @@
                 "The sentence translates to 'The answer of many people is that it is because of a weak will.'"
             ];
 
-            const randomIndex = Math.floor(Math.random() * questions.length);
+            const randomIndex = Math.floor(getSecureRandomNumber() * questions.length);
             alert(questions[randomIndex]);
             alert(answers[randomIndex]);
         }

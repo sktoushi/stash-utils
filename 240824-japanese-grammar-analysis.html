@@ -24,7 +24,7 @@
                 "The sentence translates to 'Because it was so [extreme], it resulted in an abnormal outcome.'"
             ];
 
-            const randomIndex = Math.floor(Math.random() * questions.length);
+            const randomIndex = Math.floor(getSecureRandomNumber() * questions.length);
             alert(questions[randomIndex]);
             alert(answers[randomIndex]);
         }

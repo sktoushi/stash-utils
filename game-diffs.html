@@ -146,7 +146,7 @@
         let randPos = -1;
         // ensure unique positions
         do {
-          randPos = Math.floor(Math.random() * totalCells);
+          randPos = Math.floor(getSecureRandomNumber() * totalCells);
         } while (usedPositions.has(randPos));
         usedPositions.add(randPos);
 

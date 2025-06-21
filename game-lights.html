@@ -177,11 +177,11 @@
       }
 
       // randomly press some cells
-      const pressesCount = Math.floor(Math.random() * 10 + 5); 
+      const pressesCount = Math.floor(getSecureRandomNumber() * 10 + 5); 
       // Press between 5 and 14 random cells
       for (let i = 0; i < pressesCount; i++) {
-        const rr = Math.floor(Math.random() * ROWS);
-        const cc = Math.floor(Math.random() * COLS);
+        const rr = Math.floor(getSecureRandomNumber() * ROWS);
+        const cc = Math.floor(getSecureRandomNumber() * COLS);
         toggleCell(rr, cc);
       }
     }

@@ -11,7 +11,7 @@
             const qna = [{'question': "What is 'denominator neglect'?", 'answer': 'Denominator neglect is a cognitive bias where people focus more on the numerator than the denominator, leading to a distorted perception of risk and probability.'}, {'question': 'How does imagery affect the perception of risk?', 'answer': 'Vivid imagery, like imagining a single red marble among white ones, can enhance the perception of likelihood, even when the statistical probability remains unchanged.'}, {'question': 'How can the communication of risks influence perception?', 'answer': 'The way risks are communicated can significantly influence perception, with certain phrasings creating more vivid images and stronger emotional responses.'}, {'question': "What is the 'frequency format effect'?", 'answer': 'The frequency format effect refers to how people judge risks differently based on how they are presented, often misjudging risks when they focus on raw numbers rather than percentages.'}, {'question': 'Are experienced professionals immune to denominator neglect?', 'answer': 'No, even experienced professionals like forensic psychologists and psychiatrists can be influenced by denominator neglect, as shown in experiments involving risk assessment.'}];
 
             // Randomly pick a QnA
-            const randomIndex = Math.floor(Math.random() * qna.length);
+            const randomIndex = Math.floor(getSecureRandomNumber() * qna.length);
             const selectedQnA = qna[randomIndex];
 
             // Show the question first

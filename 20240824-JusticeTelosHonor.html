@@ -11,7 +11,7 @@
             const qna = [{'question': 'What does Aristotle mean by saying justice is teleological?', 'answer': 'Justice is teleological means that determining rights requires understanding the purpose or end of a social practice.'}, {'question': 'How does Aristotle connect justice to honor?', 'answer': 'Aristotle believes that reasoning about justice involves reasoning about what virtues a practice should honor and reward.'}, {'question': "What is a modern theory of justice's approach to fairness and rights?", 'answer': 'Modern theories often try to separate questions of fairness and rights from arguments about honor, virtue, and moral desert.'}, {'question': "How does Aristotle's view on justice differ from utilitarian views?", 'answer': "Aristotle's view focuses on honoring individual merit and virtue, while utilitarian views emphasize producing the greatest happiness for the greatest number."}, {'question': 'What is essential to understanding Aristotle’s ethics and politics?', 'answer': "Understanding the force of both teleological and honorific considerations and their relation is key to Aristotle's ethics and politics."}];
 
             // Randomly pick a QnA
-            const randomIndex = Math.floor(Math.random() * qna.length);
+            const randomIndex = Math.floor(getSecureRandomNumber() * qna.length);
             const selectedQnA = qna[randomIndex];
 
             // Show the question first

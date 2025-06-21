@@ -24,7 +24,7 @@
         if (Array.isArray(raw.patches) && raw.patches.length) {
           const weights = raw.patches.map(p => Number(p.distributionWeight) || 1);
           const tot = weights.reduce((a, b) => a + b, 0);
-          let rnd = Math.random() * tot;
+          let rnd = getSecureRandomNumber() * tot;
           for (let i = 0; i < raw.patches.length; i++) {
             if (rnd < weights[i]) { patch = { ...raw.patches[i] }; break; }
             rnd -= weights[i];

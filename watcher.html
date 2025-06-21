@@ -104,7 +104,7 @@ function generateNotificationTimes(numRewinds, episodeDuration) {
 
     if (segmentEnd <= segmentStart) continue;
 
-    const randomTimeInSegment = segmentStart + Math.random() * (segmentEnd - segmentStart);
+    const randomTimeInSegment = segmentStart + getSecureRandomNumber() * (segmentEnd - segmentStart);
     times.push(randomTimeInSegment);
   }
 

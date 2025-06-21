@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="common/random-utils.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Display</title>
@@ -84,14 +85,14 @@
         const UPDATE_VISITOR_API = "https://script.google.com/macros/s/AKfycbx-c7HUH9OnQBMwDAss1WpMV0uZAs8zHwGEHSn9EIQ_hTRBKVYLiPStXQTkbhfpcS7T/exec"; // 20240819_1530
 
         function randomizeArray(arr) {
-            return arr.sort(() => Math.random() - 0.5);
+            return arr.sort(() => getSecureRandomNumber() - 0.5);
         }
 
         function randomizeObjectKeys(obj) {
             const randomizedObj = {};
 
             for (const [key, value] of Object.entries(obj)) {
-                const randomizedKeys = Object.keys(value).sort(() => Math.random() - 0.5);
+                const randomizedKeys = Object.keys(value).sort(() => getSecureRandomNumber() - 0.5);
                 const randomizedValue = {};
 
                 randomizedKeys.forEach(k => {
@@ -180,11 +181,6 @@
             }).getRandomContentFromSheet(repo);
         }
 
-        function getSecureRandomNumber() {
-          const array = new Uint32Array(1);
-          window.crypto.getRandomValues(array);
-          return array[0] / (0xFFFFFFFF + 1);
-        }
 
         function useConfigAndMods() {
             console.log("Using Config:", config);

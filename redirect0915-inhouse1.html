@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script src="common/random-utils.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="config.js"></script>
@@ -638,11 +639,6 @@ var links2 = [
 	"https://sktoushi.github.io/ref2409/viewer.html?&fileName=240924-notes-1-4.pdf&startIdx=1&endIdx=4"
 ];
 
-function getSecureRandomNumber() {
-    const array = new Uint32Array(1);
-    window.crypto.getRandomValues(array);
-    return array[0] / (0xFFFFFFFF + 1);
-}
 
 // Optimized shuffleArray function to use less memory
 function shuffleArray(array) {

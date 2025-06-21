@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="common/random-utils.js"></script>
   <meta charset="UTF-8">
   <title>Random CSV Redirect (Weighted + Nested + Variables)</title>
 </head>
@@ -18,7 +19,7 @@ async function loadConfig() {
       if (Array.isArray(raw.patches) && raw.patches.length) {
         const weights = raw.patches.map(p => Number(p.distributionWeight) || 1);
         const tot = weights.reduce((a, b) => a + b, 0);
-        let rnd = Math.random() * tot;
+        let rnd = getSecureRandomNumber() * tot;
         for (let i = 0; i < raw.patches.length; i++) {
           if (rnd < weights[i]) { patch = { ...raw.patches[i] }; break; }
           rnd -= weights[i];
@@ -36,11 +37,6 @@ async function loadConfig() {
 /*  0.  SECURE RNG                                                    */
 /* ------------------------------------------------------------------ */
 /** Returns a cryptographically-secure random number in [0, 1). */
-function getSecureRandomNumber() {
-  const array = new Uint32Array(1);
-  window.crypto.getRandomValues(array);
-  return array[0] / (0xFFFFFFFF + 1);
-}
 
 /* ------------------------------------------------------------------ */
 /*  1.  STRING HELPERS                                                */

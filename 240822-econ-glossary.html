@@ -44,7 +44,7 @@
 
         function showRandomGlossaryItem() {
             const keys = Object.keys(glossary);
-            const randomKey = keys[Math.floor(Math.random() * keys.length)];
+            const randomKey = keys[Math.floor(getSecureRandomNumber() * keys.length)];
             alert(glossary[randomKey]);
             alert(randomKey);
         }

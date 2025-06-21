@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="common/random-utils.js"></script>
     <meta charset="UTF-8">
     <title>Random URL Picker</title>
     <!-- Bootstrap CSS -->
@@ -85,11 +86,6 @@
         /**
          * Function to get a secure random number between 0 (inclusive) and 1 (exclusive).
          */
-        function getSecureRandomNumber() {
-            const array = new Uint32Array(1);
-            window.crypto.getRandomValues(array);
-            return array[0] / (0xFFFFFFFF + 1);
-        }
 
         /**
          * Function to shuffle an array in place using Fisher-Yates.

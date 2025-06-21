@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script src="common/random-utils.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="config.js"></script>
@@ -28,11 +29,6 @@ function updateCounter() {
 /**
  * Returns a float in [0,1).
  */
-function getSecureRandomNumber() {
-  const array = new Uint32Array(1);
-  window.crypto.getRandomValues(array);
-  return array[0] / (0xFFFFFFFF + 1);
-}
 
 /**
  * Weighted picking given an array of numeric weights.

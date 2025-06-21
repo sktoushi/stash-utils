@@ -105,7 +105,7 @@ a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
   /* ─── render random row ─── */
   function renderRandom(){
     if(rowCount===0){randCard.innerHTML='<p>No rows.</p>';enableBar(false);return;}
-    const offset = Math.floor(Math.random()*rowCount);
+    const offset = Math.floor(getSecureRandomNumber()*rowCount);
     const rs = db.exec(`SELECT * FROM "${table}" LIMIT 1 OFFSET ${offset}`);
     const cols = rs[0].columns, vals = rs[0].values[0]; currentRow=vals;
 

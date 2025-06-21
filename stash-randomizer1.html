@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script src="common/random-utils.js"></script>
     <meta charset="UTF-8">
     <title>Redirect</title>
     <script>
-        // Secure random number generator function
-        function getSecureRandomNumber() {
-            const array = new Uint32Array(1);
-            window.crypto.getRandomValues(array);
-            return array[0] / (0xFFFFFFFF + 1);
-        }
 
         // Weighted random pick function
         function weightedRandomPick(items, weights) {

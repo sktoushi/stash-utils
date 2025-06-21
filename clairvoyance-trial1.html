@@ -69,25 +69,25 @@
       document.getElementById('feedback').textContent = '';
       
       // Random number of bars
-      const numberOfBars = Math.floor(Math.random() * (maxBars - minBars + 1)) + minBars;
+      const numberOfBars = Math.floor(getSecureRandomNumber() * (maxBars - minBars + 1)) + minBars;
 
       // Random tries
-      triesLeft = Math.floor(Math.random() * 3) + 3; // e.g. 3–5 tries
+      triesLeft = Math.floor(getSecureRandomNumber() * 3) + 3; // e.g. 3–5 tries
 
       // Reset global barsData
       barsData = [];
 
       // Create each progress bar (slider) with random weight and random initial value
       for (let i = 0; i < numberOfBars; i++) {
-        const weight = Math.floor(Math.random() * 5) + 1; // Weight between 1 and 5
-        const initialValue = Math.floor(Math.random() * 101); // 0–100
+        const weight = Math.floor(getSecureRandomNumber() * 5) + 1; // Weight between 1 and 5
+        const initialValue = Math.floor(getSecureRandomNumber() * 101); // 0–100
 
         barsData.push({ weight, sliderValue: initialValue, sliderElement: null });
       }
 
       // Random target sum (you can tweak the range as you like)
       // For instance, let’s allow up to 5 * 100 * 5 = 2500 as a max
-      targetSum = Math.floor(Math.random() * 2501);
+      targetSum = Math.floor(getSecureRandomNumber() * 2501);
 
       // Build UI
       const container = document.getElementById('progressBarsContainer');
