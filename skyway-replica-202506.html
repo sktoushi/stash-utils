@@ -164,7 +164,28 @@ async function fetchCSV(csvFilename) {
     /* Shuffle rows (weight math is preserved because values remain) */
     shuffle(resolvedRows);
 
-    return resolvedRows;
+    const injections=[]; const normal=[];
+    for(const r of resolvedRows){
+      if(r[0].trim().toLowerCase()==='injection'){
+        const c=Math.max(1,parseInt(r[1],10)||1);
+        for(let i=0;i<c;i++) injections.push(['injection','1',r[2]]);
+      }else normal.push(r);
+    }
+    let rows=normal;
+    if(injections.length){
+      const total=rows.length+injections.length;
+      const step=total/injections.length;
+      let next=step/2,idx=0; const out=[];
+      for(let i=0;i<total;i++){
+        if(idx<injections.length && i>=Math.round(next)){
+          out.push(injections[idx++]);
+          next+=step;
+        }else if(rows.length) out.push(rows.shift());
+        else out.push(injections[idx++]);
+      }
+      rows=out;
+    }
+    return rows;
   } catch (error) {
     throw new Error('Error fetching CSV: ' + error.message);
   }
@@ -214,7 +235,7 @@ async function processRows(rows, recursionDepth = 0) {
 
   const rowType = selectedRow[0].trim();
 
-  if (rowType === 'link') {
+  if (rowType === 'link' || rowType === 'injection') {
     const url = selectedRow[2];
     console.log('Redirecting to link:', url);
     window.location.href = url;

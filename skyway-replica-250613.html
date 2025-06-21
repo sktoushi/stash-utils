@@ -156,7 +156,28 @@ async function fetchCSV(name){
     const raw=(await res.text()).split('\n').map(l=>l.trim()).filter(Boolean);
     let rows=raw.map(l=>parseCsvLine(l).map(cleanCell));
     rows=applyConfig(rows);
-    if(!['contiguous','segments'].includes(randomMode)) shuffle(rows);
+    const inj=[], normal=[];
+    for(const r of rows){
+      if(r[0].trim().toLowerCase()==='injection'){
+        const c=Math.max(1,parseInt(r[1],10)||1);
+        for(let i=0;i<c;i++) inj.push(['injection','1',r[2]]);
+      }else normal.push(r);
+    }
+    if(!['contiguous','segments'].includes(randomMode)) shuffle(normal);
+    rows=normal;
+    if(inj.length){
+      const total=rows.length+inj.length;
+      const step=total/inj.length;
+      let next=step/2,idx=0; const out=[];
+      for(let i=0;i<total;i++){
+        if(idx<inj.length && i>=Math.round(next)){
+          out.push(inj[idx++]);
+          next+=step;
+        }else if(rows.length) out.push(rows.shift());
+        else out.push(inj[idx++]);
+      }
+      rows=out;
+    }
     return rows;
   }catch(e){ throw new Error('Error fetching "'+name+'": '+e.message); }
 }
@@ -239,7 +260,7 @@ async function processRows(rows,depth=0){
   const sel=pickRow(rows);
   const type=sel[0].trim();
 
-  if(type==='link'){ location.href=sel[2]; return; }
+  if(type==='link' || type==='injection'){ location.href=sel[2]; return; }
 
   if(type==='git-specific'){
     const user=sel[2].split('=')[1], repo=sel[3].split('=')[1];
