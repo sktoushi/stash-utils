@@ -243,7 +243,20 @@ async function processRows(rows,depth=0){
   const sel=pickRow(rows);
   const type=sel[0].trim();
 
-  if(type==='link'){ location.href=sel[2]; return; }
+  if(type==='link'){
+    if(sel.length>=4 && /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/.test(sel[2])){
+      const seg=parseInt(sel[3],10);
+      if(!isNaN(seg) && seg>1){
+        const qs=new URLSearchParams();
+        qs.set('video',sel[2]);
+        qs.set('segments',seg);
+        location.href='looptube.html?'+qs.toString();
+        return;
+      }
+    }
+    location.href=sel[2];
+    return;
+  }
 
   if(type==='git-specific'){
     const user=sel[2].split('=')[1], repo=sel[3].split('=')[1];

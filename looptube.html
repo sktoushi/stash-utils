@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>LoopTube</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; }
+    #player { margin: 1em auto; width: 640px; height: 360px; }
+    #controls button { margin: 0.2em; }
+    textarea { width: 90%; height: 150px; margin-top: 1em; }
+  </style>
+</head>
+<body>
+<input id="urlInput" type="text" placeholder="YouTube URL" size="60">
+<button id="loadBtn">Load</button>
+<div id="player"></div>
+<div id="controls">
+  <button id="setStart">Set A</button>
+  <button id="setEnd">Set B</button>
+  <button id="toggleLoop">Start Loop</button>
+  <button id="randomSeg">Random Segment</button>
+</div>
+<textarea id="notes" placeholder="Take notes here..."></textarea>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+/* ==== BEGIN Skyway algorithm helpers (copied from skyway.html) ==== */
+const urlParams   = new URLSearchParams(location.search);
+const targetCsv   = urlParams.get('target');
+let   distributionArr = null;
+const distributionStr = urlParams.get('distribution');
+if (distributionStr) {
+  distributionArr = distributionStr.split(/[-,]/).map(n => parseInt(n.trim(),10)).filter(n => !isNaN(n) && n>0);
+}
+let distributionPool = [];
+const distributionsStr = urlParams.get('distributions');
+if (distributionsStr) {
+  const distEntries = distributionsStr.split(/[;|]/);
+  for (const entry of distEntries) {
+    const [distPart,wPart] = entry.split(/[:=]/);
+    if (!distPart || !wPart) continue;
+    const w = parseInt(wPart.trim(),10);
+    if (w<=0 || isNaN(w)) continue;
+    const arr = distPart.split(/[-,]/).map(x => parseInt(x.trim(),10)).filter(x => !isNaN(x)&&x>0);
+    if (arr.length) distributionPool.push({arr,weight:w});
+  }
+}
+let randomMode = (urlParams.get('randomMode') || 'weighted').toLowerCase();
+const modeWeightsStr = urlParams.get('modeWeights');
+if (modeWeightsStr) {
+  const allowed = new Set(['weighted','uniform','contiguous','segments']);
+  const mwList = modeWeightsStr.split(/[;,]/).map(p=>p.trim()).filter(Boolean).map(p=>{const[k,v]=p.split(/[:=|]/);return{mode:k?.trim().toLowerCase(),w:parseInt(v?.trim(),10)}}).filter(o=>allowed.has(o.mode)&&o.w>0&&!isNaN(o.w));
+  if (mwList.length) {
+    const tot = mwList.reduce((s,m)=>s+m.w,0);
+    let rnd = randInt(1,tot);
+    for (const m of mwList){ if(rnd<=m.w){ randomMode=m.mode; break;} rnd-=m.w; }
+  }
+}
+if ((distributionArr && distributionArr.length) || distributionPool.length)
+  randomMode='segments';
+let configValues={};
+async function loadConfig(){ if(Object.keys(configValues).length) return configValues; try{ const resp=await fetch('config/values.json'); if(resp.ok){ const raw=await resp.json(); const base=raw.base||{}; let patch={}; if(Array.isArray(raw.patches)&&raw.patches.length){ const weights=raw.patches.map(p=>Number(p.distributionWeight)||1); const tot=weights.reduce((a,b)=>a+b,0); let rnd=Math.random()*tot; for(let i=0;i<raw.patches.length;i++){ if(rnd<weights[i]){ patch={...raw.patches[i]}; break;} rnd-=weights[i]; } delete patch.distributionWeight; } configValues=Object.assign({},base,patch); } }catch(err){ console.error('Config load failed:',err);} return configValues; }
+function getSecureRandomNumber(){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]/(0xFFFFFFFF+1); }
+function randInt(min,max){ return Math.floor(getSecureRandomNumber()*(max-min+1))+min; }
+function pickIdxByWeights(freq){ const tot=freq.reduce((s,v)=>s+v,0); let rnd=randInt(1,tot); for(let i=0;i<freq.length;i++){ if(rnd<=freq[i]) return i; rnd-=freq[i]; } return freq.length-1; }
+function cleanCell(c){ return c.trim().replace(/^["']+|["']+$/g,''); }
+function parseCsvLine(l){ const out=[]; let cell='',inQ=false; for(let i=0;i<l.length;i++){ const ch=l[i]; if(ch==='"'){ if(inQ&&l[i+1]==='"'){cell+='"';i++;} else inQ=!inQ;} else if(ch===','&&!inQ){ out.push(cell); cell=''; } else cell+=ch; } out.push(cell); return out; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(getSecureRandomNumber()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function tryEvalExpr(str){ if(!/^[0-9+\-*/ ().]+$/.test(str)) return str; try{ const v=Function('"use strict";return ('+str+')')(); return Number.isFinite(v)?String(v):str; }catch{ return str; } }
+function applyConfig(rows){ const re=/\{([^}]+)}/g; return rows.map(r=>r.map(c=>{ const sub=c.replace(re,(m,p)=>Object.prototype.hasOwnProperty.call(configValues,p)?configValues[p]:m); return tryEvalExpr(sub);})); }
+async function fetchCSV(name){ await loadConfig(); try{ const res=await fetch(name); if(!res.ok) throw new Error(`${res.status} ${res.statusText}`); const raw=(await res.text()).split('\n').map(l=>l.trim()).filter(Boolean); let rows=raw.map(l=>parseCsvLine(l).map(cleanCell)); rows=applyConfig(rows); if(!['contiguous','segments'].includes(randomMode)) shuffle(rows); return rows; }catch(e){ throw new Error('Error fetching "'+name+'": '+e.message); }}
+function pickUniform(rows){ return rows[randInt(0,rows.length-1)]; }
+function pickWeighted(rows){ const list=rows.map(r=>({r,w:Math.max(1,parseInt(r[1],10)||1)})); const tot=list.reduce((s,x)=>s+x.w,0); let rnd=getSecureRandomNumber()*tot; for(const x of list){ if(rnd<x.w) return x.r; rnd-=x.w; } return list[list.length-1].r; }
+function pickContiguous(rows){ const tot=rows.reduce((s,r)=>s+Math.max(1,parseInt(r[1],10)||1),0); let rnd=randInt(1,tot); for(const r of rows){ const w=Math.max(1,parseInt(r[1],10)||1); if(rnd<=w) return r; rnd-=w; } return rows[rows.length-1]; }
+function pickSegments(rows){ let freq=null; if(distributionPool.length){ const weights=distributionPool.map(d=>d.weight); freq=distributionPool[pickIdxByWeights(weights)].arr.slice(); } else if(distributionArr&&distributionArr.length){ freq=distributionArr.slice(); } else return pickUniform(rows); const nRows=rows.length; if(freq.length>nRows){ const extra=freq.slice(nRows).reduce((s,v)=>s+v,0); freq=freq.slice(0,nRows); freq[nRows-1]+=extra; } const nReg=freq.length; const base=Math.floor(nRows/nReg); let rem=nRows%nReg; const bounds=[]; let start=0; for(let i=0;i<nReg;i++){ const sz=base+(i<rem?1:0); bounds.push([start,start+sz-1]); start+=sz; } const regIdx=pickIdxByWeights(freq); const [l,r]=bounds[regIdx]; return rows[randInt(l,r)]; }
+function pickRow(rows){ switch(randomMode){ case 'uniform': return pickUniform(rows); case 'contiguous': return pickContiguous(rows); case 'segments': return pickSegments(rows); case 'weighted': default: return pickWeighted(rows); }}
+async function processRows(rows,depth=0){ if(depth>2000) return document.body.textContent='Max CSV nesting depth exceeded.'; if(!rows.length) return document.body.textContent='CSV empty.'; for(const r of rows){ if(r[0].trim()==='csv' && parseInt(r[1],10)===0){ try{ r[1]=(await fetchCSV(r[2])).length.toString(); }catch(e){ console.error(e); r[1]='1'; } } } const sel=pickRow(rows); const type=sel[0].trim(); if(type==='link'){ if(sel.length>=4 && /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/.test(sel[2])){ const seg=parseInt(sel[3],10); if(!isNaN(seg)&&seg>1){ const qs=new URLSearchParams(); qs.set('video',sel[2]); qs.set('segments',seg); location.href='looptube.html?'+qs.toString(); return; } } location.href=sel[2]; return; } if(type==='git-specific'){ const user=sel[2].split('=')[1], repo=sel[3].split('=')[1]; const list=sel[4].split('=')[1].split('_'); location.href=`https://github.com/${user}/${repo}/issues/${list[randInt(0,list.length-1)]}`; return; } if(type==='git-range'){ const user=sel[2].split('=')[1], repo=sel[3].split('=')[1]; const [min,max]=sel[4].split('=')[1].split('_').map(Number); if(isNaN(min)||isNaN(max)) return document.body.textContent='Bad git-range row'; location.href=`https://github.com/${user}/${repo}/issues/${randInt(min,max)}`; return; } if(type==='csv'){ try{ return processRows(await fetchCSV(sel[2]),depth+1); }catch(e){ return document.body.textContent=e.message; } } document.body.textContent='Unknown row type: '+type; }
+/* ==== END Skyway algorithm helpers ==== */
+</script>
+<script>
+let player;
+let startTime=0;
+let endTime=0;
+let loopActive=false;
+function onYouTubeIframeAPIReady(){ createPlayer(initialVideoId()); }
+function createPlayer(id){ if(player) player.destroy(); player=new YT.Player('player',{height:'360',width:'640',videoId:id,events:{onReady:onPlayerReady}}); }
+function onPlayerReady(){ const segCount=parseInt(urlParams.get('segments')||'0',10); if(segCount>1){ pickRandomSegment(segCount); } else { endTime=player.getDuration(); } }
+function initialVideoId(){ const direct=urlParams.get('video'); if(direct) return extractVideoId(direct); return ''; }
+function extractVideoId(url){ const m=url.match(/[?&]v=([^&]+)/); if(m) return m[1]; const m2=url.match(/youtu\.be\/([^?]+)/); if(m2) return m2[1]; return url; }
+function loadVideo(){ const url=document.getElementById('urlInput').value.trim(); if(!url) return; const id=extractVideoId(url); createPlayer(id); }
+document.getElementById('loadBtn').onclick=loadVideo;
+document.getElementById('setStart').onclick=()=>{ if(player){ startTime=player.getCurrentTime(); }};
+document.getElementById('setEnd').onclick=()=>{ if(player){ endTime=player.getCurrentTime(); }};
+document.getElementById('toggleLoop').onclick=()=>{ loopActive=!loopActive; if(loopActive) checkLoop(); };
+document.getElementById('randomSeg').onclick=()=>{ if(player){ const n=parseInt(prompt('Segments?'),10); if(n>1) pickRandomSegment(n); }};
+function pickRandomSegment(n){ const dur=player.getDuration(); if(!dur) return; const segLen=dur/n; const idx=randInt(0,n-1); startTime=idx*segLen; endTime=(idx+1)*segLen; player.seekTo(startTime,true); loopActive=true; checkLoop(); }
+function checkLoop(){ if(!loopActive) return; if(player.getCurrentTime()>=endTime){ player.seekTo(startTime,true); } requestAnimationFrame(checkLoop); }
+window.addEventListener('keydown',e=>{ if(e.target.tagName==='TEXTAREA') return; if(e.code==='Space'){ e.preventDefault(); if(player.getPlayerState()==YT.PlayerState.PLAYING) player.pauseVideo(); else player.playVideo(); } else if(e.key==='a'){ if(player) startTime=player.getCurrentTime(); } else if(e.key==='b'){ if(player) endTime=player.getCurrentTime(); } else if(e.key==='l'){ loopActive=!loopActive; if(loopActive) checkLoop(); } else if(e.key==='n'){ document.getElementById('notes').focus(); } });
+window.onload=async ()=>{ if(targetCsv){ try{ await processRows(await fetchCSV(targetCsv)); }catch(e){ document.body.textContent=e.message; } } else if(urlParams.get('video')){ loadVideo(); } };
+</script>
+</body>
+</html>
