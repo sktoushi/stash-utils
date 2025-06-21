@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Private-Drive PDF Viewer</title>
+  <title>Private-Drive PDF Viewer (IndexedDB cache)</title>
 
-  <!-- Google Identity Services (GIS) -->
+  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" defer></script>
 
   <style>
-    html,body,iframe {margin:0;height:100%;width:100%;border:0}
-    body {font-family: sans-serif}
-    #err {padding:2rem;color:#b00}
+    html,body,iframe{margin:0;height:100%;width:100%;border:0}
+    body{font-family:sans-serif}
+    #err{padding:2rem;color:#b00}
   </style>
 </head>
 <body>
@@ -18,49 +18,92 @@
   <div id="err" hidden></div>
 
   <script defer>
-    /* ────  CONFIG  ─────────────────────────────────────────────── */
+    /* ─── CONFIG ─────────────────────────────────────────────────── */
     const CLIENT_ID = '569755047834-3mn8irblfmqa8puatv1iapdaj1ug86s3.apps.googleusercontent.com';
-    const API_KEY   = 'AIzaSyCYSqmh8zBqybd9Sg2F_9bkMz3PYImmaw4';                         // from GCP → Credentials
-    const FILE_ID   = '1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc';                   // 1w5-ntN… etc.
-    const PAGE_NUM  = 1;                                      // page to jump to
+    const API_KEY   = 'AIzaSyCYSqmh8zBqybd9Sg2F_9bkMz3PYImmaw4';
+    const FILE_ID   = '1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc';
     const SCOPES    = 'https://www.googleapis.com/auth/drive.readonly';
 
-    /* ────  MAIN  ───────────────────────────────────────────────── */
-    window.addEventListener('DOMContentLoaded', () => {
-      google.accounts.oauth2.initTokenClient({
-        client_id : CLIENT_ID,
-        scope     : SCOPES,
-        prompt    : '',
-        callback  : onToken
-      }).requestAccessToken({prompt:'consent'});  // shows picker if needed
+    /* page number from ?page=N  (default 1) */
+    const PAGE_NUM = (() => {
+      const n = parseInt(new URLSearchParams(location.search).get('page'), 10);
+      return Number.isFinite(n) && n > 0 ? n : 1;
+    })();
+
+    /* ─── IndexedDB helpers ──────────────────────────────────────── */
+    const dbPromise = new Promise(res => {
+      const req = indexedDB.open('pdfCache', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('files');
+      req.onsuccess       = () => res(req.result);
+      req.onerror         = () => res(null);                // fallback ⇒ no caching
     });
 
-    async function onToken(resp) {
-      if (resp.error) { return showError(resp.error); }
+    const getCachedBlob = async key => {
+      const db = await dbPromise;
+      if (!db) return null;
+      return new Promise(r => {
+        const tx = db.transaction('files', 'readonly');
+        const g  = tx.objectStore('files').get(key);
+        g.onsuccess = () => r(g.result || null);
+        g.onerror   = () => r(null);
+      });
+    };
 
-      const url = `https://www.googleapis.com/drive/v3/files/${FILE_ID}`
-                + `?alt=media&supportsAllDrives=true&key=${API_KEY}`;
-
+    const putCachedBlob = async (key, blob) => {
+      const db = await dbPromise;
+      if (!db) return;
       try {
-        const blob = await fetch(url, {
-          headers: { Authorization: `Bearer ${resp.access_token}` }
-        }).then(r => r.ok ? r.blob()
-                          : r.json().then(e => Promise.reject(e.error.message)));
+        const tx = db.transaction('files', 'readwrite');
+        tx.objectStore('files').put(blob, key);
+      } catch { /* quota exceeded → silently ignore */ }
+    };
 
-        const objUrl = URL.createObjectURL(blob);
-        const iframe = document.getElementById('pdf');
-        iframe.src   = `${objUrl}#page=${PAGE_NUM}`;
-        iframe.hidden = false;
-      } catch (err) {
-        showError(err);
-      }
+    /* ─── render helper ──────────────────────────────────────────── */
+    function showPdf(blob) {
+      const iframe = document.getElementById('pdf');
+      iframe.src   = `${URL.createObjectURL(blob)}#page=${PAGE_NUM}`;
+      iframe.hidden = false;
     }
-
     function showError(msg) {
-      document.getElementById('err').textContent = '💥 ' + msg;
-      document.getElementById('err').hidden = false;
+      const div = document.getElementById('err');
+      div.textContent = '💥 ' + msg;
+      div.hidden = false;
       console.error(msg);
     }
+
+    /* ─── MAIN FLOW ──────────────────────────────────────────────── */
+    (async () => {
+      const cached = await getCachedBlob(FILE_ID);
+      if (cached) {                       // cache-hit → instant load
+        console.log('📦 cache hit');
+        return showPdf(cached);
+      }
+
+      /* cache-miss → run OAuth then fetch */
+      console.log('⬇️  cache miss – fetching Drive');
+      google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope    : SCOPES,
+        prompt   : '',
+        callback : async resp => {
+          if (resp.error) return showError(resp.error);
+
+          try {
+            const url  = `https://www.googleapis.com/drive/v3/files/${FILE_ID}` +
+                         `?alt=media&supportsAllDrives=true&key=${API_KEY}`;
+            const blob = await fetch(url, {
+              headers: { Authorization: `Bearer ${resp.access_token}` }
+            }).then(r => r.ok ? r.blob()
+                              : r.json().then(e => Promise.reject(e.error.message)));
+
+            showPdf(blob);               // display first
+            putCachedBlob(FILE_ID, blob); // then save for next time
+          } catch (err) {
+            showError(err);
+          }
+        }
+      }).requestAccessToken({prompt:'consent'});
+    })();
   </script>
 </body>
 </html>
