@@ -1,65 +1,44 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Drive-private PDF (no backend)</title>
+  <meta charset="utf-8" />
+  <title>Drive-private PDF (GIS only)</title>
 
-  <!-- 1️⃣  Google Identity Services -->
+  <!-- Google Identity Services – this is the ONLY Google JS you need -->
   <script src="https://accounts.google.com/gsi/client" defer></script>
-
-  <!-- 2️⃣  gapi client (Drive REST) -->
-  <script src="https://apis.google.com/js/api.js"   defer></script>
 
   <style>html,body,iframe{margin:0;height:100%;width:100%;border:0}</style>
 </head>
 <body>
   <iframe id="pdf"></iframe>
 
-  <!-- 3️⃣  Our code runs LAST, after both libraries are executed -->
   <script defer>
-    /* ---------- CONFIG --------------------------------------------------- */
+    /* ---------- CONFIG -------------------------------------------------- */
     const CLIENT_ID = '569755047834-3mn8irblfmqa8puatv1iapdaj1ug86s3.apps.googleusercontent.com';
-    const FILE_ID   = '1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc';   // Drive file
-    const PAGE      = 21;                                     // start page
+    const FILE_ID   = '1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc';  // Drive file
+    const PAGE      = 21;                                    // start page
     const SCOPES    = 'https://www.googleapis.com/auth/drive.readonly';
 
-    /* ---------- Wait for DOM + both libraries ---------------------------- */
-    window.addEventListener('DOMContentLoaded', init);
-
-    async function init() {
-      /* 1. Make sure gapi is ready */
-      await new Promise(r => gapi.load('client', r));
-
-      /* 2. Set up Drive API (no API-key needed for OAuth flow) */
-      await gapi.client.init({clientId: CLIENT_ID, scope: SCOPES});
-
-      /* 3. Get an access-token that includes Drive scope */
-      const tokenClient = google.accounts.oauth2.initTokenClient({
+    /* ---------- 1.  Ask Google for an access-token ---------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope    : SCOPES,
-        callback : async (resp) => {
-          if (resp.error) { alert(resp.error); return; }
-          gapi.client.setToken({access_token: resp.access_token});
-          await renderPdf();            // all set—download & display
-        }
-      });
+        prompt   : '',                    // silent if user is already signed-in
+        callback : handleToken,
+      }).requestAccessToken({prompt: 'consent'});  // fallback: show picker
+    });
 
-      /* 4. Prompt user to pick an account (popup) */
-      tokenClient.requestAccessToken({prompt: 'consent'});
-    }
+    /* ---------- 2.  Use fetch() + Bearer token to grab the bytes -------- */
+    async function handleToken(resp) {
+      if (resp.error) { alert(resp.error); return; }
 
-    /* ----- Download bytes and stream into iframe ------------------------ */
-    async function renderPdf() {
-      const resp = await gapi.client.drive.files.get({
-        fileId      : FILE_ID,
-        alt         : 'media'
-      });
+      const pdfBlob = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media`,
+        { headers: { Authorization: `Bearer ${resp.access_token}` } }
+      ).then(r => r.ok ? r.blob() : Promise.reject(r.statusText));
 
-      /* gapi hands back an ArrayBuffer */
-      const buf  = resp.body;
-      const blob = new Blob([buf], {type:'application/pdf'});
-      const url  = URL.createObjectURL(blob);
-
+      const url = URL.createObjectURL(pdfBlob);
       document.getElementById('pdf').src = `${url}#page=${PAGE}`;
     }
   </script>
