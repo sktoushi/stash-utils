@@ -29,6 +29,10 @@
     "theSnackbarEnding": "33",
     "imgStarting": "1",
     "imgEnding": "195",
+    "progressCurrentValueFormula": "publicRepoEnding + stashEnding + stash1p5Ending + stash2Ending + stash3Ending",
+    "progressTargetValueFormula": "18393",
+    "lastUpdated": "2025-06-22T04:20:22+08:00",
+    "progressBasis": "568",
     "dbviewerLinks": {
       "baseURL": "https://sktoushi.github.io/ref2506/dbviewer.html?db=",
       "files": [
