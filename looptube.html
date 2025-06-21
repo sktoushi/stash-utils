@@ -156,6 +156,7 @@ async function setupSegment(){
   await updateGlobalStats();
   awaitingNext=false;
   hideNextBtn();
+  document.getElementById('progressBar').style.width='100%';
 }
 
 async function updateStatsDisplay(){
@@ -301,11 +302,11 @@ async function onPlayerReady(){
   if(!isNaN(s) && !isNaN(e)){
     startTime=s; endTime=e;
   } else if(segCount>1){
-    await pickRandomSegment(segCount);
-    return;
+    const ok = await pickRandomSegment(segCount);
+    if(ok) return;
   } else {
     startTime=0;
-    endTime=player.getDuration();
+    endTime=await waitForDuration();
   }
   await setupSegment();
   player.seekTo(startTime,true);
@@ -317,6 +318,14 @@ function initialVideoId(){ const direct=urlParams.get('video'); if(direct) retur
 function extractVideoId(url){ const m=url.match(/[?&]v=([^&]+)/); if(m) return m[1]; const m2=url.match(/youtu\.be\/([^?]+)/); if(m2) return m2[1]; return url; }
 function loadVideo(){ const url=document.getElementById('urlInput').value.trim(); if(!url) return; const id=extractVideoId(url); createPlayer(id); }
 document.getElementById('loadBtn').onclick=loadVideo;
+
+async function waitForDuration(){
+  return new Promise(res=>{
+    const check=()=>{ const d=player.getDuration(); if(d) res(d); else setTimeout(check,100); };
+    check();
+  });
+}
+
 document.getElementById('setStart').onclick=()=>{ if(player){ startTime=player.getCurrentTime(); }};
 document.getElementById('setEnd').onclick=()=>{ if(player){ endTime=player.getCurrentTime(); }};
 document.getElementById('toggleLoop').onclick=()=>{ loopActive=!loopActive; if(loopActive) checkLoop(); };
@@ -336,8 +345,9 @@ document.getElementById('shareBtn').onclick=async()=>{
   location.href=`https://github.com/${repo}/issues/new/choose`;
 };
 async function pickRandomSegment(n){
-  const dur=player.getDuration();
-  if(!dur) return;
+  let dur=player.getDuration();
+  if(!dur) dur = await waitForDuration();
+  if(!dur) return false;
   const segLen=dur/n;
   const idx=randInt(0,n-1);
   startTime=idx*segLen;
@@ -347,6 +357,7 @@ async function pickRandomSegment(n){
   player.playVideo();
   loopActive=true;
   checkLoop();
+  return true;
 }
 function checkLoop(){
   if(!loopActive) return;
