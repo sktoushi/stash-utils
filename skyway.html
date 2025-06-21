@@ -351,6 +351,10 @@ async function processRows(rows,depth=0){
     location.href=handleSkywayLink(sel,pickBucketItem);
     return;
   }
+  if(type==='link-jp'){
+    location.href=handleSkywayLink(sel,pickBucketItem,true);
+    return;
+  }
 
   if(type==='git-specific'){
     const user=sel[2].split('=')[1], repo=sel[3].split('=')[1];
