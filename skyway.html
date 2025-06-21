@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <script src="common/random-utils.js"></script>
+    <script src="common/skyway-utils.js"></script>
   <meta charset="UTF-8">
   <title>skyway.html – Hierarchical Multi-Mode Randomizer (multi-distribution)</title>
 </head>
@@ -325,21 +326,8 @@ async function processRows(rows,depth=0){
   }
   const sel=pickRow(rows);
   const type=sel[0].trim();
-
   if(type==='link'){
-    if(sel.length>=4 && /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)/.test(sel[2])){
-      const seg=parseInt(sel[3],10);
-      if(!isNaN(seg) && seg>1){
-        const qs=new URLSearchParams();
-        qs.set('video',sel[2]);
-        qs.set('segments',seg);
-        const defaultUrl='looptube.html?'+qs.toString();
-        const picked=pickBucketItem();
-        location.href=picked||defaultUrl;
-        return;
-      }
-    }
-    location.href=sel[2];
+    location.href=handleSkywayLink(sel,pickBucketItem);
     return;
   }
 
