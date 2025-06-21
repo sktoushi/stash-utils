@@ -31,7 +31,9 @@
     <button id="randomSeg" class="btn btn-secondary">Random Segment</button>
     <button id="shareBtn" class="btn btn-success">Share</button>
   </div>
-  <div class="mb-3">Minutes watched: <span id="minutesWatched">0</span></div>
+  <div class="mb-3">Minutes watched: <span id="minutesWatched">0</span>
+    <button id="clearStats" class="btn btn-success ms-2">Clear Stats</button>
+  </div>
   <div id="watchStats" class="mb-3 text-start">
     <div id="watchedToday"></div>
     <div id="watchedWeek"></div>
@@ -103,7 +105,7 @@ let endTime=0;
 let loopActive=false;
 let watchLog=JSON.parse(localStorage.getItem("watchLog")||"{}");
 let watchedSeconds=0;
-let lastPlayerTime=0;
+let lastPlayerTime=null;
 let trackInterval=null;
 function addWatchTime(delta){
   const d=new Date().toISOString().slice(0,10);
@@ -155,13 +157,20 @@ function updateStatsDisplay(){
   document.getElementById("watchedYear").textContent=formatDuration(thisYear)+percentChange(thisYear,prevYear);
   document.getElementById("watchedAll").textContent=formatDuration(allTime);
 }
-function startTracking(){
-  if(player) lastPlayerTime=player.getCurrentTime();
+function startTracking(reset=false){
+  if(reset) lastPlayerTime=null;
   if(trackInterval||!player) return;
   trackInterval=setInterval(()=>{
     if(player.getPlayerState&&player.getPlayerState()===YT.PlayerState.PLAYING){
       const t=player.getCurrentTime();
-      if(t>=lastPlayerTime){ const d=t-lastPlayerTime; watchedSeconds+=d; addWatchTime(d); }
+      if(lastPlayerTime===null){ lastPlayerTime=t; return; }
+      if(t>=lastPlayerTime){
+        const d=t-lastPlayerTime;
+        if(d>0 && d<5){
+          watchedSeconds+=d;
+          addWatchTime(d);
+        }
+      }
       lastPlayerTime=t;
       updateMinutesDisplay();
     } else if(player) {
@@ -186,7 +195,7 @@ function onPlayerReady(){
   } else {
     endTime=player.getDuration();
   }
-  startTracking();
+  startTracking(true);
 }
 function initialVideoId(){ const direct=urlParams.get('video'); if(direct) return extractVideoId(direct); return ''; }
 function extractVideoId(url){ const m=url.match(/[?&]v=([^&]+)/); if(m) return m[1]; const m2=url.match(/youtu\.be\/([^?]+)/); if(m2) return m2[1]; return url; }
@@ -209,6 +218,12 @@ document.getElementById('shareBtn').onclick=async()=>{
   u.searchParams.set('end',Math.round(endTime));
   try{ await navigator.clipboard.writeText(u.toString()); }catch(e){ console.error('copy failed',e); }
   location.href=`https://github.com/${repo}/issues/new/choose`;
+};
+document.getElementById('clearStats').onclick=()=>{
+  watchLog={};
+  localStorage.removeItem('watchLog');
+  watchedSeconds=0;
+  updateMinutesDisplay();
 };
 function pickRandomSegment(n){ const dur=player.getDuration(); if(!dur) return; const segLen=dur/n; const idx=randInt(0,n-1); startTime=idx*segLen; endTime=(idx+1)*segLen; player.seekTo(startTime,true); loopActive=true; checkLoop(); }
 function checkLoop(){ if(!loopActive) return; if(player.getCurrentTime()>=endTime){ player.seekTo(startTime,true); } requestAnimationFrame(checkLoop); }
