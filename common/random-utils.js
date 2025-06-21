@@ -4,6 +4,10 @@ function getSecureRandomNumber() {
   return array[0] / (0xFFFFFFFF + 1);
 }
 
+function randInt(min, max) {
+  return Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
+}
+
 function getRandomIndexByFrequency(frequencyArray) {
     // Calculate the cumulative sum of frequencies
     const cumulativeSum = [];
