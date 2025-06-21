@@ -32,7 +32,7 @@
             ];
 
             // Randomly pick a QnA
-            const randomIndex = Math.floor(Math.random() * qna.length);
+            const randomIndex = Math.floor(getSecureRandomNumber() * qna.length);
             const selectedQnA = qna[randomIndex];
 
             // Show the question first

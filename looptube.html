@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="common/random-utils.js"></script>
   <meta charset="UTF-8">
   <title>LoopTube</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -63,9 +64,7 @@ if (modeWeightsStr) {
 if ((distributionArr && distributionArr.length) || distributionPool.length)
   randomMode='segments';
 let configValues={};
-async function loadConfig(){ if(Object.keys(configValues).length) return configValues; try{ const resp=await fetch('config/values.json'); if(resp.ok){ const raw=await resp.json(); const base=raw.base||{}; let patch={}; if(Array.isArray(raw.patches)&&raw.patches.length){ const weights=raw.patches.map(p=>Number(p.distributionWeight)||1); const tot=weights.reduce((a,b)=>a+b,0); let rnd=Math.random()*tot; for(let i=0;i<raw.patches.length;i++){ if(rnd<weights[i]){ patch={...raw.patches[i]}; break;} rnd-=weights[i]; } delete patch.distributionWeight; } configValues=Object.assign({},base,patch); } }catch(err){ console.error('Config load failed:',err);} return configValues; }
-function getSecureRandomNumber(){ const a=new Uint32Array(1); crypto.getRandomValues(a); return a[0]/(0xFFFFFFFF+1); }
-function randInt(min,max){ return Math.floor(getSecureRandomNumber()*(max-min+1))+min; }
+async function loadConfig(){ if(Object.keys(configValues).length) return configValues; try{ const resp=await fetch('config/values.json'); if(resp.ok){ const raw=await resp.json(); const base=raw.base||{}; let patch={}; if(Array.isArray(raw.patches)&&raw.patches.length){ const weights=raw.patches.map(p=>Number(p.distributionWeight)||1); const tot=weights.reduce((a,b)=>a+b,0); let rnd=getSecureRandomNumber()*tot; for(let i=0;i<raw.patches.length;i++){ if(rnd<weights[i]){ patch={...raw.patches[i]}; break;} rnd-=weights[i]; } delete patch.distributionWeight; } configValues=Object.assign({},base,patch); } }catch(err){ console.error('Config load failed:',err);} return configValues; }
 function pickIdxByWeights(freq){ const tot=freq.reduce((s,v)=>s+v,0); let rnd=randInt(1,tot); for(let i=0;i<freq.length;i++){ if(rnd<=freq[i]) return i; rnd-=freq[i]; } return freq.length-1; }
 function cleanCell(c){ return c.trim().replace(/^["']+|["']+$/g,''); }
 function parseCsvLine(l){ const out=[]; let cell='',inQ=false; for(let i=0;i<l.length;i++){ const ch=l[i]; if(ch==='"'){ if(inQ&&l[i+1]==='"'){cell+='"';i++;} else inQ=!inQ;} else if(ch===','&&!inQ){ out.push(cell); cell=''; } else cell+=ch; } out.push(cell); return out; }

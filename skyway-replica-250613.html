@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="common/random-utils.js"></script>
   <meta charset="UTF-8">
   <title>skyway.html – Hierarchical Multi-Mode Randomizer (multi-distribution)</title>
 </head>
@@ -90,7 +91,7 @@ async function loadConfig() {
       if (Array.isArray(raw.patches) && raw.patches.length) {
         const weights = raw.patches.map(p => Number(p.distributionWeight) || 1);
         const tot = weights.reduce((a, b) => a + b, 0);
-        let rnd = Math.random() * tot;
+        let rnd = getSecureRandomNumber() * tot;
         for (let i = 0; i < raw.patches.length; i++) {
           if (rnd < weights[i]) { patch = { ...raw.patches[i] }; break; }
           rnd -= weights[i];
@@ -104,11 +105,6 @@ async function loadConfig() {
 }
 
 /* ──────────────── RANDOM HELPERS ──────────────── */
-function getSecureRandomNumber() {
-  const a = new Uint32Array(1);
-  crypto.getRandomValues(a);
-  return a[0] / (0xFFFFFFFF + 1);
-}
 function randInt(min, max) { return Math.floor(getSecureRandomNumber()*(max-min+1))+min; }
 function pickIdxByWeights(freq) {
   const tot=freq.reduce((s,v)=>s+v,0);

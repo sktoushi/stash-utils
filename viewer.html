@@ -31,7 +31,7 @@
         }
 
         function getRandomPage(startIdx, endIdx) {
-            return Math.floor(Math.random() * (endIdx - startIdx + 1)) + startIdx;
+            return Math.floor(getSecureRandomNumber() * (endIdx - startIdx + 1)) + startIdx;
         }
 
         function displayPdf() {

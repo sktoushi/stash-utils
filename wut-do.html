@@ -80,7 +80,7 @@
         // Function to pick a random activity based on weights
         function getRandomActivity(activities) {
             let totalWeight = Object.values(activities).reduce((sum, w) => sum + w, 0);
-            let random = Math.random() * totalWeight;
+            let random = getSecureRandomNumber() * totalWeight;
             let cumulativeWeight = 0;
 
             for (let activity in activities) {

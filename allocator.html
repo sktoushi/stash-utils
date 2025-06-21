@@ -101,7 +101,7 @@
             console.log("Ranges:", ranges);
 
             // Step 2: Pick a random number within the total weighted range
-            let randomWeight = Math.floor(Math.random() * totalWeight);
+            let randomWeight = Math.floor(getSecureRandomNumber() * totalWeight);
             let cumulativeWeight = 0;
 
             // Step 3: Determine which range and index the random weight falls into

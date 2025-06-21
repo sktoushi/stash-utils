@@ -30,7 +30,7 @@
         ];
 
         window.onload = function() {
-            const randomQnA = qna[Math.floor(Math.random() * qna.length)];
+            const randomQnA = qna[Math.floor(getSecureRandomNumber() * qna.length)];
             alert("Question: " + randomQnA.question);
             alert("Answer: " + randomQnA.answer);
         };

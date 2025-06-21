@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="common/random-utils.js"></script>
     <meta charset="UTF-8">
     <title>Ralloc</title>
     <!-- Include Bootstrap CSS -->
@@ -342,11 +343,6 @@
     <!-- Custom JavaScript -->
     <script>
 
-        function getSecureRandomNumber() {
-            const array = new Uint32Array(1);
-            window.crypto.getRandomValues(array);
-            return array[0] / (0xFFFFFFFF + 1);
-        }
 
         $(document).ready(function() {
             // Initialize tooltips

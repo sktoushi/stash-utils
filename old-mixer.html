@@ -181,8 +181,8 @@ function jumbleSentence(sentence, difficulty) {
     var shuffledIndices = wordIndices.slice();
     if (difficulty > 0) {
         for (var i = shuffledIndices.length - 1; i > 0; i--) {
-            if (Math.random() < (difficulty / 100)) {
-                var j = Math.floor(Math.random() * (i + 1));
+            if (getSecureRandomNumber() < (difficulty / 100)) {
+                var j = Math.floor(getSecureRandomNumber() * (i + 1));
                 var temp = shuffledIndices[i];
                 shuffledIndices[i] = shuffledIndices[j];
                 shuffledIndices[j] = temp;

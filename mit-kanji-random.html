@@ -40,7 +40,7 @@
             ];
 
             // Randomly choose a URL
-            var randomIndex = Math.floor(Math.random() * urls.length);
+            var randomIndex = Math.floor(getSecureRandomNumber() * urls.length);
             var randomUrl = urls[randomIndex];
 
             // Redirect to the chosen URL

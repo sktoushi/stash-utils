@@ -8,7 +8,7 @@
       // Range is 030–200 inclusive
       var min = 30;
       var max = 200;
-      var num = Math.floor(Math.random() * (max - min + 1)) + min;
+      var num = Math.floor(getSecureRandomNumber() * (max - min + 1)) + min;
       var padded = ('000' + num).slice(-3);   // zero‑pad to 3 digits
 
       // Build the verbatim GitHub URL (non‑raw, points to the blob page)

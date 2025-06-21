@@ -56,7 +56,7 @@
         function getRandomLetters(numLetters) {
             const letters = [];
             for (let i = 0; i < numLetters; i++) {
-                const randomCharCode = Math.floor(Math.random() * 26) + 97; // a = 97, z = 122
+                const randomCharCode = Math.floor(getSecureRandomNumber() * 26) + 97; // a = 97, z = 122
                 letters.push(String.fromCharCode(randomCharCode));
             }
             return letters;
@@ -78,7 +78,7 @@
 
             if (!isNaN(maxLetters) && maxLetters >= 2) {
                 // Random number between 2 and maxLetters
-                const numLetters = Math.floor(Math.random() * (maxLetters - 2 + 1)) + 2;
+                const numLetters = Math.floor(getSecureRandomNumber() * (maxLetters - 2 + 1)) + 2;
                 const randomLetters = getRandomLetters(numLetters);
                 // Display the letters in the webpage
                 lettersElement.textContent = randomLetters.join(' + ');

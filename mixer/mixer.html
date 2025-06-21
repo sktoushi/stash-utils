@@ -262,7 +262,7 @@
             var originalSentence = sentence.trim();
 
             // Generate random difficulty between 0 and 100
-            var difficulty = Math.floor(Math.random() * 101);
+            var difficulty = Math.floor(getSecureRandomNumber() * 101);
 
             // Jumble the sentence with the difficulty
             var jumbledSentence = jumbleSentence(originalSentence, difficulty);
@@ -396,8 +396,8 @@
         var shuffledIndices = wordIndices.slice();
         if (difficulty > 0) {
             for (var i = shuffledIndices.length - 1; i > 0; i--) {
-                if (Math.random() < (difficulty / 100)) {
-                    var j = Math.floor(Math.random() * (i + 1));
+                if (getSecureRandomNumber() < (difficulty / 100)) {
+                    var j = Math.floor(getSecureRandomNumber() * (i + 1));
                     var temp = shuffledIndices[i];
                     shuffledIndices[i] = shuffledIndices[j];
                     shuffledIndices[j] = temp;
@@ -423,7 +423,7 @@
 
     // Function to get a random hex color
     function getRandomHexColor() {
-        var hex = '#' + Math.floor(Math.random() * 16777215).toString(16);
+        var hex = '#' + Math.floor(getSecureRandomNumber() * 16777215).toString(16);
         return hex.padEnd(7, '0'); // Ensure the hex code is 7 characters
     }
 
@@ -653,7 +653,7 @@
         // Get three random words
         var selectedWords = [];
         for (var i = 0; i < 3 && meaningfulWords.length > 0; i++) {
-            var index = Math.floor(Math.random() * meaningfulWords.length);
+            var index = Math.floor(getSecureRandomNumber() * meaningfulWords.length);
             selectedWords.push(meaningfulWords.splice(index, 1)[0]);
         }
 

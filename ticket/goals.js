@@ -300,7 +300,7 @@ function showGoalTicketsModal(goal) {
 
 // Function to generate a random hex color (same as in tickets.js)
 function generateRandomHexColor() {
-    let color = '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+    let color = '#' + Math.floor(getSecureRandomNumber()*16777215).toString(16).padStart(6, '0');
     return color.toUpperCase();
 }
 

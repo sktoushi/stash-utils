@@ -44,7 +44,7 @@
 
         // Function to trigger Q&A randomizer
         function triggerRandomQA() {
-            const randomIndex = Math.floor(Math.random() * qaSet.length);
+            const randomIndex = Math.floor(getSecureRandomNumber() * qaSet.length);
             const selectedQA = qaSet[randomIndex];
 
             // First alert with the question

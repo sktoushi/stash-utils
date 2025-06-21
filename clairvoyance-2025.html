@@ -324,33 +324,33 @@
       lettersSubset = getRandomLetters(10);
 
       // Randomize category probabilities
-      let w1 = Math.random(), w2 = Math.random(), w3 = Math.random();
+      let w1 = getSecureRandomNumber(), w2 = getSecureRandomNumber(), w3 = getSecureRandomNumber();
       let sum = w1 + w2 + w3;
       probLetters = w1 / sum;
       probNumbers = w2 / sum;
       probSpecials = w3 / sum;
 
       // Random coefficients
-      randomCoefficient1 = Math.random();
+      randomCoefficient1 = getSecureRandomNumber();
       do {
-        randomCoefficient2 = Math.random();
+        randomCoefficient2 = getSecureRandomNumber();
       } while (randomCoefficient2 <= randomCoefficient1);
     }
 
     function makeDraw(userGuess) {
-      const r = Math.random();
+      const r = getSecureRandomNumber();
       let chosenCategory;
       let chosenChar;
 
       if (r < probLetters) {
         chosenCategory = "letter";
-        chosenChar = lettersSubset[Math.floor(Math.random() * lettersSubset.length)];
+        chosenChar = lettersSubset[Math.floor(getSecureRandomNumber() * lettersSubset.length)];
       } else if (r < probLetters + probNumbers) {
         chosenCategory = "number";
-        chosenChar = numbers[Math.floor(Math.random() * numbers.length)];
+        chosenChar = numbers[Math.floor(getSecureRandomNumber() * numbers.length)];
       } else {
         chosenCategory = "special";
-        chosenChar = specials[Math.floor(Math.random() * specials.length)];
+        chosenChar = specials[Math.floor(getSecureRandomNumber() * specials.length)];
       }
 
       const userCategory = getCategory(userGuess);
@@ -415,7 +415,7 @@
       const copy = [...allLetters];
       const chosen = [];
       for (let i = 0; i < count; i++) {
-        const index = Math.floor(Math.random() * copy.length);
+        const index = Math.floor(getSecureRandomNumber() * copy.length);
         chosen.push(copy[index]);
         copy.splice(index, 1);
       }

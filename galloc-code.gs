@@ -22,7 +22,7 @@ function getRandomContentFromSheet(repo) {
     }
 
     // Randomly select a row (skipping the header row)
-    const randomIndex = Math.floor(Math.random() * (data.length - 1)) + 1;
+    const randomIndex = Math.floor(getSecureRandomNumber() * (data.length - 1)) + 1;
     const content = data[randomIndex][1]; // Assuming 'content' is in the second column
 
     return content;
