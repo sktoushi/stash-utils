@@ -28,6 +28,17 @@ async function loadConfig(){
         delete patch.distributionWeight;
       }
       configValues = Object.assign({}, base, patch);
+      if(configValues['current-era-stash']){
+        const [u,r] = configValues['current-era-stash'].split('/');
+        configValues.repoUser=u; configValues.repoName=r;
+      }
+      if(Array.isArray(configValues.recent5Settings)){
+        configValues.recent5Settings=configValues.recent5Settings.map(s=>({
+          ...s,
+          username:(s.username||'{repoUser}').replace('{repoUser}',configValues.repoUser||''),
+          repository:(s.repository||'{repoName}').replace('{repoName}',configValues.repoName||'')
+        }));
+      }
     }
   }catch(e){ console.error('Config load failed:',e); }
   return configValues;

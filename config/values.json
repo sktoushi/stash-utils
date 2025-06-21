@@ -51,11 +51,12 @@
     "skyway-recent5-coefficient": "1",
     "recent5Settings": [
       {
-        "username": "cjcaf1995",
-        "repository": "stash3",
+        "username": "{repoUser}",
+        "repository": "{repoName}",
         "csvUrl": "skyway-stash3.csv"
       }
-    ]
+    ],
+    "current-era-stash": "cjcaf1995/stash3"
   },
   "patches": [
     {
