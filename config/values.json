@@ -50,14 +50,13 @@
     },
     "skyway-recent5-coefficient": "1",
     "skyway-lever-japanese-listening-2506": "1",
+    "stashUsername": "cjcaf1995",
+    "stashRepository": "stash3",
     "recent5Settings": [
       {
-        "username": "cjcaf1995",
-        "repository": "stash3",
         "csvUrl": "skyway-stash3.csv"
       }
-    ],
-    "current-era-stash": "cjcaf1995/stash3"
+    ]
   },
   "patches": [
     {
