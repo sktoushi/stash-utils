@@ -1,45 +1,67 @@
-<!doctype html><html><head><meta charset="utf-8">
-<title>Private Drive PDF</title>
-<style>html,body,iframe{margin:0;height:100%;width:100%;border:0}</style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://apis.google.com/js/api.js" async defer></script>
-</head><body>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Drive-private PDF (no backend)</title>
 
-<iframe id="pdf"></iframe>
+  <!-- 1️⃣  Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" defer></script>
 
-<script>
-  const CLIENT_ID = '569755047834-3mn8irblfmqa8puatv1iapdaj1ug86s3.apps.googleusercontent.com';
-  const FILE_ID   = '1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc';
-  const PAGE      = 21 ;                         // starting page
+  <!-- 2️⃣  gapi client (Drive REST) -->
+  <script src="https://apis.google.com/js/api.js"   defer></script>
 
-  // 1) one-tap sign-in
-  google.accounts.id.initialize({
-    client_id: CLIENT_ID,
-    callback  : tokenResponse => start(tokenResponse.credential)
-  });
-  google.accounts.id.prompt();                // shows the Google picker
+  <style>html,body,iframe{margin:0;height:100%;width:100%;border:0}</style>
+</head>
+<body>
+  <iframe id="pdf"></iframe>
 
-  async function start(idToken) {
-    // 2) set up gapi client with Drive scope
-    await new Promise(r => gapi.load('client', r));
-    await gapi.client.init({
-      apiKey     : '',                        // not needed for OAuth flow
-      clientId   : CLIENT_ID,
-      scope      : 'https://www.googleapis.com/auth/drive.readonly'
-    });
-    gapi.client.setToken({access_token: idToken});
+  <!-- 3️⃣  Our code runs LAST, after both libraries are executed -->
+  <script defer>
+    /* ---------- CONFIG --------------------------------------------------- */
+    const CLIENT_ID = '569755047834-3mn8irblfmqa8puatv1iapdaj1ug86s3.apps.googleusercontent.com';
+    const FILE_ID   = '1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc';   // Drive file
+    const PAGE      = 21;                                     // start page
+    const SCOPES    = 'https://www.googleapis.com/auth/drive.readonly';
 
-    // 3) download the file (alt=media) as ArrayBuffer
-    const resp = await gapi.client.request({
-      path : `/drive/v3/files/${FILE_ID}`,
-      method: 'GET',
-      params: {alt: 'media'},
-      responseType: 'arraybuffer'
-    });
+    /* ---------- Wait for DOM + both libraries ---------------------------- */
+    window.addEventListener('DOMContentLoaded', init);
 
-    const blob = new Blob([resp.body], {type:'application/pdf'});
-    document.getElementById('pdf').src =
-      `${URL.createObjectURL(blob)}#page=${PAGE}`;
-  }
-</script>
-</body></html>
+    async function init() {
+      /* 1. Make sure gapi is ready */
+      await new Promise(r => gapi.load('client', r));
+
+      /* 2. Set up Drive API (no API-key needed for OAuth flow) */
+      await gapi.client.init({clientId: CLIENT_ID, scope: SCOPES});
+
+      /* 3. Get an access-token that includes Drive scope */
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope    : SCOPES,
+        callback : async (resp) => {
+          if (resp.error) { alert(resp.error); return; }
+          gapi.client.setToken({access_token: resp.access_token});
+          await renderPdf();            // all set—download & display
+        }
+      });
+
+      /* 4. Prompt user to pick an account (popup) */
+      tokenClient.requestAccessToken({prompt: 'consent'});
+    }
+
+    /* ----- Download bytes and stream into iframe ------------------------ */
+    async function renderPdf() {
+      const resp = await gapi.client.drive.files.get({
+        fileId      : FILE_ID,
+        alt         : 'media'
+      });
+
+      /* gapi hands back an ArrayBuffer */
+      const buf  = resp.body;
+      const blob = new Blob([buf], {type:'application/pdf'});
+      const url  = URL.createObjectURL(blob);
+
+      document.getElementById('pdf').src = `${url}#page=${PAGE}`;
+    }
+  </script>
+</body>
+</html>
