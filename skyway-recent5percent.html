@@ -73,7 +73,8 @@ async function fetchCSV(name){
 function pickWeighted(rows){ const list=rows.map(r=>({r,w:Math.max(1,parseInt(r[1],10)||1)})); const tot=list.reduce((s,x)=>s+x.w,0); let rnd=getSecureRandomNumber()*tot; for(const x of list){ if(rnd<x.w) return x.r; rnd-=x.w; } return list[list.length-1].r; }
 async function processRows(rows){ if(!rows.length) throw new Error('CSV empty'); for(const r of rows){ if(r[0].trim()==='csv' && parseInt(r[1],10)===0){ try{ r[1]=(await fetchCSV(r[2])).length.toString(); }catch(e){ console.error(e); r[1]='1'; } } }
  const sel=pickWeighted(rows); const type=sel[0].trim();
- if(type==='link' || type==='injection'){ location.href=handleSkywayLink(sel); return; }
+  if(type==='link' || type==='injection'){ location.href=handleSkywayLink(sel); return; }
+  if(type==='link-jp'){ location.href=handleSkywayLink(sel,null,true); return; }
  if(type==='git-specific'){ const user=sel[2].split('=')[1], repo=sel[3].split('=')[1]; const list=sel[4].split('=')[1].split('_'); location.href=`https://github.com/${user}/${repo}/issues/${list[randInt(0,list.length-1)]}`; return; }
  if(type==='git-range'){ const user=sel[2].split('=')[1], repo=sel[3].split('=')[1]; const [min,max]=sel[4].split('=')[1].split('_').map(Number); if(isNaN(min)||isNaN(max)) throw new Error('Bad git-range row'); location.href=`https://github.com/${user}/${repo}/issues/${randInt(min,max)}`; return; }
  if(type==='csv'){ return processRows(await fetchCSV(sel[2])); }
