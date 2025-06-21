@@ -347,8 +347,9 @@ function pickFromBucket(bucket,isReview){
 }
 
 function evalFormula(formula){
-  if(!formula) return NaN;
-  let expr = formula;
+  if(formula === undefined || formula === null || formula === '') return NaN;
+  if(typeof formula === 'number') return formula;
+  let expr = String(formula);
   for(const [k,v] of Object.entries(configValues)){
     expr = expr.replace(new RegExp('\\b'+k+'\\b','g'), v);
   }
