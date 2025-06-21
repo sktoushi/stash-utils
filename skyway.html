@@ -9,8 +9,10 @@
   <title>skyway.html – Hierarchical Multi-Mode Randomizer (multi-distribution)</title>
 </head>
 <body>
-  <div id="progressContainer" class="progress" style="position:fixed;top:50%;left:50%;transform:translate(-50%, -50%);width:80%;height:30px;display:none;z-index:9999;">
-  <div id="progressBar" class="progress-bar" role="progressbar" style="width:0%;background-color:#28a745;transition:width 0.4s ease;"></div>
+  <div id="progressBarContainer" style="position:fixed;top:0;left:0;width:100%;display:none;z-index:9999;">
+    <div class="progress" style="height:30px;">
+      <div id="progressBar" class="progress-bar" role="progressbar" style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
   </div>
   <div id="progressSubtext" style="position:fixed;top:calc(50% + 40px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;"></div>
   <div id="progressCount" style="position:fixed;top:calc(50% + 80px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;"></div>
@@ -362,11 +364,14 @@ async function showProgressAndRedirect(url){
   await loadConfig();
   const cur = evalFormula(configValues.progressCurrentValueFormula);
   const target = evalFormula(configValues.progressTargetValueFormula);
-  const container=document.getElementById('progressContainer');
+  const container=document.getElementById('progressBarContainer');
   const bar=document.getElementById('progressBar');
   if(!container||!bar){ location.href=url; return; }
   if(isNaN(cur)||isNaN(target)||target<=cur){ location.href=url; return; }
   container.style.display='block';
+  bar.style.width='0%';
+  bar.setAttribute('aria-valuenow','0');
+  bar.textContent='0%';
   const steps=60; const duration=2000; let step=0;
   const inc=(target-cur)/steps; let val=cur;
   return new Promise(resolve=>{
@@ -374,6 +379,8 @@ async function showProgressAndRedirect(url){
       val += inc; step++;
       const pct=((val-cur)/(target-cur))*100;
       bar.style.width=pct+'%';
+      bar.setAttribute('aria-valuenow',pct);
+      bar.textContent=Math.floor(pct)+'%';
       if(step>=steps){
         clearInterval(timer);
         const delay=0.5+getSecureRandomNumber()*(5000-0.5);
