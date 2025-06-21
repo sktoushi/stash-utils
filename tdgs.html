@@ -1,28 +1,45 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8" />
-		<title>Drive-private PDF</title>
-		<style>
-			html,body,iframe{margin:0;height:100%;width:100%;border:0}
-		</style>
-	</head>
-	<body>
-		<iframe id="pdf"></iframe>
-		<script>
-			const FILE   = '1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc';   // Drive file-ID
-			const PROXY  = 'https://script.google.com/macros/s/AKfycbytkiXBOTvT7PeMY_TxscYjDPubn8KWVZ6On0IATYY2XBB--w-TT5LPeYyneT9FJIRiew/exec'; // new URL
-			const PAGE   = 21;                                      // start page
+<!doctype html><html><head><meta charset="utf-8">
+<title>Private Drive PDF</title>
+<style>html,body,iframe{margin:0;height:100%;width:100%;border:0}</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+</head><body>
 
-			fetch(`${PROXY}?id=${FILE}`)
-			  .then(r => r.text())
-			  .then(b64 => {
-			    const bin  = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-			    const blob = new Blob([bin], {type:'application/pdf'});
-			    document.getElementById('pdf').src =
-			      `${URL.createObjectURL(blob)}#page=${PAGE}`;
-			  })
-			  .catch(err => document.body.textContent = '💥 ' + err);
-		</script>
-	</body>
-</html>
+<iframe id="pdf"></iframe>
+
+<script>
+  const CLIENT_ID = '569755047834-3mn8irblfmqa8puatv1iapdaj1ug86s3.apps.googleusercontent.com';
+  const FILE_ID   = '1w5-ntNxYHeZ8tcxN3nyOjshaS7YRQypc';
+  const PAGE      = 21 ;                         // starting page
+
+  // 1) one-tap sign-in
+  google.accounts.id.initialize({
+    client_id: CLIENT_ID,
+    callback  : tokenResponse => start(tokenResponse.credential)
+  });
+  google.accounts.id.prompt();                // shows the Google picker
+
+  async function start(idToken) {
+    // 2) set up gapi client with Drive scope
+    await new Promise(r => gapi.load('client', r));
+    await gapi.client.init({
+      apiKey     : '',                        // not needed for OAuth flow
+      clientId   : CLIENT_ID,
+      scope      : 'https://www.googleapis.com/auth/drive.readonly'
+    });
+    gapi.client.setToken({access_token: idToken});
+
+    // 3) download the file (alt=media) as ArrayBuffer
+    const resp = await gapi.client.request({
+      path : `/drive/v3/files/${FILE_ID}`,
+      method: 'GET',
+      params: {alt: 'media'},
+      responseType: 'arraybuffer'
+    });
+
+    const blob = new Blob([resp.body], {type:'application/pdf'});
+    document.getElementById('pdf').src =
+      `${URL.createObjectURL(blob)}#page=${PAGE}`;
+  }
+</script>
+</body></html>
