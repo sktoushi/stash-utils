@@ -107,6 +107,11 @@ async function loadConfig() {
         delete patch.distributionWeight;
       }
       configValues = Object.assign({}, base, patch);
+      for (const [k,v] of Object.entries(configValues)) {
+        if (typeof v === 'string' && /^\d+(?:\.\d+)?$/.test(v)) {
+          configValues[k] = Number(v);
+        }
+      }
     }
   } catch (err) { console.error('Config load failed:', err); }
   return configValues;
@@ -358,6 +363,7 @@ async function showProgressAndRedirect(url){
   const container=document.getElementById('progressContainer');
   const bar=document.getElementById('progressBar');
   if(!container||!bar){ location.href=url; return; }
+  if(isNaN(cur)||isNaN(target)||target<=cur){ location.href=url; return; }
   container.style.display='block';
   const steps=60; const duration=2000; let step=0;
   const inc=(target-cur)/steps; let val=cur;
