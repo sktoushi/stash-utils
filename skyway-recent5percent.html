@@ -38,11 +38,42 @@ function cleanCell(c){ return c.trim().replace(/^["']+|["']+$/g,''); }
 function parseCsvLine(l){ const out=[]; let cell='',inQ=false; for(let i=0;i<l.length;i++){ const ch=l[i]; if(ch==='"'){ if(inQ && l[i+1]==='"'){ cell+='"'; i++; } else inQ=!inQ; } else if(ch===',' && !inQ){ out.push(cell); cell=''; } else cell+=ch; } out.push(cell); return out; }
 function tryEvalExpr(str){ if(!/^[0-9+\-*/ ().]+$/.test(str)) return str; try{ const v=Function('"use strict";return ('+str+')')(); return Number.isFinite(v)?String(v):str; }catch{ return str; }}
 function applyConfig(rows){ const re=/\{([^}]+)}/g; return rows.map(r=>r.map(c=>{ const sub=c.replace(re,(m,p)=>Object.prototype.hasOwnProperty.call(configValues,p)?configValues[p]:m); return tryEvalExpr(sub); })); }
-async function fetchCSV(name){ await loadConfig(); try{ const res=await fetch(name); if(!res.ok) throw new Error(`${res.status} ${res.statusText}`); const raw=(await res.text()).split('\n').map(l=>l.trim()).filter(Boolean); let rows=raw.map(l=>parseCsvLine(l).map(cleanCell)); rows=applyConfig(rows); return rows; }catch(e){ throw new Error('Error fetching "'+name+'": '+e.message); }}
+async function fetchCSV(name){
+  await loadConfig();
+  try{
+    const res=await fetch(name);
+    if(!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const raw=(await res.text()).split('\n').map(l=>l.trim()).filter(Boolean);
+    let rows=raw.map(l=>parseCsvLine(l).map(cleanCell));
+    rows=applyConfig(rows);
+    const inj=[],normal=[];
+    for(const r of rows){
+      if(r[0].trim().toLowerCase()==='injection'){
+        const c=Math.max(1,parseInt(r[1],10)||1);
+        for(let i=0;i<c;i++) inj.push(['injection','1',r[2]]);
+      }else normal.push(r);
+    }
+    rows=normal;
+    if(inj.length){
+      const total=rows.length+inj.length;
+      const step=total/inj.length;
+      let next=step/2,idx=0; const out=[];
+      for(let i=0;i<total;i++){
+        if(idx<inj.length && i>=Math.round(next)){
+          out.push(inj[idx++]);
+          next+=step;
+        }else if(rows.length) out.push(rows.shift());
+        else out.push(inj[idx++]);
+      }
+      rows=out;
+    }
+    return rows;
+  }catch(e){ throw new Error('Error fetching "'+name+'": '+e.message); }
+}
 function pickWeighted(rows){ const list=rows.map(r=>({r,w:Math.max(1,parseInt(r[1],10)||1)})); const tot=list.reduce((s,x)=>s+x.w,0); let rnd=getSecureRandomNumber()*tot; for(const x of list){ if(rnd<x.w) return x.r; rnd-=x.w; } return list[list.length-1].r; }
 async function processRows(rows){ if(!rows.length) throw new Error('CSV empty'); for(const r of rows){ if(r[0].trim()==='csv' && parseInt(r[1],10)===0){ try{ r[1]=(await fetchCSV(r[2])).length.toString(); }catch(e){ console.error(e); r[1]='1'; } } }
  const sel=pickWeighted(rows); const type=sel[0].trim();
- if(type==='link'){ location.href=handleSkywayLink(sel); return; }
+ if(type==='link' || type==='injection'){ location.href=handleSkywayLink(sel); return; }
  if(type==='git-specific'){ const user=sel[2].split('=')[1], repo=sel[3].split('=')[1]; const list=sel[4].split('=')[1].split('_'); location.href=`https://github.com/${user}/${repo}/issues/${list[randInt(0,list.length-1)]}`; return; }
  if(type==='git-range'){ const user=sel[2].split('=')[1], repo=sel[3].split('=')[1]; const [min,max]=sel[4].split('=')[1].split('_').map(Number); if(isNaN(min)||isNaN(max)) throw new Error('Bad git-range row'); location.href=`https://github.com/${user}/${repo}/issues/${randInt(min,max)}`; return; }
  if(type==='csv'){ return processRows(await fetchCSV(sel[2])); }
@@ -66,7 +97,8 @@ window.onload=async()=>{
        location.href=`https://github.com/${user}/${repo}/issues/${issue}`;
     }else{
        const rows=await fetchCSV(settings.csvUrl);
-       const sub=sliceFinalPercent(rows,0.05);
+       const filtered=rows.filter(r=>r[0].trim().toLowerCase()!=='injection');
+       const sub=sliceFinalPercent(filtered,0.05);
        if(!sub.length) throw new Error('No rows in final 5%');
        await processRows(sub);
     }

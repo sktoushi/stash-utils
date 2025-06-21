@@ -77,7 +77,28 @@ async function fetchCSV(name) {
     let rows = lines.map(l => l.trim()).filter(Boolean)
                     .map(l => parseCsvLine(l).map(cleanCell));
     rows = applyConfigPlaceholders(rows);
-    shuffle(rows);
+    const inj=[], normal=[];
+    for(const r of rows){
+      if(r[0].trim().toLowerCase()==='injection'){
+        const c=Math.max(1,parseInt(r[1],10)||1);
+        for(let i=0;i<c;i++) inj.push(['injection','1',r[2]]);
+      } else normal.push(r);
+    }
+    shuffle(normal);
+    rows=normal;
+    if(inj.length){
+      const total=rows.length+inj.length;
+      const step=total/inj.length;
+      let next=step/2,idx=0; const out=[];
+      for(let i=0;i<total;i++){
+        if(idx<inj.length && i>=Math.round(next)){
+          out.push(inj[idx++]);
+          next+=step;
+        } else if(rows.length) out.push(rows.shift());
+        else out.push(inj[idx++]);
+      }
+      rows=out;
+    }
     return rows;
   } catch (e) { throw new Error('Error fetching ' + name + ': ' + e.message); }
 }
@@ -107,7 +128,7 @@ async function processRows(rows, depth = 0) {
   const sel = pickRowByWeight(rows);
   const type = sel[0].trim();
 
-  if (type === 'link') {
+  if (type === 'link' || type === 'injection') {
     return location.href = sel[2];
   }
   if (type === 'git-specific') {
