@@ -31,6 +31,14 @@
     <button id="randomSeg" class="btn btn-secondary">Random Segment</button>
     <button id="shareBtn" class="btn btn-success">Share</button>
   </div>
+  <div class="mb-3">Minutes watched: <span id="minutesWatched">0</span></div>
+  <div id="watchStats" class="mb-3 text-start">
+    <div id="watchedToday"></div>
+    <div id="watchedWeek"></div>
+    <div id="watchedMonth"></div>
+    <div id="watchedYear"></div>
+    <div id="watchedAll"></div>
+  </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
@@ -93,6 +101,78 @@ let player;
 let startTime=0;
 let endTime=0;
 let loopActive=false;
+let watchLog=JSON.parse(localStorage.getItem("watchLog")||"{}");
+let watchedSeconds=0;
+let lastPlayerTime=0;
+let trackInterval=null;
+function addWatchTime(delta){
+  const d=new Date().toISOString().slice(0,10);
+  watchLog[d]=(watchLog[d]||0)+delta;
+  localStorage.setItem("watchLog",JSON.stringify(watchLog));
+}
+function formatDuration(sec){
+  const hrs=sec/3600;
+  return hrs>=1?hrs.toFixed(2)+" hours":(sec/60).toFixed(2)+" minutes";
+}
+function percentChange(curr,prev){
+  if(!prev) return "";
+  if(curr===prev) return " (--)";
+  const pct=((curr-prev)/prev*100).toFixed(0);
+  return ` (${curr>prev?'+':''}${pct}%)`;
+}
+function sumBetween(start,end){
+  let s=0;
+  for(const [k,v] of Object.entries(watchLog)){
+    const d=new Date(k);
+    if(d>=start&&d<end) s+=v;
+  }
+  return s;
+}
+function updateStatsDisplay(){
+  const now=new Date();
+  const dayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const yesterdayStart=new Date(dayStart); yesterdayStart.setDate(dayStart.getDate()-1);
+  const weekStart=new Date(dayStart); weekStart.setDate(dayStart.getDate()-dayStart.getDay());
+  const prevWeekStart=new Date(weekStart); prevWeekStart.setDate(prevWeekStart.getDate()-7);
+  const monthStart=new Date(now.getFullYear(),now.getMonth(),1);
+  const prevMonthStart=new Date(monthStart); prevMonthStart.setMonth(prevMonthStart.getMonth()-1);
+  const nextMonthStart=new Date(monthStart); nextMonthStart.setMonth(nextMonthStart.getMonth()+1);
+  const yearStart=new Date(now.getFullYear(),0,1);
+  const prevYearStart=new Date(yearStart); prevYearStart.setFullYear(prevYearStart.getFullYear()-1);
+  const nextYearStart=new Date(yearStart); nextYearStart.setFullYear(nextYearStart.getFullYear()+1);
+  const today=sumBetween(dayStart,new Date(dayStart.getTime()+86400000));
+  const yesterday=sumBetween(yesterdayStart,dayStart);
+  const thisWeek=sumBetween(weekStart,new Date(weekStart.getTime()+7*86400000));
+  const prevWeek=sumBetween(prevWeekStart,weekStart);
+  const thisMonth=sumBetween(monthStart,nextMonthStart);
+  const prevMonth=sumBetween(prevMonthStart,monthStart);
+  const thisYear=sumBetween(yearStart,nextYearStart);
+  const prevYear=sumBetween(prevYearStart,yearStart);
+  const allTime=Object.values(watchLog).reduce((a,b)=>a+b,0);
+  document.getElementById("watchedToday").textContent=formatDuration(today)+percentChange(today,yesterday);
+  document.getElementById("watchedWeek").textContent=formatDuration(thisWeek)+percentChange(thisWeek,prevWeek);
+  document.getElementById("watchedMonth").textContent=formatDuration(thisMonth)+percentChange(thisMonth,prevMonth);
+  document.getElementById("watchedYear").textContent=formatDuration(thisYear)+percentChange(thisYear,prevYear);
+  document.getElementById("watchedAll").textContent=formatDuration(allTime);
+}
+function startTracking(){
+  if(player) lastPlayerTime=player.getCurrentTime();
+  if(trackInterval||!player) return;
+  trackInterval=setInterval(()=>{
+    if(player.getPlayerState&&player.getPlayerState()===YT.PlayerState.PLAYING){
+      const t=player.getCurrentTime();
+      if(t>=lastPlayerTime){ const d=t-lastPlayerTime; watchedSeconds+=d; addWatchTime(d); }
+      lastPlayerTime=t;
+      updateMinutesDisplay();
+    } else if(player) {
+      lastPlayerTime=player.getCurrentTime();
+    }
+  },1000);
+}
+function updateMinutesDisplay(){
+  document.getElementById("minutesWatched").textContent=(watchedSeconds/60).toFixed(2);
+  updateStatsDisplay();
+}
 function onYouTubeIframeAPIReady(){ createPlayer(initialVideoId()); }
 function createPlayer(id){ if(player) player.destroy(); player=new YT.Player('player',{height:'100%',width:'100%',videoId:id,events:{onReady:onPlayerReady}}); }
 function onPlayerReady(){
@@ -106,6 +186,7 @@ function onPlayerReady(){
   } else {
     endTime=player.getDuration();
   }
+  startTracking();
 }
 function initialVideoId(){ const direct=urlParams.get('video'); if(direct) return extractVideoId(direct); return ''; }
 function extractVideoId(url){ const m=url.match(/[?&]v=([^&]+)/); if(m) return m[1]; const m2=url.match(/youtu\.be\/([^?]+)/); if(m2) return m2[1]; return url; }
@@ -134,6 +215,7 @@ function checkLoop(){ if(!loopActive) return; if(player.getCurrentTime()>=endTim
 window.addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); if(player.getPlayerState()==YT.PlayerState.PLAYING) player.pauseVideo(); else player.playVideo(); } else if(e.key==='a'){ if(player) startTime=player.getCurrentTime(); } else if(e.key==='b'){ if(player) endTime=player.getCurrentTime(); } else if(e.key==='l'){ loopActive=!loopActive; if(loopActive) checkLoop(); } });
 window.onload=async ()=>{
   await loadConfig();
+  updateMinutesDisplay();
   if(targetCsv){
     try{ await processRows(await fetchCSV(targetCsv)); }
     catch(e){ document.body.textContent=e.message; }
