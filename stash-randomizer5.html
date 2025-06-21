@@ -116,20 +116,18 @@ async function commit(db, id, rec, success) {
   const modes  = (qs.get('modes')            || '').split(',').filter(Boolean);
   let pairs  = (qs.get('usernameRepoList') || '').split(',').filter(Boolean);
   let alloc  = (qs.get('allocation')       || '').split(',').map(Number);
-  let baseW;
-  if (alloc.length === pairs.length && alloc.length > 0 && alloc.every(n => n >= 0)) {
-    baseW = alloc;
-  } else {
-    baseW = Array(pairs.length).fill(1);
-  }
+  const repoSizes = pairs.map(p => {
+    const [,,,s,e] = p.split('_');
+    const start = Number(s);
+    const end   = Number(e);
+    return Math.max(1, (isNaN(start) || isNaN(end)) ? 1 : (end - start + 1));
+  });
 
-  const baseTotal = baseW.reduce((a, b) => a + b, 0);
-  const injTotal = injectionWeights.reduce((a, b) => a + b, 0);
-  let scaledInj = injectionWeights.slice();
-  if (injTotal > baseTotal && baseTotal > 0) {
-    const factor = baseTotal / injTotal;
-    scaledInj = injectionWeights.map(w => w * factor);
-  }
+  const validAlloc = alloc.length === pairs.length && alloc.length > 0 && alloc.every(n => n >= 0);
+
+  const baseW = repoSizes.map((sz, i) => sz * (validAlloc ? alloc[i] : 1));
+
+  const scaledInj = injectionWeights.slice();
 
   const combinedItems = pairs.concat(injectionItems);
   const combinedWeights = baseW.concat(scaledInj);

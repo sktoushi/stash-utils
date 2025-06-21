@@ -63,22 +63,25 @@
                 .map(str => Number(str))
                 .filter(num => !isNaN(num));
 
-            // Determine base weights for main items
-            let baseWeights;
-            if (allocationArray.length === userRepoArray.length && allocationArray.length > 0 && allocationArray.every(w => w >= 0)) {
-                baseWeights = allocationArray;
-            } else {
-                baseWeights = new Array(userRepoArray.length).fill(1);
-            }
+            // Determine the size of each repo range so injections can be
+            // distributed relative to the total picking pool
+            const repoSizes = userRepoArray.map(item => {
+                const parts = item.split('_');
+                const s = Number(parts[2]);
+                const e = Number(parts[3]);
+                return Math.max(1, (isNaN(e) || isNaN(s)) ? 1 : (e - s + 1));
+            });
 
-            // Balance injection weights if they outweigh the base pool
-            const baseTotal = baseWeights.reduce((a, b) => a + b, 0);
-            const injTotal = injectionWeights.reduce((a, b) => a + b, 0);
-            let scaledInj = injectionWeights.slice();
-            if (injTotal > baseTotal && baseTotal > 0) {
-                const factor = baseTotal / injTotal;
-                scaledInj = injectionWeights.map(w => w * factor);
-            }
+            const validAlloc = allocationArray.length === userRepoArray.length &&
+                               allocationArray.length > 0 &&
+                               allocationArray.every(w => w >= 0);
+
+            const baseWeights = repoSizes.map((sz, i) =>
+                sz * (validAlloc ? allocationArray[i] : 1)
+            );
+
+            // Injection weights represent actual record counts; no scaling
+            const scaledInj = injectionWeights.slice();
 
             // Append injection items and weights
             const combinedItems = userRepoArray.concat(injectionItems);

@@ -84,17 +84,17 @@ const qs    = new URLSearchParams(location.search);
 const modes = (qs.get('modes')||'').split(',').filter(Boolean);
 let items = (qs.get('usernameRepoList')||'').split(',').filter(Boolean);
 let alloc = (qs.get('allocation')||'').split(',').map(Number);
-let baseW;
-if(alloc.length===items.length && alloc.length>0 && alloc.every(n=>n>=0))
-  baseW = alloc; else baseW = Array(items.length).fill(1);
+const repoSizes=items.map(it=>{
+  const [,,,s,e]=it.split('_');
+  const start=Number(s); const end=Number(e);
+  return Math.max(1,(isNaN(start)||isNaN(end))?1:(end-start+1));
+});
 
-const baseTotal=baseW.reduce((a,b)=>a+b,0);
-const injTotal=injectionWeights.reduce((a,b)=>a+b,0);
-let scaledInj=injectionWeights.slice();
-if(injTotal>baseTotal && baseTotal>0){
-  const factor=baseTotal/injTotal;
-  scaledInj=injectionWeights.map(w=>w*factor);
-}
+const validAlloc=alloc.length===items.length && alloc.length>0 && alloc.every(n=>n>=0);
+
+const baseW=repoSizes.map((sz,i)=>sz*(validAlloc?alloc[i]:1));
+
+const scaledInj=injectionWeights.slice();
 
 const combinedItems = items.concat(injectionItems);
 const combinedWeights = baseW.concat(scaledInj);
