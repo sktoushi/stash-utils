@@ -13,6 +13,7 @@
     <div id="progressBar" class="progress-bar" role="progressbar" style="width:0%;"></div>
   </div>
   <div id="progressSubtext" style="position:fixed;top:calc(50% + 40px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;"></div>
+  <div id="progressCount" style="position:fixed;top:calc(50% + 80px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;"></div>
 <script>
 /*╔══════════════════════════════════════════╗
   ║  HIERARCHICAL DECISION STACK             ║
@@ -382,6 +383,21 @@ async function showProgressAndRedirect(url){
   });
 }
 
+async function animateProgressCount(){
+  await loadConfig();
+  const target=evalFormula(configValues.progressCurrentValueFormula);
+  const el=document.getElementById('progressCount');
+  if(!el||isNaN(target)) return;
+  el.style.display='block';
+  const steps=60; const duration=2000; let step=0; let val=0;
+  const inc=target/steps;
+  const timer=setInterval(()=>{
+    val+=inc; step++;
+    if(step>=steps){ clearInterval(timer); val=target; }
+    el.textContent=Math.round(val).toLocaleString();
+  }, duration/steps);
+}
+
 function updateVisitCounter(){
   const key='skywayVisitCount';
   let count=parseInt(localStorage.getItem(key)||'0',10);
@@ -440,6 +456,7 @@ window.onload = async ()=>{
   if(!targetCsv){ document.body.textContent='Missing ?target=…'; return; }
   await getRandomColor();
   await loadConfig();
+  animateProgressCount();
   const count=updateVisitCounter();
   const sub=document.getElementById('progressSubtext');
   if(sub && configValues.lastUpdated){
