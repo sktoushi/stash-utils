@@ -117,7 +117,9 @@ document.getElementById('toggleLoop').onclick=()=>{ loopActive=!loopActive; if(l
 document.getElementById('randomSeg').onclick=()=>{ if(player){ const n=parseInt(prompt('Segments?'),10); if(n>1) pickRandomSegment(n); }};
 document.getElementById('shareBtn').onclick=async()=>{
   await loadConfig();
-  const repo=configValues['current-era-stash']||'cjcaf1995/stash3';
+  const repo=(configValues.stashUsername&&configValues.stashRepository)?
+    `${configValues.stashUsername}/${configValues.stashRepository}`:
+    (configValues['current-era-stash']||'cjcaf1995/stash3');
   const u=new URL(location.href);
   if(!u.searchParams.get('video')&&player){
     u.searchParams.set('video',extractVideoId(player.getVideoUrl()));
