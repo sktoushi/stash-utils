@@ -1,9 +1,9 @@
 csv,{stash3Ending},skyway-stash3-core.csv
-csv,23,stash3-v250612-23.csv
-csv,50,stash3-v250613-50.csv
-csv,35,stash3-v250613-35.csv
-csv,221,skyway-mob-250614.csv
-csv,50,stash3-v250616.csv
-csv,70,stash3-v250617.csv
-csv,139,stash3-v250618to20-139.csv
-csv,309,skyway-harvard-probability-youtube.csv
+injection,23,https://sktoushi.github.io/stash-utils/skyway.html?target=stash3-v250612-23.csv
+injection,50,https://sktoushi.github.io/stash-utils/skyway.html?target=stash3-v250613-50.csv
+injection,35,https://sktoushi.github.io/stash-utils/skyway.html?target=stash3-v250613-35.csv
+injection,221,https://sktoushi.github.io/stash-utils/skyway.html?target=skyway-mob-250614.csv
+injection,50,https://sktoushi.github.io/stash-utils/skyway.html?target=stash3-v250616.csv
+injection,70,https://sktoushi.github.io/stash-utils/skyway.html?target=stash3-v250617.csv
+injection,139,https://sktoushi.github.io/stash-utils/skyway.html?target=stash3-v250618to20-139.csv
+injection,309,https://sktoushi.github.io/stash-utils/skyway.html?target=skyway-harvard-probability-youtube.csv
