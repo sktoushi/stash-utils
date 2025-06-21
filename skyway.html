@@ -225,6 +225,93 @@ function pickRow(rows){
   }
 }
 
+/* ──────────────── BUCKET HANDLING ──────────────── */
+const DB_NAME='skyBuckets';
+const STORE='state';
+const DB_VERSION=1;
+let bucketDb=null, bucketState=null;
+
+function openBucketDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DB_NAME,DB_VERSION);
+    r.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(STORE))
+        db.createObjectStore(STORE,{keyPath:'id'});
+    };
+    r.onerror=()=>rej(r.error);
+    r.onsuccess=()=>res(r.result);
+  });
+}
+function idbGet(key){
+  return new Promise((res,rej)=>{
+    const tx=bucketDb.transaction(STORE,'readonly').objectStore(STORE).get(key);
+    tx.onsuccess=()=>res(tx.result?tx.result.data:null);
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+function idbPut(key,val){
+  return new Promise((res,rej)=>{
+    const tx=bucketDb.transaction(STORE,'readwrite').objectStore(STORE).put({id:key,data:val});
+    tx.onsuccess=()=>res();
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+
+function extractVideoId(url){
+  const m=url.match(/[?&]v=([^&]+)/); if(m) return m[1];
+  const m2=url.match(/youtu\.be\/([^?]+)/); if(m2) return m2[1];
+  return url;
+}
+
+async function loadBucketState(){
+  bucketDb=await openBucketDB();
+  bucketState=await idbGet('main');
+  if(!bucketState){
+    bucketState={reviewBucket:[],newBucket:[],initiated:false};
+  }
+  if(!bucketState.initiated){
+    initNewBucketFromQuery();
+    bucketState.initiated=true;
+    await saveBucketState();
+  }
+}
+function initNewBucketFromQuery(){
+  const p=new URLSearchParams(location.search);
+  const vid=p.get('video');
+  if(!vid) return;
+  const start=p.get('start')||'0';
+  const end=p.get('end')||'0';
+  const u=new URL('looptube.html',location.origin);
+  u.searchParams.set('video',extractVideoId(vid));
+  u.searchParams.set('start',start);
+  u.searchParams.set('end',end);
+  bucketState.newBucket.push(u.toString());
+}
+async function saveBucketState(){ await idbPut('main',bucketState); }
+
+function pickBucketItem(){
+  if(!bucketState.reviewBucket.length && !bucketState.newBucket.length) return null;
+  const useReview=getSecureRandomNumber()<0.33 && bucketState.reviewBucket.length;
+  const bucket=useReview?bucketState.reviewBucket:bucketState.newBucket;
+  if(!bucket.length){
+    const other=useReview?bucketState.newBucket:bucketState.reviewBucket;
+    if(!other.length) return null;
+    return pickFromBucket(other,!useReview);
+  }
+  return pickFromBucket(bucket,useReview);
+}
+function pickFromBucket(bucket,isReview){
+  const idx=Math.floor(getSecureRandomNumber()*bucket.length);
+  const item=bucket[idx];
+  if(!isReview){
+    bucket.splice(idx,1);
+    bucketState.reviewBucket.push(item);
+  }
+  saveBucketState();
+  return item;
+}
+
 /* ──────────────── MAIN PROCESSOR ──────────────── */
 async function processRows(rows,depth=0){
   if(depth>2000) return document.body.textContent='Max CSV nesting depth exceeded.';
@@ -246,7 +333,9 @@ async function processRows(rows,depth=0){
         const qs=new URLSearchParams();
         qs.set('video',sel[2]);
         qs.set('segments',seg);
-        location.href='looptube.html?'+qs.toString();
+        const defaultUrl='looptube.html?'+qs.toString();
+        const picked=pickBucketItem();
+        location.href=picked||defaultUrl;
         return;
       }
     }
@@ -275,6 +364,7 @@ async function processRows(rows,depth=0){
 /* ──────────────── ENTRY ──────────────── */
 window.onload = async ()=>{
   if(!targetCsv){ document.body.textContent='Missing ?target=…'; return; }
+  await loadBucketState();
   try{ await processRows(await fetchCSV(targetCsv)); }
   catch(e){ document.body.textContent=e.message; }
 };
