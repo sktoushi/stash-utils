@@ -49,7 +49,8 @@
         "psychological_warfare_analysis.db",
         "control_schedule_case_studies.db",
         "ev_trajectory_cases.db",
-        "develop_schedule_case_studies.db"
+        "develop_schedule_case_studies.db", 
+        "communist_society_analysis.db"
       ]
     },
     "skyway-recent5-coefficient": "1",
