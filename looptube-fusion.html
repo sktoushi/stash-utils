@@ -125,8 +125,13 @@ function playNext(){
   if(!randMode)return;
   active=Math.floor(Math.random()*3);
   const c=Math.max(1,parseInt(document.getElementById('segments'+(active+1)).value)||1);
-  const start=(segIdx[active]%c)*segLens[active];
-  endTime=start+segLens[active];
+  const baseLen=segLens[active];
+  const start=(segIdx[active]%c)*baseLen;
+  // randomly scale the base segment length
+  const mults=[0.7,0.8,0.9,1];
+  const segLen=baseLen*mults[Math.floor(Math.random()*mults.length)];
+  const dur=players[active].getDuration();
+  endTime=Math.min(start+segLen,dur);
   players[active].seekTo(start,true);
   players[active].playVideo();
   checkRand();
