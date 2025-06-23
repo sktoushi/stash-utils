@@ -90,16 +90,7 @@
       display: none;
       margin-bottom: 20px;
     }
-    #googleImageContainer {
-      display: none;
-      margin-bottom: 20px;
-    }
-    .google-image-frame {
-      width: 100%;
-      height: 60vh;
-      border: none;
-      display: none;
-    }
+    /* Removed Google image frames */
   </style>
 </head>
 <body>
@@ -193,7 +184,9 @@
     <!-- Action Buttons for the Flashcard (Copy & Open as Link) -->
     <div id="additionalFlashcardButtons" style="text-align:center; margin-bottom:20px;">
       <button class="btn btn-success btn-lg" onclick="copyFrontText()">Copy Front</button>
+      <button class="btn btn-secondary btn-lg" onclick="googleImagesFront()">Google Images (Front)</button>
       <button class="btn btn-success btn-lg" onclick="copyBackText()">Copy Back</button>
+      <button class="btn btn-secondary btn-lg" onclick="googleImagesBack()">Google Images (Back)</button>
       <button class="btn btn-info btn-lg" onclick="openFrontAsLink()">Open Front as Link</button>
       <button class="btn btn-info btn-lg" onclick="openBackAsLink()">Open Back as Link</button>
 
@@ -216,11 +209,7 @@
       <button class="btn btn-outline-info btn-lg" onclick="jishoSearchBack()">Search Jisho (Back)</button>
     </div>
 
-    <!-- Google Images iframes -->
-    <div id="googleImageContainer">
-      <iframe id="frontImageFrame" class="google-image-frame" loading="lazy"></iframe>
-      <iframe id="backImageFrame" class="google-image-frame" loading="lazy"></iframe>
-    </div>
+
 
     <hr />
 
@@ -887,13 +876,6 @@
 
       document.getElementById("backTextContainer").style.display = "none";
       document.getElementById("googleSearchButtons").style.display = "none";
-      document.getElementById("googleImageContainer").style.display = "none";
-      const fFrame = document.getElementById("frontImageFrame");
-      const bFrame = document.getElementById("backImageFrame");
-      fFrame.src = "";
-      bFrame.src = "";
-      fFrame.style.display = "none";
-      bFrame.style.display = "none";
 
       const revealBtn = document.querySelector('.btn-reveal');
       revealBtn.disabled = false;
@@ -949,7 +931,6 @@
       addToHistory(selectedId);
       populateHistoryList();
 
-      preloadGoogleImages(currentFront, currentBack);
 
       // Show the attribute section
       document.getElementById("attributeSection").style.display = "block";
@@ -972,24 +953,6 @@
     function revealAnswer() {
       document.getElementById("backTextContainer").style.display = "block";
       document.getElementById("googleSearchButtons").style.display = "block";
-
-      const container = document.getElementById("googleImageContainer");
-      const fFrame = document.getElementById("frontImageFrame");
-      const bFrame = document.getElementById("backImageFrame");
-      fFrame.style.display = "none";
-      bFrame.style.display = "none";
-
-      if (!isValidURL(currentFront)) {
-        fFrame.style.display = "block";
-      }
-
-      if (!isValidURL(currentBack)) {
-        bFrame.style.display = "block";
-      }
-
-      if (fFrame.style.display === "block" || bFrame.style.display === "block") {
-        container.style.display = "block";
-      }
 
       autoOpenUrlIfDateOnOtherSide(currentFront, currentBack);
 
@@ -1023,13 +986,7 @@
       lastDrawnId = null;
       currentlyDrawnRecordId = null;
       document.getElementById("attributeSection").style.display = "none";
-      const fFrame = document.getElementById("frontImageFrame");
-      const bFrame = document.getElementById("backImageFrame");
-      document.getElementById("googleImageContainer").style.display = "none";
-      fFrame.src = "";
-      bFrame.src = "";
-      fFrame.style.display = "none";
-      bFrame.style.display = "none";
+
 
       saveBucketState();
       updateDisplay();
@@ -1163,13 +1120,6 @@
       document.getElementById("backText").innerText = "";
       document.getElementById("backTextContainer").style.display = "none";
       document.getElementById("googleSearchButtons").style.display = "none";
-      const fFrame = document.getElementById("frontImageFrame");
-      const bFrame = document.getElementById("backImageFrame");
-      document.getElementById("googleImageContainer").style.display = "none";
-      fFrame.src = "";
-      bFrame.src = "";
-      fFrame.style.display = "none";
-      bFrame.style.display = "none";
 
       saveBucketState();
       updateDisplay();
@@ -1324,13 +1274,6 @@
       populateHistoryList();
 
       document.getElementById("attributeSection").style.display = "none";
-      const fFrame = document.getElementById("frontImageFrame");
-      const bFrame = document.getElementById("backImageFrame");
-      document.getElementById("googleImageContainer").style.display = "none";
-      fFrame.src = "";
-      bFrame.src = "";
-      fFrame.style.display = "none";
-      bFrame.style.display = "none";
 
       if (!fully) {
         showToast("Buckets reset. All items are back in Bucket2.");
@@ -1380,27 +1323,6 @@
       window.open(currentBack, "_blank");
     }
 
-    function preloadGoogleImages(front, back) {
-      const fFrame = document.getElementById("frontImageFrame");
-      const bFrame = document.getElementById("backImageFrame");
-
-      if (front && !isValidURL(front)) {
-        fFrame.src = "https://r.jina.ai/https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(front);
-      } else {
-        fFrame.src = "";
-      }
-
-      if (back && !isValidURL(back)) {
-        bFrame.src = "https://r.jina.ai/https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(back);
-      } else {
-        bFrame.src = "";
-      }
-
-      fFrame.style.display = "none";
-      bFrame.style.display = "none";
-      document.getElementById("googleImageContainer").style.display = "none";
-    }
-
     /****************************************************
      * NEW: Redirect to maxmemorizer with the DB name, plus cardId & side
      ****************************************************/
@@ -1427,6 +1349,16 @@
     function googleSearchBack() {
       if (!currentBack) return;
       window.open("https://www.google.com/search?q=" + encodeURIComponent(currentBack), "_blank");
+    }
+
+    function googleImagesFront() {
+      if (!currentFront) return;
+      window.open("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(currentFront), "_blank");
+    }
+
+    function googleImagesBack() {
+      if (!currentBack) return;
+      window.open("https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(currentBack), "_blank");
     }
 
     function chatGPTSearchFront() {
