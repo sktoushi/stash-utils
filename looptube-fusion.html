@@ -48,6 +48,15 @@ const players=[null,null,null];
 let randMode=false,active=0,endTime=0;
 const segLens=[0,0,0];
 const segIdx=[0,0,0];
+const initSegDur=[0,0,0];
+for(let i=0;i<3;i++){
+  const v=parseFloat(urlParams.get('segd'+(i+1)));
+  initSegDur[i]=isNaN(v)?0:v;
+  const c=parseInt(urlParams.get('seg'+(i+1)),10);
+  if(!isNaN(c)&&c>0){
+    document.getElementById('segments'+(i+1)).value=c;
+  }
+}
 
 function checkLoop(){
   for(let i=0;i<players.length;i++){
@@ -69,10 +78,18 @@ function extractVideoId(url){
 
 function onYouTubeIframeAPIReady(){
   const pv=location.protocol==='file:'?{}:{playerVars:{origin:location.origin}};
-  players[0]=new YT.Player('player1',Object.assign({events:{onReady:()=>{const u=urlParams.get('video1');if(u){document.getElementById('url1').value=u;loadVideo(0,u);}}}},pv));
-  players[1]=new YT.Player('player2',Object.assign({events:{onReady:()=>{const u=urlParams.get('video2');if(u){document.getElementById('url2').value=u;loadVideo(1,u);}}}},pv));
-  players[2]=new YT.Player('player3',Object.assign({events:{onReady:()=>{const u=urlParams.get('video3');if(u){document.getElementById('url3').value=u;loadVideo(2,u);}}}},pv));
+  players[0]=new YT.Player('player1',Object.assign({events:{onReady:()=>{const u=urlParams.get('video1');if(u){document.getElementById('url1').value=u;loadVideo(0,u);}setSegFromDur(0);}}},pv));
+  players[1]=new YT.Player('player2',Object.assign({events:{onReady:()=>{const u=urlParams.get('video2');if(u){document.getElementById('url2').value=u;loadVideo(1,u);}setSegFromDur(1);}}},pv));
+  players[2]=new YT.Player('player3',Object.assign({events:{onReady:()=>{const u=urlParams.get('video3');if(u){document.getElementById('url3').value=u;loadVideo(2,u);}setSegFromDur(2);}}},pv));
   requestAnimationFrame(checkLoop);
+}
+
+function setSegFromDur(i){
+  if(!initSegDur[i])return;
+  const dur=players[i].getDuration();
+  if(!dur){setTimeout(()=>setSegFromDur(i),500);return;}
+  const cnt=Math.max(1,Math.round(dur/initSegDur[i]));
+  document.getElementById('segments'+(i+1)).value=cnt;
 }
 
 function loadVideo(i,u){const id=extractVideoId(u.trim());players[i].loadVideoById(id);}
@@ -87,7 +104,7 @@ function startRandom(){
     const dur=players[i].getDuration();
     if(!dur){alert('Load all videos before starting.');return;}
     const c=Math.max(1,parseInt(document.getElementById('segments'+(i+1)).value)||1);
-    segLens[i]=dur/c;
+    segLens[i]=initSegDur[i]||dur/c;
     segIdx[i]=0;
   }
   randMode=true;
@@ -126,6 +143,14 @@ function shareLink(){
   if(u1)p.set('video1',u1);
   if(u2)p.set('video2',u2);
   if(u3)p.set('video3',u3);
+  for(let i=0;i<3;i++){
+    const dur=players[i]?players[i].getDuration():0;
+    if(dur){
+      const c=Math.max(1,parseInt(document.getElementById('segments'+(i+1)).value)||1);
+      const segd=Math.round(dur/c);
+      p.set('segd'+(i+1),segd);
+    }
+  }
   const link=base+(p.toString()?'?'+p.toString():'');
   navigator.clipboard.writeText(link)
     .then(()=>alert('Link copied to clipboard'))
