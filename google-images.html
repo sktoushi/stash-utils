@@ -981,9 +981,13 @@
 
       if (!isValidURL(currentFront)) {
         fFrame.style.display = "block";
-        container.style.display = "block";
-      } else if (!isValidURL(currentBack)) {
+      }
+
+      if (!isValidURL(currentBack)) {
         bFrame.style.display = "block";
+      }
+
+      if (fFrame.style.display === "block" || bFrame.style.display === "block") {
         container.style.display = "block";
       }
 
@@ -1381,13 +1385,13 @@
       const bFrame = document.getElementById("backImageFrame");
 
       if (front && !isValidURL(front)) {
-        fFrame.src = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(front);
+        fFrame.src = "https://r.jina.ai/https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(front);
       } else {
         fFrame.src = "";
       }
 
       if (back && !isValidURL(back)) {
-        bFrame.src = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(back);
+        bFrame.src = "https://r.jina.ai/https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(back);
       } else {
         bFrame.src = "";
       }
