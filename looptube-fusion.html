@@ -7,7 +7,7 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
   body {padding:1rem;background-color:#0d1117;color:#c9d1d9;}
-  #player1,#player2{width:100%;height:100%;}
+  #player1,#player2,#player3{width:100%;height:100%;}
   .form-control{background-color:#161b22;color:#c9d1d9;border-color:#30363d;}
   .btn-secondary{background-color:#21262d;color:#c9d1d9;border-color:#30363d;}
   .btn-secondary:hover{background-color:#30363d;color:#c9d1d9;border-color:#30363d;}
@@ -27,66 +27,83 @@
     <div class="col-auto"><button id="load2" class="btn btn-primary">Load 2</button></div>
   </div>
   <div class="ratio ratio-16x9 mb-3" id="player2"></div>
+  <div class="row mb-3">
+    <div class="col"><input id="url3" type="text" class="form-control" placeholder="URL 3"></div>
+    <div class="col-auto"><button id="load3" class="btn btn-primary">Load 3</button></div>
+  </div>
+  <div class="ratio ratio-16x9 mb-3" id="player3"></div>
   <div class="mb-3 d-flex justify-content-center align-items-center gap-2">
     <input id="segments1" type="number" class="form-control" style="max-width:6rem;" value="1" min="1">
     <input id="segments2" type="number" class="form-control" style="max-width:6rem;" value="1" min="1">
-    <button id="altPlay" class="btn btn-secondary">Alternate Play</button>
+    <input id="segments3" type="number" class="form-control" style="max-width:6rem;" value="1" min="1">
+    <button id="randPlay" class="btn btn-secondary">Random Play</button>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
 const urlParams=new URLSearchParams(location.search);
-let player1,player2;
-let altMode=false,active=1,segIdx=0,endTime=0,segLen1=0,segLen2=0;
+const players=[null,null,null];
+let randMode=false,active=0,endTime=0;
+const segLens=[0,0,0];
+const segIdx=[0,0,0];
+
 function extractVideoId(url){
   const m=url.match(/[?&]v=([^&]+)/);if(m)return m[1];
   const m2=url.match(/youtu\.be\/([^?]+)/);if(m2)return m2[1];
   return url;
 }
+
 function onYouTubeIframeAPIReady(){
-  player1=new YT.Player('player1',{events:{onReady:()=>{const u=urlParams.get('video1');if(u){document.getElementById('url1').value=u;loadVideo1(u);}}}});
-  player2=new YT.Player('player2',{events:{onReady:()=>{const u=urlParams.get('video2');if(u){document.getElementById('url2').value=u;loadVideo2(u);}}}});
+  const pv=location.protocol==='file:'?{}:{playerVars:{origin:location.origin}};
+  players[0]=new YT.Player('player1',Object.assign({events:{onReady:()=>{const u=urlParams.get('video1');if(u){document.getElementById('url1').value=u;loadVideo(0,u);}}}},pv));
+  players[1]=new YT.Player('player2',Object.assign({events:{onReady:()=>{const u=urlParams.get('video2');if(u){document.getElementById('url2').value=u;loadVideo(1,u);}}}},pv));
+  players[2]=new YT.Player('player3',Object.assign({events:{onReady:()=>{const u=urlParams.get('video3');if(u){document.getElementById('url3').value=u;loadVideo(2,u);}}}},pv));
 }
-function loadVideo1(u){const id=extractVideoId(u.trim());player1.loadVideoById(id);}
-function loadVideo2(u){const id=extractVideoId(u.trim());player2.loadVideoById(id);}
-document.getElementById('load1').onclick=()=>loadVideo1(document.getElementById('url1').value);
-document.getElementById('load2').onclick=()=>loadVideo2(document.getElementById('url2').value);
-function startAlternate(){
-  if(!player1||!player2)return;
-  segIdx=0;active=1;altMode=true;
-  segLen1=player1.getDuration()/Math.max(1,parseInt(document.getElementById('segments1').value)||1);
-  segLen2=player2.getDuration()/Math.max(1,parseInt(document.getElementById('segments2').value)||1);
-  playCurrent();
-}
-function playCurrent(){
-  if(!altMode)return;
-  if(active===1){
-    const c=Math.max(1,parseInt(document.getElementById('segments1').value)||1);
-    const start=(segIdx%c)*segLen1;
-    endTime=start+segLen1;
-    player1.seekTo(start,true);player1.playVideo();
-  }else{
-    const c=Math.max(1,parseInt(document.getElementById('segments2').value)||1);
-    const start=(segIdx%c)*segLen2;
-    endTime=start+segLen2;
-    player2.seekTo(start,true);player2.playVideo();
+
+function loadVideo(i,u){const id=extractVideoId(u.trim());players[i].loadVideoById(id);}
+
+document.getElementById('load1').onclick=()=>loadVideo(0,document.getElementById('url1').value);
+document.getElementById('load2').onclick=()=>loadVideo(1,document.getElementById('url2').value);
+document.getElementById('load3').onclick=()=>loadVideo(2,document.getElementById('url3').value);
+
+function startRandom(){
+  if(players.some(p=>!p))return;
+  for(let i=0;i<3;i++){
+    const dur=players[i].getDuration();
+    if(!dur){alert('Load all videos before starting.');return;}
+    const c=Math.max(1,parseInt(document.getElementById('segments'+(i+1)).value)||1);
+    segLens[i]=dur/c;
+    segIdx[i]=0;
   }
-  checkAlt();
+  randMode=true;
+  playNext();
 }
-function checkAlt(){
-  if(!altMode)return;
-  const p=active===1?player1:player2;
+
+function playNext(){
+  if(!randMode)return;
+  active=Math.floor(Math.random()*3);
+  const c=Math.max(1,parseInt(document.getElementById('segments'+(active+1)).value)||1);
+  const start=(segIdx[active]%c)*segLens[active];
+  endTime=start+segLens[active];
+  players[active].seekTo(start,true);
+  players[active].playVideo();
+  checkRand();
+}
+
+function checkRand(){
+  if(!randMode)return;
+  const p=players[active];
   if(p.getCurrentTime()>=endTime){
     p.pauseVideo();
-    if(active===2)segIdx++;
-    active=active===1?2:1;
-    playCurrent();
+    segIdx[active]++;
+    playNext();
     return;
   }
-  requestAnimationFrame(checkAlt);
+  requestAnimationFrame(checkRand);
 }
-document.getElementById('altPlay').onclick=startAlternate;
+
+document.getElementById('randPlay').onclick=startRandom;
 </script>
 </body>
 </html>
