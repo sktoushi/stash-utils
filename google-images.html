@@ -94,10 +94,11 @@
       display: none;
       margin-bottom: 20px;
     }
-    #googleImageFrame {
+    .google-image-frame {
       width: 100%;
       height: 60vh;
       border: none;
+      display: none;
     }
   </style>
 </head>
@@ -215,9 +216,10 @@
       <button class="btn btn-outline-info btn-lg" onclick="jishoSearchBack()">Search Jisho (Back)</button>
     </div>
 
-    <!-- Google Images iframe -->
+    <!-- Google Images iframes -->
     <div id="googleImageContainer">
-      <iframe id="googleImageFrame" loading="lazy"></iframe>
+      <iframe id="frontImageFrame" class="google-image-frame" loading="lazy"></iframe>
+      <iframe id="backImageFrame" class="google-image-frame" loading="lazy"></iframe>
     </div>
 
     <hr />
@@ -886,7 +888,12 @@
       document.getElementById("backTextContainer").style.display = "none";
       document.getElementById("googleSearchButtons").style.display = "none";
       document.getElementById("googleImageContainer").style.display = "none";
-      document.getElementById("googleImageFrame").src = "";
+      const fFrame = document.getElementById("frontImageFrame");
+      const bFrame = document.getElementById("backImageFrame");
+      fFrame.src = "";
+      bFrame.src = "";
+      fFrame.style.display = "none";
+      bFrame.style.display = "none";
 
       const revealBtn = document.querySelector('.btn-reveal');
       revealBtn.disabled = false;
@@ -942,6 +949,8 @@
       addToHistory(selectedId);
       populateHistoryList();
 
+      preloadGoogleImages(currentFront, currentBack);
+
       // Show the attribute section
       document.getElementById("attributeSection").style.display = "block";
 
@@ -963,16 +972,19 @@
     function revealAnswer() {
       document.getElementById("backTextContainer").style.display = "block";
       document.getElementById("googleSearchButtons").style.display = "block";
-      let query = "";
+
+      const container = document.getElementById("googleImageContainer");
+      const fFrame = document.getElementById("frontImageFrame");
+      const bFrame = document.getElementById("backImageFrame");
+      fFrame.style.display = "none";
+      bFrame.style.display = "none";
+
       if (!isValidURL(currentFront)) {
-        query = currentFront;
+        fFrame.style.display = "block";
+        container.style.display = "block";
       } else if (!isValidURL(currentBack)) {
-        query = currentBack;
-      }
-      if (query) {
-        const frame = document.getElementById("googleImageFrame");
-        frame.src = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(query);
-        document.getElementById("googleImageContainer").style.display = "block";
+        bFrame.style.display = "block";
+        container.style.display = "block";
       }
 
       autoOpenUrlIfDateOnOtherSide(currentFront, currentBack);
@@ -1007,8 +1019,13 @@
       lastDrawnId = null;
       currentlyDrawnRecordId = null;
       document.getElementById("attributeSection").style.display = "none";
+      const fFrame = document.getElementById("frontImageFrame");
+      const bFrame = document.getElementById("backImageFrame");
       document.getElementById("googleImageContainer").style.display = "none";
-      document.getElementById("googleImageFrame").src = "";
+      fFrame.src = "";
+      bFrame.src = "";
+      fFrame.style.display = "none";
+      bFrame.style.display = "none";
 
       saveBucketState();
       updateDisplay();
@@ -1142,8 +1159,13 @@
       document.getElementById("backText").innerText = "";
       document.getElementById("backTextContainer").style.display = "none";
       document.getElementById("googleSearchButtons").style.display = "none";
+      const fFrame = document.getElementById("frontImageFrame");
+      const bFrame = document.getElementById("backImageFrame");
       document.getElementById("googleImageContainer").style.display = "none";
-      document.getElementById("googleImageFrame").src = "";
+      fFrame.src = "";
+      bFrame.src = "";
+      fFrame.style.display = "none";
+      bFrame.style.display = "none";
 
       saveBucketState();
       updateDisplay();
@@ -1298,8 +1320,13 @@
       populateHistoryList();
 
       document.getElementById("attributeSection").style.display = "none";
+      const fFrame = document.getElementById("frontImageFrame");
+      const bFrame = document.getElementById("backImageFrame");
       document.getElementById("googleImageContainer").style.display = "none";
-      document.getElementById("googleImageFrame").src = "";
+      fFrame.src = "";
+      bFrame.src = "";
+      fFrame.style.display = "none";
+      bFrame.style.display = "none";
 
       if (!fully) {
         showToast("Buckets reset. All items are back in Bucket2.");
@@ -1347,6 +1374,27 @@
     function openBackAsLink() {
       if (!currentBack) return;
       window.open(currentBack, "_blank");
+    }
+
+    function preloadGoogleImages(front, back) {
+      const fFrame = document.getElementById("frontImageFrame");
+      const bFrame = document.getElementById("backImageFrame");
+
+      if (front && !isValidURL(front)) {
+        fFrame.src = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(front);
+      } else {
+        fFrame.src = "";
+      }
+
+      if (back && !isValidURL(back)) {
+        bFrame.src = "https://www.google.com/search?tbm=isch&q=" + encodeURIComponent(back);
+      } else {
+        bFrame.src = "";
+      }
+
+      fFrame.style.display = "none";
+      bFrame.style.display = "none";
+      document.getElementById("googleImageContainer").style.display = "none";
     }
 
     /****************************************************
