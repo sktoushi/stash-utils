@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>View PDF (Random Range)</title>
+  <style>
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; }
+    #pdfEmbed { position:absolute; top:0; left:0; width:100%; height:100%; border:none; }
+  </style>
+  <script>
+    function getSecureRandomNumber(){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/(0xFFFFFFFF+1);}
+
+    function getUrlParams(){
+      const p=new URLSearchParams(window.location.search);
+      return {
+        fileName:p.get('fileName')||'default.pdf',
+        startIdx:p.get('startIdx'),
+        endIdx:p.get('endIdx'),
+        randIdx:p.get('randIdx')
+      };
+    }
+
+    function parseRangeFromFileName(name){
+      const m=name.match(/-(\d+)-(\d+)\.pdf$/);
+      if(m){return {start:parseInt(m[1],10), end:parseInt(m[2],10)};}
+      return {start:1,end:1};
+    }
+
+    function getRandomPage(s,e){return Math.floor(getSecureRandomNumber()*(e-s+1))+s;}
+
+    function displayPdf(){
+      const params=getUrlParams();
+      const file=params.fileName;
+      let page;
+      if(params.randIdx){
+        page=parseInt(params.randIdx,10);
+      }else if(params.startIdx&&params.endIdx){
+        page=getRandomPage(parseInt(params.startIdx,10),parseInt(params.endIdx,10));
+      }else{
+        const r=parseRangeFromFileName(file);
+        page=getRandomPage(r.start,r.end);
+        const url=new URL(window.location.href);
+        url.searchParams.set('randIdx',page);
+        history.replaceState(null,'',url);
+      }
+      document.getElementById('pdfEmbed').src=`${file}#page=${page}`;
+    }
+  </script>
+</head>
+<body onload="displayPdf()">
+  <embed id="pdfEmbed" src="" type="application/pdf" />
+</body>
+</html>
