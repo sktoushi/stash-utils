@@ -21,24 +21,134 @@
         }
     </style>
     <script>
-        function getUrlParams() {
-            const params = new URLSearchParams(window.location.search);
+        // ===== Utility =====
+        function getSecureRandomNumber(){
+            const a=new Uint32Array(1);
+            crypto.getRandomValues(a);
+            return a[0]/(0xFFFFFFFF+1);
+        }
+
+        function getUrlParams(){
+            const p=new URLSearchParams(window.location.search);
             return {
-                fileName: params.get('fileName') || 'default.pdf',
-                startIdx: parseInt(params.get('startIdx')) || 1,
-                endIdx: parseInt(params.get('endIdx')) || 1
+                fileName:p.get('fileName')||'default.pdf',
+                startIdx:p.get('startIdx'),
+                endIdx:p.get('endIdx'),
+                randIdx:p.get('randIdx')
             };
         }
 
-        function getRandomPage(startIdx, endIdx) {
-            return Math.floor(getSecureRandomNumber() * (endIdx - startIdx + 1)) + startIdx;
+        function parseRangeFromFileName(name){
+            const m=name.match(/-(\d+)-(\d+)\.pdf$/);
+            if(m){return {start:parseInt(m[1],10), end:parseInt(m[2],10)};}
+            return {start:1,end:1};
         }
 
-        function displayPdf() {
-            const params = getUrlParams();
-            const randomPage = getRandomPage(params.startIdx, params.endIdx);
-            const pdfEmbed = document.getElementById('pdfEmbed');
-            pdfEmbed.src = `${params.fileName}#page=${randomPage}`;
+        // ===== Bucket storage =====
+        function loadBuckets(file,start,end){
+            const key='pdfBuckets_'+file;
+            let obj=localStorage.getItem(key);
+            if(obj){
+                try{obj=JSON.parse(obj);}catch(e){obj=null;}
+            }
+            if(!obj||obj.start!==start||obj.end!==end){
+                obj={start,end,new:[],review:[]};
+                for(let i=start;i<=end;i++) obj.new.push(i);
+            }
+            return obj;
+        }
+
+        function saveBuckets(file,obj){
+            localStorage.setItem('pdfBuckets_'+file,JSON.stringify(obj));
+        }
+
+        function addHistory(file,page){
+            const key='pdfHistory_'+file;
+            let arr=localStorage.getItem(key);
+            if(arr){try{arr=JSON.parse(arr);}catch(e){arr=[];}}
+            else arr=[];
+            arr.push({page,ts:Date.now()});
+            localStorage.setItem(key,JSON.stringify(arr));
+        }
+
+        function pickPage(buckets){
+            const n=buckets.new,r=buckets.review;
+            if(!n.length && !r.length) return null;
+            const useReview=r.length && (getSecureRandomNumber()<0.33||!n.length);
+            let page;
+            if(useReview){
+                page=r[Math.floor(getSecureRandomNumber()*r.length)];
+            }else{
+                const idx=Math.floor(getSecureRandomNumber()*n.length);
+                page=n.splice(idx,1)[0];
+                r.push(page);
+            }
+            return page;
+        }
+
+        // ===== IndexedDB caching =====
+        function openPdfCache(){
+            return new Promise((res,rej)=>{
+                const req=indexedDB.open('pdfCache',1);
+                req.onupgradeneeded=e=>e.target.result.createObjectStore('files');
+                req.onsuccess=e=>res(e.target.result);
+                req.onerror=e=>rej(e.target.error);
+            });
+        }
+
+        async function getCachedPdf(file){
+            const db=await openPdfCache();
+            return new Promise((res,rej)=>{
+                const tx=db.transaction('files','readonly');
+                const req=tx.objectStore('files').get(file);
+                req.onsuccess=e=>res(e.target.result||null);
+                req.onerror=e=>rej(e.target.error);
+            });
+        }
+
+        async function storeCachedPdf(file,blob){
+            const db=await openPdfCache();
+            return new Promise((res,rej)=>{
+                const tx=db.transaction('files','readwrite');
+                tx.objectStore('files').put(blob,file);
+                tx.oncomplete=()=>res();
+                tx.onerror=e=>rej(e.target.error);
+            });
+        }
+
+        async function getPdfUrl(file){
+            let blob=await getCachedPdf(file);
+            if(!blob){
+                const res=await fetch(file);
+                blob=await res.blob();
+                await storeCachedPdf(file,blob);
+            }
+            return URL.createObjectURL(blob);
+        }
+
+        // ===== Main =====
+        async function displayPdf(){
+            const params=getUrlParams();
+            const file=params.fileName;
+            let start=parseInt(params.startIdx),end=parseInt(params.endIdx);
+            if(!start||!end){const r=parseRangeFromFileName(file);start=r.start;end=r.end;}
+
+            const buckets=loadBuckets(file,start,end);
+
+            let page;
+            if(params.randIdx){
+                page=parseInt(params.randIdx,10);
+            }else{
+                page=pickPage(buckets);
+                addHistory(file,page);
+                saveBuckets(file,buckets);
+                const url=new URL(window.location.href);
+                url.searchParams.set('randIdx',page);
+                history.replaceState(null,'',url);
+            }
+
+            const pdfUrl=await getPdfUrl(file);
+            document.getElementById('pdfEmbed').src=`${pdfUrl}#page=${page}`;
         }
     </script>
 </head>
