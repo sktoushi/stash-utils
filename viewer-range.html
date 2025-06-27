@@ -19,6 +19,7 @@
             height: 100%;
             border: none;
         }
+        #portal { padding: 1em; font-family: sans-serif; }
     </style>
     <script>
         /* ========= Utility ========= */
@@ -29,99 +30,144 @@
         }
 
         function getUrlParams () {
-            const p = new URLSearchParams(window.location.search);
+            const p = new URLSearchParams(window.location.search.replace(/\+$/, ''));
             return {
-                fileName: p.get('fileName') || 'default.pdf',
-                randIdx : p.get('randIdx')               // optional explicit page override
+                fileName: p.get('fileName') || null,
+                randIdx : p.get('randIdx'),
+                portal  : p.has('portal')
             };
         }
 
+        function hasPlusMode () {
+            return window.location.search.endsWith('+');
+        }
+
         function parseRangeFromFileName (name) {
-            /* expects "...-START-END.pdf", e.g. my-book-13-509.pdf */
-            const m = name.match(/-(\d+)-(\d+)\.pdf$/);
+            const m = name ? name.match(/-(\d+)-(\d+)\.pdf$/) : null;
             if (m) {
                 return { start: parseInt(m[1], 10), end: parseInt(m[2], 10) };
             }
-            /* fallback – single-page range */
             return { start: 1, end: 1 };
         }
 
-        /* ========= Bucket storage ========= */
-        function loadBuckets (file, start, end) {
-            const key = 'pdfBuckets_' + file;
-            let obj   = localStorage.getItem(key);
+        /* ========= IndexedDB ========= */
+        const DB_NAME = 'viewerRangeDB';
+        const B1 = 'bucket1';
+        const B2 = 'bucket2';
 
-            if (obj) {
-                try { obj = JSON.parse(obj); } catch { obj = null; }
-            }
-
-            if (!obj || obj.start !== start || obj.end !== end) {
-                obj = { start, end, new: [], review: [] };
-                for (let i = start; i <= end; i++) obj.new.push(i);
-            }
-            return obj;
+        function openDB () {
+            return new Promise((res, rej) => {
+                const req = indexedDB.open(DB_NAME, 1);
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(B1)) db.createObjectStore(B1, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(B2)) db.createObjectStore(B2, { keyPath: 'id' });
+                };
+                req.onsuccess = e => res(e.target.result);
+                req.onerror   = e => rej(e.target.error);
+            });
         }
 
-        function saveBuckets (file, obj) {
-            localStorage.setItem('pdfBuckets_' + file, JSON.stringify(obj));
+        async function getAll (storeName, fileFilter) {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction(storeName, 'readonly');
+                const req = tx.objectStore(storeName).getAll();
+                req.onsuccess = e => {
+                    let arr = e.target.result || [];
+                    if (fileFilter) arr = arr.filter(x => x.file === fileFilter);
+                    res(arr);
+                };
+                req.onerror = e => rej(e.target.error);
+            });
         }
 
-        function addHistory (file, page) {
-            const key = 'pdfHistory_' + file;
-            let arr   = localStorage.getItem(key);
-
-            if (arr) {
-                try { arr = JSON.parse(arr); } catch { arr = []; }
-            } else {
-                arr = [];
-            }
-            arr.push({ page, ts: Date.now() });
-            localStorage.setItem(key, JSON.stringify(arr));
+        async function updateCard (storeName, file, page, start, end, override) {
+            const db = await openDB();
+            return new Promise((res, rej) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                const store = tx.objectStore(storeName);
+                const id = file + '|' + page;
+                const now = Date.now();
+                const req = store.get(id);
+                req.onsuccess = () => {
+                    let card = req.result;
+                    if (card) {
+                        card.lastSeen = override && override.lastSeen ? override.lastSeen : now;
+                        card.frequency = (card.frequency || 0) + (override && override.freqInc ? override.freqInc : 1);
+                    } else {
+                        card = {
+                            id,
+                            file,
+                            page,
+                            start,
+                            end,
+                            added: override && override.added ? override.added : now,
+                            lastSeen: override && override.lastSeen ? override.lastSeen : now,
+                            frequency: override && override.freqInc ? override.freqInc : 1
+                        };
+                    }
+                    store.put(card);
+                };
+                tx.oncomplete = () => res();
+                tx.onerror = e => rej(e.target.error);
+            });
         }
 
-        /* ========= Pick a page (with auto-refresh) ========= */
-        function pickPage (buckets) {
-            let n = buckets.new,
-                r = buckets.review;
-
-            /* ---------- 1. AUTO-REFRESH ---------- */
-            if (!n.length) {
-                /* move everything back to NEW and clear REVIEW */
-                n.push(...r);
-                r.length = 0;
-            }
-
-            /* ---------- 2. NORMAL SELECTION ---------- */
-            const useReview = r.length && (getSecureRandomNumber() < 0.33);
-            let page;
-
-            if (useReview) {
-                page = r[Math.floor(getSecureRandomNumber() * r.length)];
-            } else {
-                const idx = Math.floor(getSecureRandomNumber() * n.length);
-                page = n.splice(idx, 1)[0];
-                r.push(page);
-            }
-            return page;
+        async function addVisit (file, page, start, end) {
+            await updateCard(B1, file, page, start, end);
+            const neighbors = new Set([page]);
+            if (page - 1 >= start) neighbors.add(page - 1); else if (page + 1 <= end) neighbors.add(page + 1);
+            if (page + 1 <= end) neighbors.add(page + 1); else if (page - 1 >= start) neighbors.add(page - 1);
+            for (const p of neighbors) await updateCard(B2, file, p, start, end);
         }
 
-        /* ========= IndexedDB caching ========= */
+        function srsPick (cards) {
+            if (!cards.length) return null;
+            const now = Date.now();
+            let best = null, bestScore = -Infinity;
+            for (const c of cards) {
+                const score = (now - (c.lastSeen || c.added)) / ((c.frequency || 1));
+                if (score > bestScore) { bestScore = score; best = c; }
+            }
+            return best;
+        }
+
+        async function randomBucketPick (fileFilter) {
+            const [b1, b2] = await Promise.all([getAll(B1, fileFilter), getAll(B2, fileFilter)]);
+            let arr;
+            if (getSecureRandomNumber() < 0.67 && b2.length) arr = b2; else arr = b1.length ? b1 : b2;
+            if (!arr.length) return null;
+            return arr[Math.floor(getSecureRandomNumber() * arr.length)];
+        }
+
+        async function algoPick (fileFilter) {
+            const useSrs = getSecureRandomNumber() < 0.5;
+            if (useSrs) {
+                const cards = await getAll(B1, fileFilter);
+                const card = srsPick(cards);
+                if (card) return card;
+            }
+            return randomBucketPick(fileFilter);
+        }
+
+        /* ========= PDF cache ========= */
         function openPdfCache () {
             return new Promise((res, rej) => {
                 const req = indexedDB.open('pdfCache', 1);
                 req.onupgradeneeded = e => e.target.result.createObjectStore('files');
-                req.onsuccess       = e => res(e.target.result);
-                req.onerror         = e => rej(e.target.error);
+                req.onsuccess = e => res(e.target.result);
+                req.onerror = e => rej(e.target.error);
             });
         }
 
         async function getCachedPdf (file) {
             const db = await openPdfCache();
             return new Promise((res, rej) => {
-                const tx  = db.transaction('files', 'readonly');
+                const tx = db.transaction('files', 'readonly');
                 const req = tx.objectStore('files').get(file);
                 req.onsuccess = e => res(e.target.result || null);
-                req.onerror   = e => rej(e.target.error);
+                req.onerror = e => rej(e.target.error);
             });
         }
 
@@ -131,7 +177,7 @@
                 const tx = db.transaction('files', 'readwrite');
                 tx.objectStore('files').put(blob, file);
                 tx.oncomplete = () => res();
-                tx.onerror    = e => rej(e.target.error);
+                tx.onerror = e => rej(e.target.error);
             });
         }
 
@@ -139,38 +185,113 @@
             let blob = await getCachedPdf(file);
             if (!blob) {
                 const res = await fetch(file);
-                blob      = await res.blob();
+                blob = await res.blob();
                 await storeCachedPdf(file, blob);
             }
             return URL.createObjectURL(blob);
         }
 
+        /* ========= Portal ========= */
+        async function showPortal () {
+            const [b1, b2] = await Promise.all([getAll(B1), getAll(B2)]);
+            const size = new Blob([JSON.stringify({ b1, b2 })]).size;
+            const all = b1.concat(b2);
+            const earliest = all.length ? new Date(Math.min(...all.map(c => c.added || c.lastSeen))).toLocaleString() : 'N/A';
+            const latest = all.length ? new Date(Math.max(...all.map(c => c.lastSeen || c.added))).toLocaleString() : 'N/A';
+            const div = document.getElementById('portal');
+            div.style.display = 'block';
+            div.innerHTML = `
+                <h3>Portal</h3>
+                <p>Total size: ${size} bytes</p>
+                <p>Bucket1 cards: ${b1.length}</p>
+                <p>Bucket2 cards: ${b2.length}</p>
+                <p>Earliest added: ${earliest}</p>
+                <p>Last seen: ${latest}</p>
+                <button onclick="exportData()">Export CSV</button>
+                <button onclick="importPrompt()">Import CSV</button>
+                <button onclick="resetData()">Reset State</button>
+                <br/><textarea id="csvArea" style="width:100%;height:120px;display:none"></textarea>
+            `;
+        }
+
+        async function exportData () {
+            const [b1, b2] = await Promise.all([getAll(B1), getAll(B2)]);
+            const rows = ['bucket,file,page,added,lastSeen,frequency,start,end'];
+            function push (b, arr) {
+                for (const c of arr) rows.push([b, c.file, c.page, c.added, c.lastSeen, c.frequency, c.start, c.end].join(','));
+            }
+            push('bucket1', b1); push('bucket2', b2);
+            const csv = rows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'viewerRangeData.csv'; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importPrompt () {
+            const area = document.getElementById('csvArea');
+            area.style.display = 'block';
+            area.value = '';
+            const btn = document.createElement('button');
+            btn.textContent = 'Import';
+            area.after(btn);
+            btn.onclick = async () => { await importData(area.value); location.reload(); };
+        }
+
+        async function importData (text) {
+            const lines = text.trim().split(/\r?\n/).slice(1);
+            for (const l of lines) {
+                const [bucket, file, page, added, lastSeen, frequency, start, end] = l.split(',');
+                await updateCard(bucket === 'bucket1' ? B1 : B2, file, parseInt(page, 10), parseInt(start, 10), parseInt(end, 10), {
+                    added: Number(added),
+                    lastSeen: Number(lastSeen),
+                    freqInc: Number(frequency)
+                });
+            }
+        }
+
+        function resetData () {
+            const req = indexedDB.deleteDatabase(DB_NAME);
+            req.onsuccess = () => location.reload();
+        }
+
         /* ========= Main ========= */
         async function displayPdf () {
             const params = getUrlParams();
-            const file   = params.fileName;
+            if (params.portal) return showPortal();
 
-            /* derive start / end directly from filename */
-            const { start, end } = parseRangeFromFileName(file);
-
-            const buckets = loadBuckets(file, start, end);
-
+            const plusMode = hasPlusMode();
+            let file = params.fileName;
             let page;
-            if (params.randIdx) {
+
+            if (plusMode || !params.fileName) {
+                const card = await algoPick(plusMode ? file : null);
+                if (card) {
+                    file = card.file; page = card.page;
+                } else if (file) {
+                    const { start } = parseRangeFromFileName(file); page = start;
+                } else {
+                    document.getElementById('pdfEmbed').remove();
+                    return;
+                }
+            } else if (params.randIdx) {
                 page = parseInt(params.randIdx, 10);
             } else {
-                page = pickPage(buckets);
-                addHistory(file, page);
-                saveBuckets(file, buckets);
-
-                /* persist chosen page for reproducibility */
-                const url = new URL(window.location.href);
-                url.searchParams.set('randIdx', page);
-                history.replaceState(null, '', url);
+                const { start, end } = parseRangeFromFileName(file);
+                page = Math.floor(getSecureRandomNumber() * (end - start + 1)) + start;
             }
+
+            const { start, end } = parseRangeFromFileName(file);
+            await addVisit(file, page, start, end);
 
             const pdfUrl = await getPdfUrl(file);
             document.getElementById('pdfEmbed').src = `${pdfUrl}#page=${page}`;
+
+            const url = new URL(window.location.href.replace(/\+$/, ''));
+            url.searchParams.set('fileName', file);
+            url.searchParams.set('randIdx', page);
+            history.replaceState(null, '', url);
         }
     </script>
 </head>
