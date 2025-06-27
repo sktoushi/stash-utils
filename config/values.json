@@ -50,7 +50,8 @@
         "control_schedule_case_studies.db",
         "ev_trajectory_cases.db",
         "develop_schedule_case_studies.db",
-        "communist_society_analysis.db"
+        "communist_society_analysis.db", 
+        "strategic_lessons.db" 
       ]
     },
     "skyway-recent5-coefficient": "1",
