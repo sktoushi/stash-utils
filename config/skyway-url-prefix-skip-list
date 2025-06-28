@@ -1,9 +1,12 @@
 {
   "prefixes": [
     "https://sktoushi.github.io/stash-utils/stash-randomizer",
-    "https://sktoushi.github.io/stash-utils/tdgs-randomizer.html"
+    "https://sktoushi.github.io/stash-utils/tdgs-randomizer.html",
+    "https://sktoushi.github.io/stash-utils/looptube",
+    "https://sktoushi.github.io/stash-utils/redirect0915",
+    "https://sktoushi.github.io/stash-utils/skyway-recent5percent.html"
   ],
   "exceptions": [
-    "https://sktoushi.github.io/stash-utils/stash-randomizer5.html"
+    "https://github.com/sktoushi/stash-utils/blob/main/2025-1-pm.html"
   ]
 }
