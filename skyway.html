@@ -471,26 +471,33 @@ async function getAllHistory(){
 }
 
 /* store non-local links for the history gate */
-let skipPrefixCache=null, skipExceptionCache=null, skipKeywordCache=null;
-async function loadSkipPrefixes(){
-  if(skipPrefixCache&&skipExceptionCache&&skipKeywordCache) return;
-  skipPrefixCache=[]; skipExceptionCache=[]; skipKeywordCache=[];
+let skipBegins=null, skipContains=null, skipEnds=null;
+async function loadSkipConfig(){
+  if(skipBegins&&skipContains&&skipEnds) return;
+  skipBegins=[]; skipContains=[]; skipEnds=[];
   try{
     const resp=await fetch('config/skyway-url-prefix-skip-list');
     if(resp.ok){
       const data=await resp.json();
-      if(Array.isArray(data.prefixes)) skipPrefixCache=data.prefixes.slice();
-      if(Array.isArray(data.exceptions)) skipExceptionCache=data.exceptions.slice();
-      if(Array.isArray(data.contains)) skipKeywordCache=data.contains.slice();
+      if(Array.isArray(data.beginsWith))  skipBegins=data.beginsWith.map(s=>s.toLowerCase());
+      if(Array.isArray(data.contains))    skipContains=data.contains.map(s=>s.toLowerCase());
+      if(Array.isArray(data.endsWith))    skipEnds=data.endsWith.map(s=>s.toLowerCase());
     }
-  }catch(e){ console.warn('Failed to load prefix skip list',e); }
+  }catch(e){ console.warn('Failed to load skip config',e); }
+}
+
+function shouldSkip(url){
+  const decoded=decodeURIComponent(url||'').toLowerCase();
+  if(skipBegins.some(p=>decoded.startsWith(p))) return true;
+  if(skipEnds.some(e=>decoded.endsWith(e))) return true;
+  if(skipContains.some(c=>decoded.includes(c))) return true;
+  if(/^https:\/\/sktoushi.github.io/.test(decoded)) return true;
+  return false;
 }
 
 async function recordHistory(url){
-  await loadSkipPrefixes();
-  if(skipExceptionCache.includes(url)){}else if(skipPrefixCache.some(p=>url.startsWith(p))) return;
-  else if(skipKeywordCache.some(k=>url.includes(k))) return;
-  if(/^https:\/\/sktoushi.github.io/.test(url)) return;
+  await loadSkipConfig();
+  if(shouldSkip(url)) return;
   await updateHistoryRecord(url);
 }
 
