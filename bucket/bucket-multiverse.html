@@ -421,6 +421,21 @@ function buildGraphData(){
   return {nodes,links};
 }
 
+function handleNodeClick(node){
+  if(!node||node.id==='root') return;
+  let url=null;
+  if(node.type==='item'){
+    url=idToUrl[node.id];
+  }else if(node.type==='cat'){
+    const items=categoryMap[node.id]||[];
+    if(items.length) url=idToUrl[items[randInt(0,items.length-1)]];
+  }
+  if(url){
+    try{ recordHistory(url); }catch{}
+    location.href=url;
+  }
+}
+
 async function drawNetwork(){
   const {nodes,links}=buildGraphData();
   const div=document.getElementById('network');
@@ -432,7 +447,9 @@ async function drawNetwork(){
   const node=svg.append('g').selectAll('circle').data(nodes).enter().append('circle')
     .attr('r',d=>d.type==='item'?5+2*d.count:8)
     .attr('fill',d=>d.type==='item'?'#69b3a2':'#ffdd57')
-    .attr('id',d=>d.id==='root'?'root-node':null);
+    .attr('id',d=>d.id==='root'?'root-node':null)
+    .style('cursor','pointer')
+    .on('click',(event,d)=>{ if(d.id!=='root') handleNodeClick(d); });
   const label=svg.append('g').selectAll('text').data(nodes).enter().append('text')
     .text(d=>d.id).attr('font-size','10px').attr('fill','#fff');
   node.append('title').text(d=>d.id);
