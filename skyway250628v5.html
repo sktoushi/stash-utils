@@ -471,16 +471,17 @@ async function getAllHistory(){
 }
 
 /* store non-local links for the history gate */
-let skipPrefixCache=null, skipExceptionCache=null;
+let skipPrefixCache=null, skipExceptionCache=null, skipKeywordCache=null;
 async function loadSkipPrefixes(){
-  if(skipPrefixCache&&skipExceptionCache) return;
-  skipPrefixCache=[]; skipExceptionCache=[];
+  if(skipPrefixCache&&skipExceptionCache&&skipKeywordCache) return;
+  skipPrefixCache=[]; skipExceptionCache=[]; skipKeywordCache=[];
   try{
     const resp=await fetch('config/skyway-url-prefix-skip-list');
     if(resp.ok){
       const data=await resp.json();
       if(Array.isArray(data.prefixes)) skipPrefixCache=data.prefixes.slice();
       if(Array.isArray(data.exceptions)) skipExceptionCache=data.exceptions.slice();
+      if(Array.isArray(data.contains)) skipKeywordCache=data.contains.slice();
     }
   }catch(e){ console.warn('Failed to load prefix skip list',e); }
 }
@@ -488,6 +489,7 @@ async function loadSkipPrefixes(){
 async function recordHistory(url){
   await loadSkipPrefixes();
   if(skipExceptionCache.includes(url)){}else if(skipPrefixCache.some(p=>url.startsWith(p))) return;
+  else if(skipKeywordCache.some(k=>url.includes(k))) return;
   if(/^https:\/\/sktoushi.github.io/.test(url)) return;
   let arr;
   try{ arr=JSON.parse(localStorage.getItem('skyway250628v3History')||'[]'); }
