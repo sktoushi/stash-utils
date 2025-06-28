@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="common/history-utils.js"></script>
     <script src="common/random-utils.js"></script>
     <script src="common/skyway-utils.js"></script>
     <script src="common/color-utils.js"></script>
@@ -9,7 +8,14 @@
   <meta charset="UTF-8">
   <title>skyway.html – Hierarchical Multi-Mode Randomizer (multi-distribution)</title>
   <style>
-    #lastFiveList li { font-size: 0.9rem; word-break: break-all; }
+    /* === GitHub-Issues-Dark Portal === */
+    #portal{display:none;box-sizing:border-box;padding:1rem;max-width:640px;margin:0 auto;height:100%;overflow-y:auto;background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Open Sans","Helvetica Neue",sans-serif;}
+    #portal h3{margin-top:0;color:#58a6ff;font-size:1.25rem;font-weight:600;}
+    #portal p{margin:.4rem 0;font-size:.875rem;}
+    #portal button{display:inline-block;margin:.25rem .25rem .5rem 0;padding:.45rem .85rem;font-size:.75rem;font-weight:600;border-radius:6px;border:1px solid #30363d;background:#2ea44f;color:#fff;}
+    #portal button:hover{background:#2c974b;cursor:pointer;}
+    #textareaImport{width:100%;box-sizing:border-box;background:#161b22;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.5rem;font-size:.75rem;}
+    @media(max-width:480px){#portal{padding:.75rem;}}
   </style>
 </head>
 <body>
@@ -20,45 +26,8 @@
   </div>
   <div id="progressSubtext" style="position:fixed;top:calc(50% + 40px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;"></div>
   <div id="progressCount" style="position:fixed;top:calc(50% + 80px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;"></div>
-  <!-- rating modal -->
-  <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="ratingModalLabel">How well did you recall the last link?</h5>
-        </div>
-        <div class="modal-body">
-          <p class="mb-1"><strong>Last 5 links you opened via skyway:</strong></p>
-          <ul id="lastFiveList" class="mb-3"></ul>
-          <p class="mb-2">Choose an SRS score:</p>
-          <div class="d-flex justify-content-between">
-            <button class="btn btn-outline-danger srs-btn" data-score="1">1</button>
-            <button class="btn btn-outline-warning srs-btn" data-score="2">2</button>
-            <button class="btn btn-outline-secondary srs-btn" data-score="3">3</button>
-            <button class="btn btn-outline-info srs-btn" data-score="4">4</button>
-            <button class="btn btn-outline-success srs-btn" data-score="5">5</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div id="portal"></div>
 <script>
-/* ======== SRS GATE (33% chance) ======== */
-const SRS_DB_NAME="skywaySRSv2";
-const SRS_STORE="cards";
-const SRS_DB_VERSION=1;
-const LS_PENDING="skywaySrsPending";
-const LS_HISTORY="skywaySrsHistory";
-const LS_COUNT="skywaySrsCount";
-function openSrsDB(){return new Promise((res,rej)=>{const r=indexedDB.open(SRS_DB_NAME,SRS_DB_VERSION);r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(SRS_STORE))db.createObjectStore(SRS_STORE,{keyPath:'id'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
-async function getAllCards(){const db=await openSrsDB();return new Promise((res,rej)=>{const tx=db.transaction(SRS_STORE,'readonly');const st=tx.objectStore(SRS_STORE);const rq=st.getAll();rq.onsuccess=()=>res(rq.result||[]);rq.onerror=()=>rej(rq.error);});}
-async function updateCard(url,{added,lastSeen,freqInc=1}={}){const db=await openSrsDB();return new Promise((res,rej)=>{const tx=db.transaction(SRS_STORE,'readwrite');const st=tx.objectStore(SRS_STORE);const rq=st.get(url);rq.onsuccess=()=>{const now=Date.now();let c=rq.result;if(c){c.lastSeen=lastSeen||now;c.frequency=(c.frequency||0)+freqInc;}else{c={id:url,url,added:added||now,lastSeen:lastSeen||now,frequency:freqInc};}st.put(c);};tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
-function srsPick(cards){if(!cards.length)return null;const now=Date.now();let best=null,bestScore=-1e9;for(const c of cards){const score=(now-(c.lastSeen||c.added))/(c.frequency||1);if(score>bestScore){bestScore=score;best=c;}}return best;}
-function pushHistory(url){let arr;try{arr=JSON.parse(localStorage.getItem(LS_HISTORY)||'[]');if(!Array.isArray(arr))arr=[];}catch{arr=[];}arr.push(url);if(arr.length>5)arr=arr.slice(-5);localStorage.setItem(LS_HISTORY,JSON.stringify(arr));}
-function renderLastFive(){const el=document.getElementById('lastFiveList');if(!el)return;el.innerHTML='';let arr;try{arr=JSON.parse(localStorage.getItem(LS_HISTORY)||'[]');}catch{arr=[];}arr.slice().reverse().forEach(u=>{const li=document.createElement('li');li.textContent=u;el.appendChild(li);});}
-function maybePromptRating(){return new Promise(resolve=>{const count=parseInt(localStorage.getItem(LS_COUNT)||'0',10);const pending=localStorage.getItem(LS_PENDING);if(count<1||!pending)return resolve();renderLastFive();document.querySelectorAll('.srs-btn').forEach(btn=>btn.addEventListener('click',async ev=>{const score=parseInt(ev.currentTarget.dataset.score,10)||3;await updateCard(pending,{freqInc:score,lastSeen:Date.now()});localStorage.removeItem(LS_PENDING);const m=bootstrap.Modal.getInstance(document.getElementById('ratingModal'));m.hide();resolve();},{once:true}));const m=new bootstrap.Modal(document.getElementById('ratingModal'),{backdrop:'static',keyboard:false});m.show();});}
-async function runSrsGate(){await maybePromptRating();let count=parseInt(localStorage.getItem(LS_COUNT)||'0',10);count++;localStorage.setItem(LS_COUNT,count);const cards=await getAllCards();const next=srsPick(cards);if(!next){return runOriginal();}await updateCard(next.url,{freqInc:1,lastSeen:Date.now()});localStorage.setItem(LS_PENDING,next.url);pushHistory(next.url);await showProgressAndRedirect(next.url);}
-
 /*╔══════════════════════════════════════════╗
   ║  HIERARCHICAL DECISION STACK             ║
   ║  1) modeWeights  → chooses randomMode.   ║
@@ -403,6 +372,7 @@ function evalFormula(formula){
 }
 
 async function showProgressAndRedirect(url){
+  recordHistory(url);
   await loadConfig();
   const cur = evalFormula(configValues.progressCurrentValueFormula);
   const target = evalFormula(configValues.progressTargetValueFormula);
@@ -454,30 +424,117 @@ function updateVisitCounter(){
   return count;
 }
 
+/* ──────────────── HISTORY DB ──────────────── */
+const HIST_DB_NAME='skyHistory';
+const HIST_STORE='links';
+const HIST_VERSION=1;
+let historyDb=null;
+
+function openHistoryDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(HIST_DB_NAME,HIST_VERSION);
+    r.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(HIST_STORE))
+        db.createObjectStore(HIST_STORE,{keyPath:'id'});
+    };
+    r.onerror=()=>rej(r.error);
+    r.onsuccess=()=>res(r.result);
+  });
+}
+
+async function histGet(id){
+  if(!historyDb) historyDb=await openHistoryDB();
+  return new Promise((res,rej)=>{
+    const tx=historyDb.transaction(HIST_STORE,'readonly').objectStore(HIST_STORE).get(id);
+    tx.onsuccess=()=>res(tx.result||null);
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+
+async function histPut(rec){
+  if(!historyDb) historyDb=await openHistoryDB();
+  return new Promise((res,rej)=>{
+    const tx=historyDb.transaction(HIST_STORE,'readwrite').objectStore(HIST_STORE).put(rec);
+    tx.onsuccess=()=>res();
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+
+async function getAllHistory(){
+  if(!historyDb) historyDb=await openHistoryDB();
+  return new Promise((res,rej)=>{
+    const tx=historyDb.transaction(HIST_STORE,'readonly').objectStore(HIST_STORE).getAll();
+    tx.onsuccess=()=>res(tx.result||[]);
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+
+/* store non-local links for the history gate */
+function recordHistory(url){
+  if(/^https:\/\/sktoushi.github.io/.test(url)) return;
+  let arr;
+  try{ arr=JSON.parse(localStorage.getItem('skyway250628v3History')||'[]'); }
+  catch{ arr=[]; }
+  if(!Array.isArray(arr)) arr=[];
+  arr=arr.filter(u=>u!==url);
+  arr.push(url);
+  if(arr.length>10) arr=arr.slice(-10);
+  localStorage.setItem('skyway250628v3History',JSON.stringify(arr));
+  updateHistoryRecord(url);
+}
+
+function getHistory(){
+  try{ const a=JSON.parse(localStorage.getItem('skyway250628v3History')||'[]');
+       return Array.isArray(a)?a:[]; }
+  catch{ return []; }
+}
+
+async function updateHistoryRecord(url){
+  const now=Date.now();
+  try{
+    const existing=await histGet(url);
+    const rec=existing?{...existing,freq:(existing.freq||0)+1,lastSeen:now}:{id:url,url,freq:1,lastSeen:now};
+    await histPut(rec);
+  }catch(e){ console.error('hist update fail',e); }
+}
+
 function getPhilippineNow(){
   const now=new Date();
   const utc=now.getTime()+now.getTimezoneOffset()*60000;
   return new Date(utc+8*3600000);
 }
 
-async function runOriginal(){
-  await getRandomColor();
-  await loadConfig();
-  animateProgressCount();
-  const count=updateVisitCounter();
-  const sub=document.getElementById('progressSubtext');
-  if(sub && configValues.lastUpdated){
-    const last=new Date(configValues.lastUpdated);
-    const now=getPhilippineNow();
-    const days=Math.max(1,(now-last)/86400000);
-    const avg=(count/days).toFixed(2);
-    sub.textContent=`+${count} since ${configValues.lastUpdated}! average: ${avg}`;
-    sub.style.display='block';
-  }
-  await loadBucketState();
-  try{ await processRows(await fetchCSV(targetCsv)); }
-  catch(e){ document.body.textContent=e.message; }
+/* === Portal === */
+async function showPortal(){
+  const arr=await getAllHistory();
+  const size=new Blob([JSON.stringify({links:arr})]).size;
+  const earliest=arr.length?new Date(Math.min(...arr.map(r=>r.lastSeen))).toLocaleString():'N/A';
+  const latest=arr.length?new Date(Math.max(...arr.map(r=>r.lastSeen))).toLocaleString():'N/A';
+  const div=document.getElementById('portal');
+  div.style.display='block';
+  div.innerHTML=`<h3>History Portal</h3><p>Total JSON size: ${size} bytes</p><p>${arr.length} unique URLs</p><p>First seen: ${earliest}</p><p>Last seen: ${latest}</p><button onclick="exportData()">Export JSON</button><button onclick="importPrompt()">Import JSON</button><button onclick="resetData()">Reset State</button><br/><textarea id="textareaImport" style="display:none" placeholder="Paste JSON here"></textarea>`;
 }
+
+async function exportData(){
+  const arr=await getAllHistory();
+  const blob=new Blob([JSON.stringify({links:arr})],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='skywayHistory.json';a.click();URL.revokeObjectURL(url);
+}
+function importPrompt(){
+  const area=document.getElementById('textareaImport');area.style.display='block';area.value='';
+  const btn=document.createElement('button');btn.textContent='Import';area.after(btn);
+  btn.onclick=async()=>{await importData(area.value);location.reload();};
+}
+async function importData(txt){
+  txt=txt.trim();if(!txt)return;let j;try{j=JSON.parse(txt);}catch(e){alert('Invalid JSON');return;}
+  if(!Array.isArray(j.links)){alert('Malformed JSON');return;}
+  for(const r of j.links){if(!r.url)continue;await histPut({id:r.url,url:r.url,freq:r.freq||1,lastSeen:r.lastSeen||Date.now()});}
+  const arr=j.links.map(r=>r.url).slice(-10);localStorage.setItem('skyway250628v3History',JSON.stringify(arr));
+}
+function resetData(){localStorage.removeItem('skyway250628v3History');const r=indexedDB.deleteDatabase(HIST_DB_NAME);r.onsuccess=()=>location.reload();}
+
 /* ──────────────── MAIN PROCESSOR ──────────────── */
 async function processRows(rows,depth=0){
   if(depth>2000) return document.body.textContent='Max CSV nesting depth exceeded.';
@@ -518,16 +575,60 @@ async function processRows(rows,depth=0){
   document.body.textContent='Unknown row type: '+type;
 }
 
+/* run the original skyway algorithm */
+async function runOriginal(){
+  await getRandomColor();
+  await loadConfig();
+  animateProgressCount();
+  const count=updateVisitCounter();
+  const sub=document.getElementById('progressSubtext');
+  if(sub && configValues.lastUpdated){
+    const last=new Date(configValues.lastUpdated);
+    const now=getPhilippineNow();
+    const days=Math.max(1,(now-last)/86400000);
+    const avg=(count/days).toFixed(2);
+    sub.textContent=`+${count} since ${configValues.lastUpdated}! average: ${avg}`;
+    sub.style.display='block';
+  }
+  await loadBucketState();
+  try{ await processRows(await fetchCSV(targetCsv)); }
+  catch(e){ document.body.textContent=e.message; }
+}
+
+/* pick a random previously visited link */
+async function runHistoryGate(){
+  const hist=getHistory();
+  if(!hist.length) return runOriginal();
+  const records=[];
+  for(const url of hist){
+    try{
+      const rec=await histGet(url);
+      records.push({url,freq:rec?.freq||0,lastSeen:rec?.lastSeen||0});
+    }catch{ records.push({url,freq:0,lastSeen:0}); }
+  }
+  if(!records.length) return runOriginal();
+  const now=Date.now();
+  let best=records[0];
+  let bestScore=-Infinity;
+  for(const r of records){
+    const score=(now-r.lastSeen)/(r.freq+1);
+    if(score>bestScore){ bestScore=score; best=r; }
+  }
+  await showProgressAndRedirect(best.url);
+}
+
 /* ──────────────── ENTRY ──────────────── */
 window.onload = async ()=>{
+  if(urlParams.has('portal')){
+    return showPortal();
+  }
   if(!targetCsv){ document.body.textContent='Missing ?target=…'; return; }
-  if(getSecureRandomNumber() < 0.33){
-    await runSrsGate();
+  if(getSecureRandomNumber()<0.33){
+    await runHistoryGate();
   } else {
     await runOriginal();
   }
 };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
