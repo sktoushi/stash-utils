@@ -1,112 +1,427 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Bucket Multiverse</title>
-    <script>
-        function secureRandomIndex(maxExclusive) {
-            const arr = new Uint32Array(1);
-            crypto.getRandomValues(arr);
-            return arr[0] % maxExclusive;
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            const urls = [
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-solomon",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-ms-excel",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-spycraft-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-spycraft-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-access-denied",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-good-to-great",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-listening-2410",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-value-at-risk-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-game-theory-101a",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Macroeconomics-Mankiw",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-economics-of-labor-tr-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-The-Strategy-of-Conflict-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-the-taming-of-the-demons-tibetan",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Against-the-Academics-St-Augustine-volume1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Introduction-to-operations-and-supply-chain-management-Bozarth-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Seven-Crashes",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-the-toyota-template",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-spycraft-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-nudge-improving-decisions",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Games-of-Strategy-dixit-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-The-Strategy-of-Conflict-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-world-of-the-favorite-tr-p22",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-in-the-dragons-shadow-tr-p21",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-On-Order-St-Augustine-volume3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-in-the-dragons-shadow-tr-p221",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-These-Trees-Tell-a-Story-tr-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-These-Trees-Tell-a-Story-tr-p4",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-These-Trees-Tell-a-Story-tr-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-mind-performance-projects-tr-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-These-Trees-Tell-a-Story-tr-p32",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-The-Colonel-Who-Would-Not-Repent",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Manifesto-of-the-Communist-Party",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Behavioral-Game-Theory-Camerer-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Behavioral-Game-Theory-Camerer-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p4",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Game-Theory-for-Applied-Economists",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-game-theory-for-applied-economists",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-taiichi-ohnos-workplace-management",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-capitalism-socialism-and-democracy",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Hawthorn-The-Tree-That-Has-Nourished",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-never-split-the-difference-negotiate",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-production-and-operations-analysis-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-production-and-operations-analysis-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-production-and-operations-analysis-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Catechism-of-the-Catholic-Church-tr-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-influence-the-psychology-of-persuasion",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Intermediate-Microeconomics-Hal-Varian",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Catechism-of-the-Catholic-Church-tr-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Catechism-of-the-Catholic-Church-tr-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-how-to-persuade-people-who-dont-want-to",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Il-gran-cardinale-Alessandro-Farnese-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Il-gran-cardinale-Alessandro-Farnese-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Il-gran-cardinale-Alessandro-Farnese-p5",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Il-gran-cardinale-Alessandro-Farnese-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-st-augustine-answers-questions-on-prayer",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Soldiers-and-Kings-Human-Smuggling-tr-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-options-futures-and-other-derivatives-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Soldiers-and-Kings-Human-Smuggling-tr-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-options-futures-and-other-derivatives-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-options-futures-and-other-derivatives-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Principles-of-Mathematical-Analysis-Rudin",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p9",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-the-goal-a-process-of-ongoing-improvement",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-On-the-Happy-Life-Saint-Augustine-volume2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p8",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p5",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Evolution-and-the-Theory-of-Games-maynard",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p7",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-the-theory-of-games-and-economic-behavior",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p4",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p6",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-The-Goal-A-Process-of-Ongoing-Improvement",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p10",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-King-of-the-godfathers-Big-Joey-Massino-p3",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-King-of-the-godfathers-Big-Joey-Massino-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p5-1-100-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-lean-construction-management-the-toyota-way",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-BRAINWASHING-The-Science-of-Thought-Control",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p6-1-100-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p5-1-100-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p6-1-100-p1",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p7-1-109-p2",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Reclaiming-Patriotism-in-an-Age-of-Extremes",
-                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p7-1-109-p1"
-            ];
-            const idx = secureRandomIndex(urls.length);
-            window.location.replace(urls[idx]);
-        });
-    </script>
+  <meta charset="UTF-8">
+  <title>bucket-multiverse.html – Network Traverser</title>
+  <script src="../common/random-utils.js"></script>
+  <script src="../common/color-utils.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    #portal{display:none;box-sizing:border-box;padding:1rem;max-width:640px;margin:0 auto;height:100%;overflow-y:auto;background:#0d1117;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,"Open Sans","Helvetica Neue",sans-serif;}
+    #portal h3{margin-top:0;color:#58a6ff;font-size:1.25rem;font-weight:600;}
+    #portal p{margin:.4rem 0;font-size:.875rem;}
+    #portal button{display:inline-block;margin:.25rem .25rem .5rem 0;padding:.45rem .85rem;font-size:.75rem;font-weight:600;border-radius:6px;border:1px solid #30363d;background:#2ea44f;color:#fff;}
+    #portal button:hover{background:#2c974b;cursor:pointer;}
+    #textareaImport{width:100%;box-sizing:border-box;background:#161b22;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.5rem;font-size:.75rem;}
+    @media(max-width:480px){#portal{padding:.75rem;}}
+  </style>
 </head>
 <body>
-    <noscript>Please enable JavaScript.</noscript>
+  <div id="progressBarContainer" style="position:fixed;top:0;left:0;width:100%;display:none;z-index:9999;">
+    <div class="progress" style="height:30px;">
+      <div id="progressBar" class="progress-bar" role="progressbar" style="width:0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+  </div>
+  <div id="progressSubtext" style="position:fixed;top:calc(50% + 40px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;"></div>
+  <div id="progressCount" style="position:fixed;top:calc(50% + 80px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;"></div>
+  <div id="portal"></div>
+<script>
+const DB_NAME='multiverseBuckets';
+const STORE='state';
+const DB_VERSION=1;
+let bucketDb=null, bucketState=null;
+
+const HIST_DB_NAME='multiverseHistory';
+const HIST_STORE='links';
+const HIST_VERSION=1;
+let historyDb=null;
+const LOCAL_HIST_KEY='bucketMultiverseHistory';
+
+const idToUrl={};
+const idToPath={};
+const categoryMap={};
+const allItemIds=[];
+
+async function openBucketDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DB_NAME,DB_VERSION);
+    r.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(STORE))
+        db.createObjectStore(STORE,{keyPath:'id'});
+    };
+    r.onerror=()=>rej(r.error);
+    r.onsuccess=()=>res(r.result);
+  });
+}
+function idbGet(key){
+  return new Promise((res,rej)=>{
+    const tx=bucketDb.transaction(STORE,'readonly').objectStore(STORE).get(key);
+    tx.onsuccess=()=>res(tx.result?tx.result.data:null);
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+function idbPut(key,val){
+  return new Promise((res,rej)=>{
+    const tx=bucketDb.transaction(STORE,'readwrite').objectStore(STORE).put({id:key,data:val});
+    tx.onsuccess=()=>res();
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+
+async function openHistoryDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(HIST_DB_NAME,HIST_VERSION);
+    r.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains(HIST_STORE))
+        db.createObjectStore(HIST_STORE,{keyPath:'id'});
+    };
+    r.onerror=()=>rej(r.error);
+    r.onsuccess=()=>res(r.result);
+  });
+}
+async function histGet(id){
+  if(!historyDb) historyDb=await openHistoryDB();
+  return new Promise((res,rej)=>{
+    const tx=historyDb.transaction(HIST_STORE,'readonly').objectStore(HIST_STORE).get(id);
+    tx.onsuccess=()=>res(tx.result||null);
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+async function histPut(rec){
+  if(!historyDb) historyDb=await openHistoryDB();
+  return new Promise((res,rej)=>{
+    const tx=historyDb.transaction(HIST_STORE,'readwrite').objectStore(HIST_STORE).put(rec);
+    tx.onsuccess=()=>res();
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+async function getAllHistory(){
+  if(!historyDb) historyDb=await openHistoryDB();
+  return new Promise((res,rej)=>{
+    const tx=historyDb.transaction(HIST_STORE,'readonly').objectStore(HIST_STORE).getAll();
+    tx.onsuccess=()=>res(tx.result||[]);
+    tx.onerror=()=>rej(tx.error);
+  });
+}
+
+let skipBegins=null, skipContains=null, skipEnds=null;
+async function loadSkipConfig(){
+  if(skipBegins&&skipContains&&skipEnds) return;
+  skipBegins=[]; skipContains=[]; skipEnds=[];
+  try{
+    const resp=await fetch('../config/skyway-url-prefix-skip-list');
+    if(resp.ok){
+      const data=await resp.json();
+      if(Array.isArray(data.beginsWith))  skipBegins=data.beginsWith.map(s=>s.toLowerCase());
+      if(Array.isArray(data.contains))    skipContains=data.contains.map(s=>s.toLowerCase());
+      if(Array.isArray(data.endsWith))    skipEnds=data.endsWith.map(s=>s.toLowerCase());
+    }
+  }catch(e){ console.warn('Failed to load skip config',e); }
+}
+function shouldSkip(url){
+  const decoded=decodeURIComponent(url||'').toLowerCase();
+  if(skipBegins.some(p=>decoded.startsWith(p))) return true;
+  if(skipEnds.some(e=>decoded.endsWith(e))) return true;
+  if(skipContains.some(c=>decoded.includes(c))) return true;
+  return false;
+}
+async function recordHistory(url){
+  await loadSkipConfig();
+  if(shouldSkip(url)) return;
+  try{
+    let arr=JSON.parse(localStorage.getItem(LOCAL_HIST_KEY)||'[]');
+    if(!Array.isArray(arr)) arr=[];
+    arr=arr.filter(u=>u!==url);
+    arr.push(url);
+    if(arr.length>10) arr=arr.slice(-10);
+    localStorage.setItem(LOCAL_HIST_KEY,JSON.stringify(arr));
+  }catch(e){ console.warn('local history fail',e); }
+  await updateHistoryRecord(url);
+}
+async function syncLocalHistory(){
+  let arr;
+  try{ arr=JSON.parse(localStorage.getItem(LOCAL_HIST_KEY)||'[]'); }
+  catch{ arr=[]; }
+  if(!Array.isArray(arr)) arr=[];
+  for(const url of arr){
+    try{ await updateHistoryRecord(url); }catch{}
+  }
+}
+async function getHistory(){
+  try{
+    await syncLocalHistory();
+    const all=await getAllHistory();
+    all.sort((a,b)=>(b.lastSeen||0)-(a.lastSeen||0));
+    return all.slice(0,10).map(r=>r.url);
+  }catch(e){ console.error('getHistory fail',e); return []; }
+}
+async function updateHistoryRecord(url){
+  const now=Date.now();
+  try{
+    const existing=await histGet(url);
+    const rec=existing?{...existing,freq:(existing.freq||0)+1,lastSeen:now}:{id:url,url,freq:1,lastSeen:now};
+    await histPut(rec);
+  }catch(e){ console.error('hist update fail',e); }
+}
+function getPhilippineNow(){
+  const now=new Date();
+  const utc=now.getTime()+now.getTimezoneOffset()*60000;
+  return new Date(utc+8*3600000);
+}
+
+async function loadDirectory(){
+  const resp=await fetch('bucket-directory.json');
+  const data=await resp.json();
+  function walk(obj,path){
+    for(const [k,v] of Object.entries(obj)){
+      if(Array.isArray(v)){
+        const catPath=path.concat(k);
+        const catKey=catPath.join('/');
+        if(!categoryMap[catKey]) categoryMap[catKey]=[];
+        for(const item of v){
+          idToUrl[item.id]=item.url;
+          idToPath[item.id]=catPath;
+          allItemIds.push(item.id);
+          categoryMap[catKey].push(item.id);
+        }
+      }else if(typeof v==='object'){
+        walk(v,path.concat(k));
+      }
+    }
+  }
+  walk(data,[]);
+}
+
+async function loadBucketState(){
+  bucketDb=await openBucketDB();
+  bucketState=await idbGet('main');
+  if(!bucketState){
+    bucketState={reviewBucket:[],newBucket:[],counts:{},initiated:false};
+  }
+  if(!bucketState.initiated){
+    initBuckets();
+    bucketState.initiated=true;
+    await saveBucketState();
+  }
+}
+function initBuckets(){
+  for(const id of allItemIds){
+    if(!bucketState.newBucket.includes(id)&&!bucketState.reviewBucket.includes(id))
+      bucketState.newBucket.push(id);
+  }
+}
+async function saveBucketState(){ await idbPut('main',bucketState); }
+
+function traverseNeighbors(id){
+  const count=bucketState.counts[id]||0;
+  let path=idToPath[id];
+  let level=Math.floor(count/3);
+  while(level>0 && path.length>1){ path=path.slice(0,-1); level--; }
+  const catKey=path.join('/');
+  const options=categoryMap[catKey]||[id];
+  return options[randInt(0,options.length-1)];
+}
+
+function pickBucketItem(){
+  if(!bucketState.reviewBucket.length && !bucketState.newBucket.length) return null;
+  const useReview=getSecureRandomNumber()<0.33 && bucketState.reviewBucket.length;
+  const bucket=useReview?bucketState.reviewBucket:bucketState.newBucket;
+  if(!bucket.length){
+    const other=useReview?bucketState.newBucket:bucketState.reviewBucket;
+    if(!other.length) return null;
+    return pickFromBucket(other,!useReview);
+  }
+  return pickFromBucket(bucket,useReview);
+}
+function pickFromBucket(bucket,isReview){
+  const idx=Math.floor(getSecureRandomNumber()*bucket.length);
+  const id=bucket[idx];
+  if(!isReview){
+    bucket.splice(idx,1);
+    bucketState.reviewBucket.push(id);
+  }
+  bucketState.counts[id]=(bucketState.counts[id]||0)+1;
+  saveBucketState();
+  const finalId=traverseNeighbors(id);
+  return idToUrl[finalId];
+}
+
+async function showProgressAndRedirect(url){
+  await recordHistory(url);
+  const config=await loadConfig();
+  const cur=evalFormula(config.progressCurrentValueFormula);
+  const target=evalFormula(config.progressTargetValueFormula);
+  const container=document.getElementById('progressBarContainer');
+  const bar=document.getElementById('progressBar');
+  if(!container||!bar){ location.href=url; return; }
+  if(isNaN(cur)||isNaN(target)||target<=cur){ location.href=url; return; }
+  container.style.display='block';
+  bar.style.width='0%';
+  bar.setAttribute('aria-valuenow','0');
+  bar.textContent='0%';
+  const steps=60; const duration=2000; let step=0;
+  const inc=(target-cur)/steps; let val=cur;
+  return new Promise(resolve=>{
+    const timer=setInterval(()=>{
+      val+=inc; step++;
+      const pct=((val-cur)/(target-cur))*100;
+      bar.style.width=pct+'%';
+      bar.setAttribute('aria-valuenow',pct);
+      bar.textContent=Math.floor(pct)+'%';
+      if(step>=steps){
+        clearInterval(timer);
+        const delay=0.5+getSecureRandomNumber()*(5000-0.5);
+        setTimeout(()=>{ location.href=url; resolve(); }, delay);
+      }
+    }, duration/steps);
+  });
+}
+
+async function animateProgressCount(){
+  const config=await loadConfig();
+  const target=evalFormula(config.progressCurrentValueFormula);
+  const el=document.getElementById('progressCount');
+  if(!el||isNaN(target)) return;
+  el.style.display='block';
+  const steps=60; const duration=2000; let step=0; let val=0;
+  const inc=target/steps;
+  const timer=setInterval(()=>{
+    val+=inc; step++;
+    if(step>=steps){ clearInterval(timer); val=target; }
+    el.textContent=Math.round(val).toLocaleString();
+  }, duration/steps);
+}
+
+function updateVisitCounter(){
+  const key='bucketMultiverseVisitCount';
+  let count=parseInt(localStorage.getItem(key)||'0',10);
+  count++; localStorage.setItem(key,count);
+  return count;
+}
+
+let configValues={};
+async function loadConfig(){
+  if(Object.keys(configValues).length) return configValues;
+  try{
+    const resp=await fetch('../config/values.json');
+    if(resp.ok){
+      const raw=await resp.json();
+      const base=raw.base||{};
+      let patch={};
+      if(Array.isArray(raw.patches)&&raw.patches.length){
+        const weights=raw.patches.map(p=>Number(p.distributionWeight)||1);
+        const tot=weights.reduce((a,b)=>a+b,0);
+        let rnd=getSecureRandomNumber()*tot;
+        for(let i=0;i<raw.patches.length;i++){
+          if(rnd<weights[i]){ patch={...raw.patches[i]}; break; }
+          rnd-=weights[i];
+        }
+        delete patch.distributionWeight;
+      }
+      configValues=Object.assign({},base,patch);
+      for(const [k,v] of Object.entries(configValues)){
+        if(typeof v==='string' && /^\d+(?:\.\d+)?$/.test(v)){
+          configValues[k]=Number(v);
+        }
+      }
+    }
+  }catch(err){ console.error('Config load failed:',err); }
+  return configValues;
+}
+
+function evalFormula(formula){
+  if(formula===undefined||formula===null||formula==='') return NaN;
+  if(typeof formula==='number') return formula;
+  let expr=String(formula);
+  for(const [k,v] of Object.entries(configValues)){
+    expr=expr.replace(new RegExp('\\b'+k+'\\b','g'),v);
+  }
+  try{ return Function('"use strict";return ('+expr+')')(); }
+  catch{ return NaN; }
+}
+
+function showPortal(){
+  getAllHistory().then(arr=>{
+    const size=new Blob([JSON.stringify({links:arr})]).size;
+    const earliest=arr.length?new Date(Math.min(...arr.map(r=>r.lastSeen))).toLocaleString():'N/A';
+    const latest=arr.length?new Date(Math.max(...arr.map(r=>r.lastSeen))).toLocaleString():'N/A';
+    const div=document.getElementById('portal');
+    div.style.display='block';
+    div.innerHTML=`<h3>History Portal</h3><p>Total JSON size: ${size} bytes</p><p>${arr.length} unique URLs</p><p>First seen: ${earliest}</p><p>Last seen: ${latest}</p><button onclick="exportData()">Export JSON</button><button onclick="importPrompt()">Import JSON</button><button onclick="resetData()">Reset State</button><br/><textarea id="textareaImport" style="display:none" placeholder="Paste JSON here"></textarea>`;
+  });
+}
+function exportData(){
+  getAllHistory().then(arr=>{
+    const blob=new Blob([JSON.stringify({links:arr})],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='multiverseHistory.json';a.click();URL.revokeObjectURL(url);
+  });
+}
+function importPrompt(){
+  const area=document.getElementById('textareaImport');area.style.display='block';area.value='';
+  const btn=document.createElement('button');btn.textContent='Import';area.after(btn);
+  btn.onclick=async()=>{await importData(area.value);location.reload();};
+}
+async function importData(txt){
+  txt=txt.trim();if(!txt)return;let j;try{j=JSON.parse(txt);}catch(e){alert('Invalid JSON');return;}
+  if(!Array.isArray(j.links)){alert('Malformed JSON');return;}
+  for(const r of j.links){if(!r.url)continue;await histPut({id:r.url,url:r.url,freq:r.freq||1,lastSeen:r.lastSeen||Date.now()});}
+}
+function resetData(){const r=indexedDB.deleteDatabase(HIST_DB_NAME);r.onsuccess=()=>location.reload();}
+
+async function runOriginal(){
+  await getRandomColor();
+  await loadConfig();
+  animateProgressCount();
+  const count=updateVisitCounter();
+  const sub=document.getElementById('progressSubtext');
+  if(sub && configValues.lastUpdated){
+    const last=new Date(configValues.lastUpdated);
+    const now=getPhilippineNow();
+    const days=Math.max(1,(now-last)/86400000);
+    const avg=(count/days).toFixed(2);
+    sub.textContent=`+${count} since ${configValues.lastUpdated}! average: ${avg}`;
+    sub.style.display='block';
+  }
+  await loadBucketState();
+  const url=pickBucketItem();
+  if(url) await showProgressAndRedirect(url);
+  else document.body.textContent='No bucket items available.';
+}
+
+async function runHistoryGate(){
+  try{
+    await loadConfig();
+    await loadBucketState();
+  }catch(e){ console.error('history gate prep failed',e); }
+  const hist=await getHistory();
+  if(!hist.length) return runOriginal();
+  const records=[];
+  for(const url of hist){
+    try{
+      const rec=await histGet(url);
+      records.push({url,freq:rec?.freq||0,lastSeen:rec?.lastSeen||0});
+    }catch{ records.push({url,freq:0,lastSeen:0}); }
+  }
+  if(!records.length) return runOriginal();
+  const now=Date.now();
+  let best=records[0];
+  let bestScore=-Infinity;
+  for(const r of records){
+    const score=(now-r.lastSeen)/(r.freq+1);
+    if(score>bestScore){ bestScore=score; best=r; }
+  }
+  await showProgressAndRedirect(best.url);
+}
+
+window.onload=async()=>{
+  const params=new URLSearchParams(location.search);
+  if(params.has('portal')){ return showPortal(); }
+  await loadDirectory();
+  if(getSecureRandomNumber()<0.33){ await runHistoryGate(); } else { await runOriginal(); }
+};
+</script>
 </body>
 </html>
