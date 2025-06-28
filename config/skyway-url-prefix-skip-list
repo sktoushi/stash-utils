@@ -4,7 +4,8 @@
     "https://sktoushi.github.io/stash-utils/tdgs-randomizer.html",
     "https://sktoushi.github.io/stash-utils/looptube",
     "https://sktoushi.github.io/stash-utils/redirect0915",
-    "https://sktoushi.github.io/stash-utils/skyway-recent5percent.html"
+    "https://sktoushi.github.io/stash-utils/skyway-recent5percent.html",
+    "https://github.com/cjcaf1995/redirect0915/issues/241"
   ],
   "exceptions": [
     "https://github.com/sktoushi/stash-utils/blob/main/2025-1-pm.html"
