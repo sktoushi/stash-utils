@@ -64,6 +64,21 @@ const idToPath={};
 const categoryMap={};
 const allItemIds=[];
 
+function getItemsForCategory(catId){
+  let items=categoryMap[catId];
+  if(!Array.isArray(items) || !items.length){
+    const parts=catId.split('/');
+    items=allItemIds.filter(id=>{
+      const p=idToPath[id];
+      if(!p||p.length<parts.length) return false;
+      for(let i=0;i<parts.length;i++) if(p[i]!==parts[i]) return false;
+      return true;
+    });
+    categoryMap[catId]=items;
+  }
+  return items;
+}
+
 async function openBucketDB(){
   return new Promise((res,rej)=>{
     const r=indexedDB.open(DB_NAME,DB_VERSION);
@@ -427,7 +442,7 @@ function handleNodeClick(node){
   if(node.type==='item'){
     url=idToUrl[node.id];
   }else if(node.type==='cat'){
-    const items=categoryMap[node.id]||[];
+    const items=getItemsForCategory(node.id);
     if(items.length) url=idToUrl[items[randInt(0,items.length-1)]];
   }
   if(url){
