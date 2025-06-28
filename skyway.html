@@ -372,7 +372,7 @@ function evalFormula(formula){
 }
 
 async function showProgressAndRedirect(url, rawUrl=null){
-  recordHistory(rawUrl || url);
+  await recordHistory(rawUrl || url);
   await loadConfig();
   const cur = evalFormula(configValues.progressCurrentValueFormula);
   const target = evalFormula(configValues.progressTargetValueFormula);
@@ -592,7 +592,7 @@ async function computeTerminalUrl(){
   let final=null;
   const orig=showProgressAndRedirect;
   try{
-    showProgressAndRedirect=async (url, raw)=>{ recordHistory(raw || url); final=url; };
+    showProgressAndRedirect=async (url, raw)=>{ await recordHistory(raw || url); final=url; };
     await processRows(await fetchCSV(targetCsv));
   }catch(e){ console.error('terminal url capture failed',e); }
   finally{ showProgressAndRedirect=orig; }
