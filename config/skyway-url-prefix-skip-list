@@ -9,7 +9,8 @@
     "looptube",
     "stash-randomizer",
     "skyway-recent5percent",
-    "google-images"
+    "google-images",
+    "defaultRandomModeWeights"
   ],
   "endsWith": []
 }
