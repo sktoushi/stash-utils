@@ -12,7 +12,8 @@
     "google-images",
     "defaultRandomModeWeights",
     "lc300",
-    "lc200"
+    "lc200",
+    "instagram"
   ],
   "endsWith": []
 }
