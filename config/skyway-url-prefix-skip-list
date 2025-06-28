@@ -10,7 +10,9 @@
     "stash-randomizer",
     "skyway-recent5percent",
     "google-images",
-    "defaultRandomModeWeights"
+    "defaultRandomModeWeights",
+    "lc300",
+    "lc200"
   ],
   "endsWith": []
 }
