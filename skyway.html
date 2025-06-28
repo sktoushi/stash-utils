@@ -491,7 +491,6 @@ function shouldSkip(url){
   if(skipBegins.some(p=>decoded.startsWith(p))) return true;
   if(skipEnds.some(e=>decoded.endsWith(e))) return true;
   if(skipContains.some(c=>decoded.includes(c))) return true;
-  if(/^https:\/\/sktoushi.github.io/.test(decoded)) return true;
   return false;
 }
 
