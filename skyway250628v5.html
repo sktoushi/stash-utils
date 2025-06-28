@@ -478,13 +478,9 @@ async function loadSkipPrefixes(){
   try{
     const resp=await fetch('config/skyway-url-prefix-skip-list');
     if(resp.ok){
-      const text=await resp.text();
-      text.split(/\n+/).forEach(line=>{
-        const l=line.trim();
-        if(!l||l.startsWith('#')) return;
-        if(l.startsWith('!')) skipExceptionCache.push(l.slice(1));
-        else skipPrefixCache.push(l);
-      });
+      const data=await resp.json();
+      if(Array.isArray(data.prefixes)) skipPrefixCache=data.prefixes.slice();
+      if(Array.isArray(data.exceptions)) skipExceptionCache=data.exceptions.slice();
     }
   }catch(e){ console.warn('Failed to load prefix skip list',e); }
 }
