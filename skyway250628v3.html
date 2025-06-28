@@ -574,6 +574,19 @@ async function processRows(rows,depth=0){
   document.body.textContent='Unknown row type: '+type;
 }
 
+
+/* helper to compute the terminal URL without navigating */
+async function computeTerminalUrl(){
+  let final=null;
+  const orig=showProgressAndRedirect;
+  try{
+    showProgressAndRedirect=async url=>{ recordHistory(url); final=url; };
+    await processRows(await fetchCSV(targetCsv));
+  }catch(e){ console.error('terminal url capture failed',e); }
+  finally{ showProgressAndRedirect=orig; }
+  return final;
+}
+
 /* run the original skyway algorithm */
 async function runOriginal(){
   await getRandomColor();
@@ -590,14 +603,22 @@ async function runOriginal(){
     sub.style.display='block';
   }
   await loadBucketState();
-  try{ await processRows(await fetchCSV(targetCsv)); }
-  catch(e){ document.body.textContent=e.message; }
+  let url=null;
+  try{ url=await computeTerminalUrl(); }
+  catch(e){ return document.body.textContent=e.message; }
+  if(url) await showProgressAndRedirect(url);
 }
 
 /* pick a random previously visited link */
 async function runHistoryGate(){
+  try{
+    await loadConfig();
+    await loadBucketState();
+  }catch(e){ console.error('history gate prep failed',e); }
   const hist=getHistory();
   if(!hist.length) return runOriginal();
+  try{ await computeTerminalUrl(); }
+  catch(e){ console.error('terminal url capture failed',e); }
   const records=[];
   for(const url of hist){
     try{
