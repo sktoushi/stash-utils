@@ -371,8 +371,8 @@ function evalFormula(formula){
   catch{ return NaN; }
 }
 
-async function showProgressAndRedirect(url){
-  recordHistory(url);
+async function showProgressAndRedirect(url, rawUrl=null){
+  recordHistory(rawUrl || url);
   await loadConfig();
   const cur = evalFormula(configValues.progressCurrentValueFormula);
   const target = evalFormula(configValues.progressTargetValueFormula);
@@ -565,11 +565,11 @@ async function processRows(rows,depth=0){
   const sel=pickRow(rows);
   const type=sel[0].trim();
   if(type==='link' || type==='injection'){
-    await showProgressAndRedirect(handleSkywayLink(sel,pickBucketItem));
+    await showProgressAndRedirect(handleSkywayLink(sel,pickBucketItem), sel[2]);
     return;
   }
   if(type==='link-jp'){
-    await showProgressAndRedirect(handleSkywayLink(sel,pickBucketItem,true));
+    await showProgressAndRedirect(handleSkywayLink(sel,pickBucketItem,true), sel[2]);
     return;
   }
 
@@ -597,7 +597,7 @@ async function computeTerminalUrl(){
   let final=null;
   const orig=showProgressAndRedirect;
   try{
-    showProgressAndRedirect=async url=>{ recordHistory(url); final=url; };
+    showProgressAndRedirect=async (url, raw)=>{ recordHistory(raw || url); final=url; };
     await processRows(await fetchCSV(targetCsv));
   }catch(e){ console.error('terminal url capture failed',e); }
   finally{ showProgressAndRedirect=orig; }
