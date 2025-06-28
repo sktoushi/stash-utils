@@ -14,6 +14,8 @@
     #portal button{display:inline-block;margin:.25rem .25rem .5rem 0;padding:.45rem .85rem;font-size:.75rem;font-weight:600;border-radius:6px;border:1px solid #30363d;background:#2ea44f;color:#fff;}
     #portal button:hover{background:#2c974b;cursor:pointer;}
     #textareaImport{width:100%;box-sizing:border-box;background:#161b22;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.5rem;font-size:.75rem;}
+    .redirect-btn{position:fixed;bottom:20px;right:20px;z-index:10000;padding:.45rem .85rem;font-size:.9rem;border-radius:6px;border:1px solid #30363d;background:#2ea44f;color:#fff;}
+    .redirect-btn:hover{background:#2c974b;cursor:pointer;}
     @media(max-width:480px){#portal{padding:.75rem;}}
   </style>
 </head>
@@ -433,7 +435,14 @@ async function drawNetwork(){
   const node=svg.append('g').selectAll('circle').data(nodes).enter().append('circle')
     .attr('r',d=>d.type==='item'?5+2*d.count:8)
     .attr('fill',d=>d.type==='item'?'#69b3a2':'#ffdd57');
+  const label=svg.append('g').selectAll('text').data(nodes).enter().append('text')
+    .text(d=>d.id).attr('font-size','10px').attr('fill','#fff');
   node.append('title').text(d=>d.id);
+  const drag=d3.drag()
+    .on('start',(event,d)=>{ if(!event.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on('drag',(event,d)=>{ d.fx=event.x; d.fy=event.y; })
+    .on('end',(event,d)=>{ if(!event.active) sim.alphaTarget(0); d.fx=null; d.fy=null; });
+  node.call(drag);
   const sim=d3.forceSimulation(nodes)
     .force('link',d3.forceLink(links).id(d=>d.id).distance(50))
     .force('charge',d3.forceManyBody().strength(-50))
@@ -442,14 +451,25 @@ async function drawNetwork(){
     link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
         .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
     node.attr('cx',d=>d.x).attr('cy',d=>d.y);
+    label.attr('x',d=>d.x+10).attr('y',d=>d.y+4);
   });
-  return new Promise(res=>setTimeout(()=>{sim.stop();div.style.display='none';res();},4000));
+  return new Promise(res=>setTimeout(()=>{sim.stop();res();},4000));
 }
 
 async function showNetworkAndRedirect(url){
   try{ await drawNetwork(); }
   catch(e){ console.error('graph fail',e); }
-  await showProgressAndRedirect(url);
+  return new Promise(resolve=>{
+    const btn=document.createElement('button');
+    btn.textContent='Continue';
+    btn.className='redirect-btn';
+    document.body.appendChild(btn);
+    btn.onclick=()=>{
+      btn.remove();
+      document.getElementById('network').style.display='none';
+      showProgressAndRedirect(url).then(resolve);
+    };
+  });
 }
 
 async function runOriginal(){
