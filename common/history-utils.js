@@ -3,7 +3,7 @@ const HIST_STORE='links';
 const HIST_VERSION=1;
 
 function recordHistory(url){
-  if(!url||/^https:\/\/sktoushi.github.io/.test(url)) return;
+  if(!url) return;
   try{
     let arr=JSON.parse(localStorage.getItem('skyway250628v3History')||'[]');
     if(!Array.isArray(arr)) arr=[];
