@@ -10,5 +10,9 @@
   ],
   "exceptions": [
     "https://github.com/sktoushi/stash-utils/blob/main/2025-1-pm.html"
+  ],
+  "contains": [
+    "MoschCm4-XE",
+    "looptube-jp.html"
   ]
 }
