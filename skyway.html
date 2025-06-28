@@ -429,6 +429,7 @@ const HIST_DB_NAME='skyHistory';
 const HIST_STORE='links';
 const HIST_VERSION=1;
 let historyDb=null;
+const LOCAL_HIST_KEY='skyway250628v3History';
 
 function openHistoryDB(){
   return new Promise((res,rej)=>{
@@ -497,11 +498,30 @@ function shouldSkip(url){
 async function recordHistory(url){
   await loadSkipConfig();
   if(shouldSkip(url)) return;
+  try{
+    let arr=JSON.parse(localStorage.getItem(LOCAL_HIST_KEY)||'[]');
+    if(!Array.isArray(arr)) arr=[];
+    arr=arr.filter(u=>u!==url);
+    arr.push(url);
+    if(arr.length>10) arr=arr.slice(-10);
+    localStorage.setItem(LOCAL_HIST_KEY,JSON.stringify(arr));
+  }catch(e){ console.warn('local history fail',e); }
   await updateHistoryRecord(url);
+}
+
+async function syncLocalHistory(){
+  let arr;
+  try{ arr=JSON.parse(localStorage.getItem(LOCAL_HIST_KEY)||'[]'); }
+  catch{ arr=[]; }
+  if(!Array.isArray(arr)) arr=[];
+  for(const url of arr){
+    try{ await updateHistoryRecord(url); }catch{}
+  }
 }
 
 async function getHistory(){
   try{
+    await syncLocalHistory();
     const all=await getAllHistory();
     all.sort((a,b)=>(b.lastSeen||0)-(a.lastSeen||0));
     return all.slice(0,10).map(r=>r.url);
