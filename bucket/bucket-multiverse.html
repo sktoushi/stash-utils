@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bucket Multiverse</title>
+    <script>
+        function secureRandomIndex(maxExclusive) {
+            const arr = new Uint32Array(1);
+            crypto.getRandomValues(arr);
+            return arr[0] % maxExclusive;
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const urls = [
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-solomon",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-ms-excel",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-spycraft-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-spycraft-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-access-denied",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-good-to-great",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-listening-2410",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-value-at-risk-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-game-theory-101a",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Macroeconomics-Mankiw",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-economics-of-labor-tr-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-The-Strategy-of-Conflict-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-the-taming-of-the-demons-tibetan",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Against-the-Academics-St-Augustine-volume1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Introduction-to-operations-and-supply-chain-management-Bozarth-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Seven-Crashes",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-the-toyota-template",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-spycraft-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-nudge-improving-decisions",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Games-of-Strategy-dixit-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-The-Strategy-of-Conflict-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-world-of-the-favorite-tr-p22",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-in-the-dragons-shadow-tr-p21",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-On-Order-St-Augustine-volume3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-in-the-dragons-shadow-tr-p221",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-These-Trees-Tell-a-Story-tr-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-These-Trees-Tell-a-Story-tr-p4",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-These-Trees-Tell-a-Story-tr-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-mind-performance-projects-tr-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-These-Trees-Tell-a-Story-tr-p32",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-The-Colonel-Who-Would-Not-Repent",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Manifesto-of-the-Communist-Party",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Behavioral-Game-Theory-Camerer-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Behavioral-Game-Theory-Camerer-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p4",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Game-Theory-for-Applied-Economists",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-game-theory-for-applied-economists",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-taiichi-ohnos-workplace-management",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-capitalism-socialism-and-democracy",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Hawthorn-The-Tree-That-Has-Nourished",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-never-split-the-difference-negotiate",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-production-and-operations-analysis-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-production-and-operations-analysis-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-production-and-operations-analysis-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Catechism-of-the-Catholic-Church-tr-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-influence-the-psychology-of-persuasion",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Intermediate-Microeconomics-Hal-Varian",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Catechism-of-the-Catholic-Church-tr-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Catechism-of-the-Catholic-Church-tr-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-how-to-persuade-people-who-dont-want-to",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Il-gran-cardinale-Alessandro-Farnese-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Il-gran-cardinale-Alessandro-Farnese-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Il-gran-cardinale-Alessandro-Farnese-p5",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Il-gran-cardinale-Alessandro-Farnese-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-st-augustine-answers-questions-on-prayer",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Soldiers-and-Kings-Human-Smuggling-tr-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-options-futures-and-other-derivatives-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Soldiers-and-Kings-Human-Smuggling-tr-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-options-futures-and-other-derivatives-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-options-futures-and-other-derivatives-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Principles-of-Mathematical-Analysis-Rudin",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p9",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-the-goal-a-process-of-ongoing-improvement",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-On-the-Happy-Life-Saint-Augustine-volume2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p8",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p5",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Evolution-and-the-Theory-of-Games-maynard",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p7",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-the-theory-of-games-and-economic-behavior",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p4",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p6",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-The-Goal-A-Process-of-Ongoing-Improvement",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Microeconomic-Theory-Andreu-Mas-Colell-p10",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-King-of-the-godfathers-Big-Joey-Massino-p3",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-King-of-the-godfathers-Big-Joey-Massino-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p5-1-100-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-lean-construction-management-the-toyota-way",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-BRAINWASHING-The-Science-of-Thought-Control",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p6-1-100-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p5-1-100-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p6-1-100-p1",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p7-1-109-p2",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Reclaiming-Patriotism-in-an-Age-of-Extremes",
+                "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-Financial-Risk-Manager-Handbook-p7-1-109-p1"
+            ];
+            const idx = secureRandomIndex(urls.length);
+            window.location.replace(urls[idx]);
+        });
+    </script>
+</head>
+<body>
+    <noscript>Please enable JavaScript.</noscript>
+</body>
+</html>
