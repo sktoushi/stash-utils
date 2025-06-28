@@ -32,8 +32,9 @@
         function getUrlParams () {
             const p = new URLSearchParams(window.location.search);
             return {
-                fileName: p.get('fileName') || 'default.pdf',
-                randIdx : p.get('randIdx')               // optional explicit page override
+                fileName : p.get('fileName') || 'default.pdf',
+                randIdx  : p.get('randIdx'),       // optional explicit page override
+                portal   : ['1', 'true'].includes(p.get('portal'))
             };
         }
 
@@ -92,16 +93,25 @@
                 r.length = 0;
             }
 
+            /* ---------- 1b. REPLENISH REVIEW BUCKET IF EMPTY ---------- */
+            if (!r.length) {
+                for (const p of n) {
+                    if (!r.includes(p)) r.push(p);
+                }
+            }
+
             /* ---------- 2. NORMAL SELECTION ---------- */
             const useReview = r.length && (getSecureRandomNumber() < 0.33);
             let page;
 
             if (useReview) {
-                page = r[Math.floor(getSecureRandomNumber() * r.length)];
+                const idx = Math.floor(getSecureRandomNumber() * r.length);
+                page = r.splice(idx, 1)[0];
+                if (!n.includes(page)) n.push(page);
             } else {
                 const idx = Math.floor(getSecureRandomNumber() * n.length);
                 page = n.splice(idx, 1)[0];
-                r.push(page);
+                if (!r.includes(page)) r.push(page);
             }
             return page;
         }
@@ -171,11 +181,22 @@
             }
 
             const pdfUrl = await getPdfUrl(file);
-            document.getElementById('pdfEmbed').src = `${pdfUrl}#page=${page}`;
+            const embed  = document.getElementById('pdfEmbed');
+            const portalEl = document.getElementById('portal');
+            embed.src = `${pdfUrl}#page=${page}`;
+
+            if (params.portal) {
+                if (portalEl) portalEl.style.display = 'block';
+                embed.style.display = 'none';
+            } else {
+                embed.style.display = 'block';
+                if (portalEl) portalEl.style.display = 'none';
+            }
         }
     </script>
 </head>
 <body onload="displayPdf()">
     <embed id="pdfEmbed" src="" type="application/pdf" />
+    <div id="portal" style="display:none"></div>
 </body>
 </html>
