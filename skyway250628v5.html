@@ -490,7 +490,6 @@ async function recordHistory(url){
   await loadSkipPrefixes();
   if(skipExceptionCache.includes(url)){}else if(skipPrefixCache.some(p=>url.startsWith(p))) return;
   else if(skipKeywordCache.some(k=>url.includes(k))) return;
-  if(/^https:\/\/sktoushi.github.io/.test(url)) return;
   let arr;
   try{ arr=JSON.parse(localStorage.getItem('skyway250628v3History')||'[]'); }
   catch{ arr=[]; }
