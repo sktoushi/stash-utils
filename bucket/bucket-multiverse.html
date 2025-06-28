@@ -14,8 +14,6 @@
     #portal button{display:inline-block;margin:.25rem .25rem .5rem 0;padding:.45rem .85rem;font-size:.75rem;font-weight:600;border-radius:6px;border:1px solid #30363d;background:#2ea44f;color:#fff;}
     #portal button:hover{background:#2c974b;cursor:pointer;}
     #textareaImport{width:100%;box-sizing:border-box;background:#161b22;color:#c9d1d9;border:1px solid #30363d;border-radius:6px;padding:.5rem;font-size:.75rem;}
-    .redirect-btn{position:fixed;bottom:20px;right:20px;z-index:10000;padding:.45rem .85rem;font-size:.9rem;border-radius:6px;border:1px solid #30363d;background:#2ea44f;color:#fff;}
-    .redirect-btn:hover{background:#2c974b;cursor:pointer;}
     @media(max-width:480px){#portal{padding:.75rem;}}
   </style>
 </head>
@@ -433,7 +431,8 @@ async function drawNetwork(){
   const link=svg.append('g').selectAll('line').data(links).enter().append('line').attr('stroke','#999').attr('stroke-opacity',0.6);
   const node=svg.append('g').selectAll('circle').data(nodes).enter().append('circle')
     .attr('r',d=>d.type==='item'?5+2*d.count:8)
-    .attr('fill',d=>d.type==='item'?'#69b3a2':'#ffdd57');
+    .attr('fill',d=>d.type==='item'?'#69b3a2':'#ffdd57')
+    .attr('id',d=>d.id==='root'?'root-node':null);
   const label=svg.append('g').selectAll('text').data(nodes).enter().append('text')
     .text(d=>d.id).attr('font-size','10px').attr('fill','#fff');
   node.append('title').text(d=>d.id);
@@ -459,15 +458,18 @@ async function showNetworkAndRedirect(url){
   try{ await drawNetwork(); }
   catch(e){ console.error('graph fail',e); }
   return new Promise(resolve=>{
-    const btn=document.createElement('button');
-    btn.textContent='Continue';
-    btn.className='redirect-btn';
-    document.body.appendChild(btn);
-    btn.onclick=()=>{
-      btn.remove();
+    const root=document.getElementById('root-node');
+    if(!root){
+      showProgressAndRedirect(url).then(resolve);
+      return;
+    }
+    root.style.cursor='pointer';
+    const handler=()=>{
+      root.removeEventListener('click',handler);
       document.getElementById('network').style.display='none';
       showProgressAndRedirect(url).then(resolve);
     };
+    root.addEventListener('click',handler);
   });
 }
 
