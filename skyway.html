@@ -489,21 +489,15 @@ async function recordHistory(url){
   await loadSkipPrefixes();
   if(skipExceptionCache.includes(url)){}else if(skipPrefixCache.some(p=>url.startsWith(p))) return;
   if(/^https:\/\/sktoushi.github.io/.test(url)) return;
-  let arr;
-  try{ arr=JSON.parse(localStorage.getItem('skyway250628v3History')||'[]'); }
-  catch{ arr=[]; }
-  if(!Array.isArray(arr)) arr=[];
-  arr=arr.filter(u=>u!==url);
-  arr.push(url);
-  if(arr.length>10) arr=arr.slice(-10);
-  localStorage.setItem('skyway250628v3History',JSON.stringify(arr));
-  updateHistoryRecord(url);
+  await updateHistoryRecord(url);
 }
 
-function getHistory(){
-  try{ const a=JSON.parse(localStorage.getItem('skyway250628v3History')||'[]');
-       return Array.isArray(a)?a:[]; }
-  catch{ return []; }
+async function getHistory(){
+  try{
+    const all=await getAllHistory();
+    all.sort((a,b)=>(b.lastSeen||0)-(a.lastSeen||0));
+    return all.slice(0,10).map(r=>r.url);
+  }catch(e){ console.error('getHistory fail',e); return []; }
 }
 
 async function updateHistoryRecord(url){
@@ -547,9 +541,8 @@ async function importData(txt){
   txt=txt.trim();if(!txt)return;let j;try{j=JSON.parse(txt);}catch(e){alert('Invalid JSON');return;}
   if(!Array.isArray(j.links)){alert('Malformed JSON');return;}
   for(const r of j.links){if(!r.url)continue;await histPut({id:r.url,url:r.url,freq:r.freq||1,lastSeen:r.lastSeen||Date.now()});}
-  const arr=j.links.map(r=>r.url).slice(-10);localStorage.setItem('skyway250628v3History',JSON.stringify(arr));
 }
-function resetData(){localStorage.removeItem('skyway250628v3History');const r=indexedDB.deleteDatabase(HIST_DB_NAME);r.onsuccess=()=>location.reload();}
+function resetData(){const r=indexedDB.deleteDatabase(HIST_DB_NAME);r.onsuccess=()=>location.reload();}
 
 /* ──────────────── MAIN PROCESSOR ──────────────── */
 async function processRows(rows,depth=0){
@@ -632,7 +625,7 @@ async function runHistoryGate(){
     await loadConfig();
     await loadBucketState();
   }catch(e){ console.error('history gate prep failed',e); }
-  const hist=getHistory();
+  const hist=await getHistory();
   if(!hist.length) return runOriginal();
   try{ await computeTerminalUrl(); }
   catch(e){ console.error('terminal url capture failed',e); }
