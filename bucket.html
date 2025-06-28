@@ -3,6 +3,7 @@
 <head>
     <script src="common/history-utils.js"></script>
     <script src="common/random-utils.js"></script>
+    <script src="common/storage-utils.js"></script>
     <meta charset="UTF-8">
     <title>Random URL Picker</title>
     <!-- Bootstrap CSS -->
@@ -86,7 +87,7 @@
         const historyLimit = 5;
         let lastDrawnId = null;
         let currentTarget = "";
-        let localStorageKey = ""; // LocalStorage key based on the target
+        let localStorageKey = ""; // Storage key based on the target
 
         // We'll store the last Pantone color used, so we can also apply it to the Bucket 3 progress bar
         let lastPantoneColor = '#ffffff';
@@ -140,21 +141,26 @@
         }
 
         /**
-         * Save the current target's state to localStorage.
+         * Save the current target's state to persistent storage.
          */
-        function saveState() {
-            localStorage.setItem(localStorageKey, JSON.stringify(currentTargetState));
+        async function saveState() {
+            try {
+                await storageSetItem(localStorageKey, JSON.stringify(currentTargetState));
+            } catch (e) {
+                console.warn('Failed to save state:', e);
+                showToast('Storage quota exceeded. Consider exporting or clearing old states.');
+            }
         }
 
         /**
-         * Load the current target's state from localStorage or bucket-state.json.
+         * Load the current target's state from storage or bucket-state.json.
          */
         async function loadState() {
-            const storedStateString = localStorage.getItem(localStorageKey);
+            const storedStateString = await storageGetItem(localStorageKey);
             if (storedStateString) {
                 currentTargetState = JSON.parse(storedStateString);
             } else {
-                // If not found in localStorage, try bucket-state.json fallback
+                // If not found in storage, try bucket-state.json fallback
                 try {
                     const response = await fetch('bucket-state.json');
                     if (!response.ok) {
@@ -167,12 +173,12 @@
                     } else {
                         initializeTargetState();
                     }
-                    // Save to localStorage for future usage
-                    saveState();
+                    // Save to storage for future usage
+                    await saveState();
                 } catch (error) {
                     alert('Error loading initial state: ' + error.message);
                     initializeTargetState();
-                    saveState();
+                    await saveState();
                 }
             }
 
@@ -225,9 +231,9 @@
             await getRandomColor(); // change background color on button press
             if (!confirm('Are you sure you want to reset the state? This action cannot be undone.')) return;
             // Remove only THIS target's key, preserving others
-            localStorage.removeItem(localStorageKey);
+            await storageRemoveItem(localStorageKey);
             initializeTargetState();
-            saveState();
+            await saveState();
             updateDisplay();
             initializeSlider();
             populateBucketLists();
@@ -266,7 +272,7 @@
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = '.json,application/json';
-            fileInput.onchange = e => {
+            fileInput.onchange = async e => {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
@@ -282,7 +288,7 @@
                                     ...(importedState.drawHistory || [])
                                 ].slice(-historyLimit)
                             };
-                            saveState();
+                            await saveState();
                             updateDisplay();
                             initializeSlider();
                             populateBucketLists();
@@ -310,7 +316,7 @@
             currentTargetState.b2Prob = 1 - currentTargetState.b1Prob;
             document.getElementById('probBucket1').innerText = (currentTargetState.b1Prob * 100).toFixed(0) + '%';
             document.getElementById('probBucket2').innerText = (currentTargetState.b2Prob * 100).toFixed(0) + '%';
-            saveState();
+            await saveState();
         }
 
         /**
@@ -318,7 +324,7 @@
          */
         async function pickRandom() {
             await getRandomColor(); // change background color on button press
-            updateProbabilities(); // Ensure probabilities are up to date
+            await updateProbabilities(); // Ensure probabilities are up to date
 
             const rand = getSecureRandomNumber();
             let selectedBucket = rand < currentTargetState.b1Prob ? 'b1' : 'b2';
@@ -370,7 +376,7 @@
             }
 
             lastDrawnId = selectedId;
-            saveState();
+            await saveState();
 
             const fileDetails = initialFiles.find(file => file[0] === selectedId);
             if (!fileDetails) {
@@ -444,7 +450,7 @@
             currentTargetState.drawHistory.shift();
 
             lastDrawnId = null;
-            saveState();
+            await saveState();
             updateDisplay();
             populateBucketLists();
             populateHistoryList();
@@ -527,7 +533,7 @@
                         }
                     });
                     dfInput.disabled = true;
-                    saveState();
+                    await saveState();
                     updateDisplay();
                     populateBucketLists();
                     showToast('Default frequency saved and applied.');
@@ -546,24 +552,28 @@
             await getRandomColor(); // change background color on button press
             currentTargetState.urlPrefix = document.getElementById('urlPrefix').value.trim();
             currentTargetState.urlSuffix = document.getElementById('urlSuffix').value.trim();
-            saveState();
+            await saveState();
             showToast('URL prefix and suffix saved.');
         }
 
         /**
          * Toggle dark mode.
          */
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('darkMode', isDark);
-        }
+       async function toggleDarkMode() {
+           document.body.classList.toggle('dark-mode');
+           const isDark = document.body.classList.contains('dark-mode');
+            try {
+                await storageSetItem('darkMode', isDark);
+            } catch (e) {
+                console.warn('Failed to store darkMode preference:', e);
+            }
+       }
 
         /**
          * Load dark mode preference.
          */
-        function loadDarkMode() {
-            const isDark = localStorage.getItem('darkMode') === 'true';
+        async function loadDarkMode() {
+            const isDark = (await storageGetItem('darkMode')) === 'true';
             if (isDark) {
                 document.body.classList.add('dark-mode');
             }
@@ -736,7 +746,7 @@
             currentTargetState.funCard3 = document.getElementById('funCard3').value.trim();
             currentTargetState.funCard4 = document.getElementById('funCard4').value.trim();
             currentTargetState.funCard5 = document.getElementById('funCard5').value.trim();
-            saveState();
+            await saveState();
             showToast('Fun Cards saved.');
         }
 
@@ -747,7 +757,7 @@
             await getRandomColor(); // change background color on button press
             const dscValue = document.getElementById('defaultSessionCards').value.trim();
             currentTargetState.defaultSessionCards = dscValue;
-            saveState();
+            await saveState();
             showToast('Default Session Cards saved.');
         }
 
@@ -902,7 +912,7 @@
                 }
             }
 
-            saveState();
+            await saveState();
             populateBucket3List();
 
             // Initialize the Bucket 3 progress bar max to the new session length
@@ -970,7 +980,7 @@
 
             // Just remove the first item in the array
             const nextItem = currentTargetState.bucket3.shift();
-            saveState();
+            await saveState();
             populateBucket3List();
             updateBucket3Progress();
 
@@ -1051,7 +1061,7 @@
          * Main initialization function.
          */
         async function main() {
-            loadDarkMode();
+            await loadDarkMode();
 
             // Use the new async getRandomColor to set the background
             await getRandomColor();
@@ -1385,7 +1395,7 @@
                         <h6>Notes</h6>
                         <ul>
                             <li>Use the <code>target</code> parameter (<em>e.g.</em>, <code>?target=foo</code>) or <code>targets</code> parameter (<em>e.g.</em>, <code>?targets=foo,bar,baz</code>) to define which JSON file(s) to randomly pick from—or use <code>bucket2</code> with tilde-delimited URLs directly.</li>
-                            <li>Imported states overwrite/merge only for the current target, preserving others in localStorage.</li>
+                            <li>Imported states overwrite/merge only for the current target, preserving others in storage.</li>
                             <li>Toast notifications will appear at the bottom-right corner for various actions.</li>
                             <li>Check or create the <code>bucket-state.json</code> if you’d like a fallback initial state for multiple targets.</li>
                         </ul>
