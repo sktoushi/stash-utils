@@ -28,32 +28,9 @@
   <div id="progressSubtext" style="position:fixed;top:calc(50% + 40px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;"></div>
   <div id="progressCount" style="position:fixed;top:calc(50% + 80px);left:50%;transform:translateX(-50%);text-align:center;font-family:Helvetica, sans-serif;font-size:1.5rem;display:none;z-index:9999;">
 </div>
-  <!-- rating modal -->
-  <div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="ratingModalLabel">How well did you recall the last link?</h5>
-        </div>
-        <div class="modal-body">
-          <p class="mb-1"><strong>Last 5 links you opened via skyway:</strong></p>
-          <ul id="lastFiveList" class="mb-3"></ul>
-          <p class="mb-2">Choose an SRS score:</p>
-          <div class="d-flex justify-content-between">
-            <button class="btn btn-outline-danger srs-btn" data-score="1">1</button>
-            <button class="btn btn-outline-warning srs-btn" data-score="2">2</button>
-            <button class="btn btn-outline-secondary srs-btn" data-score="3">3</button>
-            <button class="btn btn-outline-info srs-btn" data-score="4">4</button>
-            <button class="btn btn-outline-success srs-btn" data-score="5">5</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div id="portal"></div>
 <script>
 /*╔══════════════════════════════════════════╗
-/* ========= SM-2 SRS LAYER ========= */
+/* ========= Silent SM-2 SRS Layer ========= */
 const SRS_DB_NAME = 'skywaySM2';
 const SRS_STORE = 'cards';
 const SRS_DB_VERSION = 1;
@@ -139,36 +116,24 @@ function pushHistory(url){
   if(arr.length>5) arr = arr.slice(-5);
   localStorage.setItem(LS_HISTORY, JSON.stringify(arr));
 }
-function renderLastFive(){
-  const list = document.getElementById('lastFiveList');
-  list.innerHTML = '';
-  let arr;
-  try{arr = JSON.parse(localStorage.getItem(LS_HISTORY)||'[]');}catch{arr=[];}
-  arr.slice().reverse().forEach(u=>{
-    const li = document.createElement('li');
-    li.textContent = u;
-    list.appendChild(li);
-  });
+async function autoRatePending(){
+  const pending = localStorage.getItem(LS_PENDING);
+  if(!pending) return;
+  let q = 4;
+  try{
+    const rec = await histGet(pending);
+    if(rec && rec.lastSeen){
+      const d = (Date.now() - rec.lastSeen) / dayMS;
+      if(d < 1) q = 2;
+      else if(d < 3) q = 3;
+      else if(d < 7) q = 4;
+      else q = 5;
+    }
+  }catch{}
+  await recordReview(pending, q);
+  localStorage.removeItem(LS_PENDING);
 }
-function promptRatingIfNeeded(){
-  return new Promise(resolve=>{
-    const pending = localStorage.getItem(LS_PENDING);
-    if(!pending) return resolve();
-    renderLastFive();
-    document.querySelectorAll('.srs-btn').forEach(btn=>{
-      btn.addEventListener('click', async ev=>{
-        const q = parseInt(ev.currentTarget.dataset.score,10)||3;
-        await recordReview(pending,q);
-        localStorage.removeItem(LS_PENDING);
-        const m = bootstrap.Modal.getInstance(document.getElementById('ratingModal'));
-        m.hide();
-        resolve();
-      },{once:true});
-    });
-    const m = new bootstrap.Modal(document.getElementById('ratingModal'),{backdrop:'static',keyboard:false});
-    m.show();
-  });
-}
+
 async function runSrsGate(){
   useSrsLayer = true;
   const c = await pickSrsCard();
@@ -179,6 +144,7 @@ async function runSrsGate(){
   useSrsLayer = false;
   return false;
 }
+
 /* ║  HIERARCHICAL DECISION STACK             ║
   ║  1) modeWeights  → chooses randomMode.   ║
   ║  2) distributions / distribution         ║
@@ -289,7 +255,7 @@ async function loadSkywayConfig(){
     if(resp.ok) skywayConfig = await resp.json();
   }catch(err){ console.error('Skyway config load failed:', err); }
   if(typeof skywayConfig.srsProbability !== 'number')
-    skywayConfig.srsProbability = 0.95;
+    skywayConfig.srsProbability = 0.5;
   return skywayConfig;
 }
 
@@ -855,16 +821,14 @@ window.onload = async ()=>{
   if(urlParams.has('portal')){
     return showPortal();
   }
-  await promptRatingIfNeeded();
+  await autoRatePending();
   if(!targetCsv){ document.body.textContent='Missing ?target=…'; return; }
   await loadSkywayConfig();
   const r = getSecureRandomNumber();
-  const p = typeof skywayConfig.srsProbability === 'number' ? skywayConfig.srsProbability : 0.95;
+  const p = typeof skywayConfig.srsProbability === 'number' ? skywayConfig.srsProbability : 0.5;
   if(r < p){
     const ok = await runSrsGate();
     if(!ok) await runOriginal(true);
-  } else if(r < 0.5){
-    await runHistoryGate();
   } else {
     await runOriginal();
   }
