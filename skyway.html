@@ -284,6 +284,18 @@ async function loadConfig() {
   return configValues;
 }
 
+let skywayConfig = {};
+async function loadSkywayConfig(){
+  if(Object.keys(skywayConfig).length) return skywayConfig;
+  try{
+    const resp = await fetch('config/skyway-config.json');
+    if(resp.ok) skywayConfig = await resp.json();
+  }catch(err){ console.error('Skyway config load failed:', err); }
+  if(typeof skywayConfig.srsProbability !== 'number')
+    skywayConfig.srsProbability = 0.95;
+  return skywayConfig;
+}
+
 /* ──────────────── RANDOM HELPERS ──────────────── */
 function randInt(min, max) { return Math.floor(getSecureRandomNumber()*(max-min+1))+min; }
 function pickIdxByWeights(freq) {
@@ -840,8 +852,10 @@ window.onload = async ()=>{
   }
   await promptRatingIfNeeded();
   if(!targetCsv){ document.body.textContent='Missing ?target=…'; return; }
+  await loadSkywayConfig();
   const r = getSecureRandomNumber();
-  if(r < 0.25){
+  const p = typeof skywayConfig.srsProbability === 'number' ? skywayConfig.srsProbability : 0.95;
+  if(r < p){
     const ok = await runSrsGate();
     if(!ok) await runOriginal();
   } else if(r < 0.5){
