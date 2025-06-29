@@ -5,6 +5,7 @@
     <script src="common/skyway-utils.js"></script>
     <script src="common/color-utils.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <meta charset="UTF-8">
   <title>skyway.html – Hierarchical Multi-Mode Randomizer (multi-distribution)</title>
   <style>
@@ -814,7 +815,13 @@ async function runOriginal(){
   let url=null;
   try{ url=await computeTerminalUrl(); }
   catch(e){ return document.body.textContent=e.message; }
-  if(url) await showProgressAndRedirect(url);
+  if(url){
+    try{
+      const cards = await getAllCards();
+      if(!cards.length) useSrsLayer = true;
+    }catch{}
+    await showProgressAndRedirect(url);
+  }
 }
 
 /* pick a random previously visited link */
