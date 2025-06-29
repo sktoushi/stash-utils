@@ -766,13 +766,17 @@ async function processRows(rows,depth=0){
   if(type==='git-specific'){
     const user=sel[2].split('=')[1], repo=sel[3].split('=')[1];
     const list=sel[4].split('=')[1].split('_');
-    location.href=`https://github.com/${user}/${repo}/issues/${list[randInt(0,list.length-1)]}`; return;
+    const url=`https://github.com/${user}/${repo}/issues/${list[randInt(0,list.length-1)]}`;
+    await showProgressAndRedirect(url);
+    return;
   }
   if(type==='git-range'){
     const user=sel[2].split('=')[1], repo=sel[3].split('=')[1];
     const [min,max]=sel[4].split('=')[1].split('_').map(Number);
     if(isNaN(min)||isNaN(max)) return document.body.textContent='Bad git-range row';
-    location.href=`https://github.com/${user}/${repo}/issues/${randInt(min,max)}`; return;
+    const url=`https://github.com/${user}/${repo}/issues/${randInt(min,max)}`;
+    await showProgressAndRedirect(url);
+    return;
   }
   if(type==='csv'){
     try{ return processRows(await fetchCSV(sel[2]),depth+1); }
