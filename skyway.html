@@ -126,12 +126,8 @@ async function pickSrsCard(){
   const cards = await getAllCards();
   if(!cards.length) return null;
   const now = Date.now();
-  let due = cards.filter(c=>c.due <= now);
-  if(!due.length) due = cards.filter(c=>(c.reps||0) === 0);
-  if(!due.length){
-    cards.sort((a,b)=>a.due-b.due);
-    return cards[0];
-  }
+  const due = cards.filter(c => c.due <= now || (c.reps||0) === 0);
+  if(!due.length) return null;
   due.sort((a,b)=>a.due-b.due);
   return due[0];
 }
@@ -796,8 +792,8 @@ async function computeTerminalUrl(){
 }
 
 /* run the original skyway algorithm */
-async function runOriginal(){
-  useSrsLayer = false;
+async function runOriginal(addToSrs=false){
+  useSrsLayer = !!addToSrs;
   await getRandomColor();
   await loadConfig();
   animateProgressCount();
@@ -817,8 +813,10 @@ async function runOriginal(){
   catch(e){ return document.body.textContent=e.message; }
   if(url){
     try{
-      const cards = await getAllCards();
-      if(!cards.length) useSrsLayer = true;
+      if(!addToSrs){
+        const cards = await getAllCards();
+        if(!cards.length) useSrsLayer = true;
+      }
     }catch{}
     await showProgressAndRedirect(url);
   }
@@ -864,7 +862,7 @@ window.onload = async ()=>{
   const p = typeof skywayConfig.srsProbability === 'number' ? skywayConfig.srsProbability : 0.95;
   if(r < p){
     const ok = await runSrsGate();
-    if(!ok) await runOriginal();
+    if(!ok) await runOriginal(true);
   } else if(r < 0.5){
     await runHistoryGate();
   } else {
