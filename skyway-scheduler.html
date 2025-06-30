@@ -9,14 +9,13 @@
         const resp = await fetch('config/schedule.json');
         const cfg = await resp.json();
         const now = new Date();
-        const start = new Date(now.getFullYear(), 0, 1);
-        const dayOfYear = Math.floor((now - start) / 86400000);
+        const minuteIndex = Math.floor(now.getTime() / 60000);
         const cycle = cfg.cycle;
         if (!Array.isArray(cycle) || cycle.length === 0) {
           document.body.textContent = 'Invalid schedule configuration.';
           return;
         }
-        const page = cycle[dayOfYear % cycle.length];
+        const page = cycle[minuteIndex % cycle.length];
         const url = `${page}?target=${encodeURIComponent(cfg.target)}`;
         window.location.href = url;
       } catch (e) {
