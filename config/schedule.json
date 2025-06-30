@@ -1,0 +1,8 @@
+{
+  "target": "skyway-central-2506.csv",
+  "cycle": [
+    "skyway-odd.html",
+    "skyway-even.html",
+    "skyway-ultraviolet.html"
+  ]
+}

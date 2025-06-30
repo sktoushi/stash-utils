@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Skyway Scheduler</title>
+  <script>
+    async function runScheduler() {
+      try {
+        const resp = await fetch('config/schedule.json');
+        const cfg = await resp.json();
+        const now = new Date();
+        const start = new Date(now.getFullYear(), 0, 1);
+        const dayOfYear = Math.floor((now - start) / 86400000);
+        const cycle = cfg.cycle;
+        if (!Array.isArray(cycle) || cycle.length === 0) {
+          document.body.textContent = 'Invalid schedule configuration.';
+          return;
+        }
+        const page = cycle[dayOfYear % cycle.length];
+        const url = `${page}?target=${encodeURIComponent(cfg.target)}`;
+        window.location.href = url;
+      } catch (e) {
+        document.body.textContent = 'Failed to load schedule.';
+      }
+    }
+    window.onload = runScheduler;
+  </script>
+</head>
+<body>
+  <p>Redirecting...</p>
+</body>
+</html>
