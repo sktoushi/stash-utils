@@ -41,8 +41,9 @@
 <div id="totalDisplay"></div>
 <svg></svg>
 <script>
-(async function() {
-  const pantone = await fetch('pantone-colors.json').then(r => r.json());
+(function() {
+  const pantone={"names":["ultimate-gray","illuminating","very-peri","viva-magenta","digital-lavender","lava-falls","sundial","tranquil-blue","verdigris","caribbean-sand","pink-charlotte","olive-sprig","after-midnight","sunny-side","espresso-brown","cobalt-lake","sirocco-blue","tropical-teal","glacier-lake","blush-light"],"values":["#939597","#f5df4d","#6667ab","#bb2649","#c3aed6","#cf1124","#c09d5a","#acd8e6","#43b5b0","#f6e0b5","#e38b9b","#70843b","#00303e","#ffe13d","#4b3621","#0047ab","#5c8a8b","#008794","#82a6b1","#f9d5d3"]};
+  const config={"b1":{"202501":100,"202412":4000},"sb":{"202507":4},"sk":{"202506":0.5},"w":{"202506":3}};
   const prev = localStorage.getItem('lastPantoneColor');
   let bg;
   for (let i=0;i<5;i++) {
@@ -61,7 +62,6 @@
   document.body.style.color = textColor;
   document.getElementById('pantoneColorDisplay').style.color = textColor;
 
-  const config = await fetch('config/c25.json').then(r => r.json());
   const nodesMap = new Map();
   const links = [];
   function getNode(id,type){ if(!nodesMap.has(id)) nodesMap.set(id,{id,type,value:0}); return nodesMap.get(id); }
