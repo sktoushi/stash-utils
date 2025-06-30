@@ -24,10 +24,21 @@
     width: 100vw;
     height: 100vh;
   }
+  #totalDisplay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(255,255,255,0.8);
+    padding: 5px;
+    border-radius: 5px;
+    font-weight: bold;
+    z-index: 1;
+  }
 </style>
 </head>
 <body>
 <div id="pantoneColorDisplay"></div>
+<div id="totalDisplay"></div>
 <svg></svg>
 <script>
 (async function() {
@@ -69,13 +80,17 @@
     }
   }
   const nodes=Array.from(nodesMap.values());
+  const total = nodes.reduce((s,n)=>s+n.value,0);
+  document.getElementById('totalDisplay').textContent = 'Total: '+total;
   const maxVal=d3.max(nodes,d=>d.value);
   const rScale=d3.scaleSqrt().domain([0,maxVal]).range([5,30]);
   const cScale=d3.scaleLinear().domain([0,maxVal]).range(['steelblue','red']);
   const svg=d3.select('svg');
+  const linkForce = d3.forceLink(links).id(d=>d.id).distance(80);
+  const chargeForce = d3.forceManyBody().strength(-100);
   const sim=d3.forceSimulation(nodes)
-    .force('link',d3.forceLink(links).id(d=>d.id).distance(80))
-    .force('charge',d3.forceManyBody().strength(-100))
+    .force('link',linkForce)
+    .force('charge',chargeForce)
     .force('center',d3.forceCenter(window.innerWidth/2,window.innerHeight/2));
   const link=svg.append('g').attr('stroke','#999').attr('stroke-opacity',0.6)
     .selectAll('line').data(links).enter().append('line').attr('stroke-width',1);
@@ -87,6 +102,23 @@
   const label=svg.append('g').selectAll('text').data(nodes).enter().append('text')
       .attr('text-anchor','middle').attr('dy','0.35em').style('pointer-events','none')
       .style('font-size','16px').style('fill',textColor).text(d=>d.id);
+
+  const moods=[
+    {name:'calm',distance:120,charge:-20,decay:0.9,alpha:0.1},
+    {name:'mild',distance:90,charge:-80,decay:0.7,alpha:0.3},
+    {name:'playful',distance:70,charge:-150,decay:0.5,alpha:0.5},
+    {name:'wild',distance:40,charge:-300,decay:0.3,alpha:0.8}
+  ];
+  function applyMood(m){
+    linkForce.distance(m.distance);
+    chargeForce.strength(m.charge);
+    sim.velocityDecay(m.decay);
+    sim.alphaTarget(m.alpha).restart();
+  }
+  setInterval(()=>{
+    const m=moods[Math.floor(getSecureRandomNumber()*moods.length)];
+    applyMood(m);
+  },5000);
   sim.on('tick',()=>{
     link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
         .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
