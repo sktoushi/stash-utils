@@ -213,6 +213,7 @@
       const values = [];
       const colors = [];
       let positiveTotal = 0;
+      let negativeRateTotal = 0;
       let xValue = 0;
       let xTime = 0;
       let aggregateValue = 0;
@@ -239,9 +240,14 @@
           aggregateValue += valueSum;
           aggregateTime += timeSum;
         }
-        if (key !== 'x') {
+
+        if (valueSum > 0) {
           positiveTotal += valueSum;
-        } else {
+        }
+        if (rate < 0) {
+          negativeRateTotal += rate;
+        }
+        if (key === 'x') {
           xValue = valueSum;
           xTime = timeSum;
         }
@@ -286,11 +292,11 @@
       }
 
       const xEl = document.getElementById('xDepletion');
-      if (xTime > 0 && xValue < 0) {
-        const xRate = xValue / xTime;
-        const daysDeplete = positiveTotal / -xRate;
+      const drainRate = negativeRateTotal;
+      if (drainRate < 0 && positiveTotal > 0) {
+        const daysDeplete = positiveTotal / -drainRate;
         const depleteDate = new Date(Date.now() + daysDeplete * 86400000);
-        xEl.textContent = `At x's pace, all positive balances would be depleted in ${Math.round(daysDeplete).toLocaleString()} days — that's on ${depleteDate.toISOString().split('T')[0]}.`;
+        xEl.textContent = `At the current negative pace, all positive balances would be depleted in ${Math.round(daysDeplete).toLocaleString()} days — that's on ${depleteDate.toISOString().split('T')[0]}.`;
       } else {
         xEl.textContent = '';
       }
