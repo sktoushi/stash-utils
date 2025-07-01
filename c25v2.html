@@ -214,10 +214,7 @@
       const colors = [];
       let positiveTotal = 0;
       let negativeRateTotal = 0;
-      let xValue = 0;
-      let xTime = 0;
-      let aggregateValue = 0;
-      let aggregateTime = 0;
+      let aggregateRate = 0;
 
       const totalsArr = categoryTotals().sort((a,b)=>b[1]-a[1]);
       const ordered = totalsArr.map(([k])=>k);
@@ -226,19 +223,18 @@
       ordered.forEach(key => {
         const entries = data[key];
         let valueSum = 0;
-        let timeSum = 0;
+        let rateSum = 0;
         Object.values(entries).forEach(e => {
           valueSum += e.value;
-          timeSum += e.time;
+          rateSum += e.value / e.time;
         });
-        const rate = timeSum ? valueSum / timeSum : 0;
+        const rate = rateSum;
         labels.push(key);
         values.push(valueSum);
         colors.push(data._colors[key] || metroColors.green);
 
         if (key !== 'b1' && key !== 'x') {
-          aggregateValue += valueSum;
-          aggregateTime += timeSum;
+          aggregateRate += rate;
         }
 
         if (valueSum > 0) {
@@ -246,10 +242,6 @@
         }
         if (rate < 0) {
           negativeRateTotal += rate;
-        }
-        if (key === 'x') {
-          xValue = valueSum;
-          xTime = timeSum;
         }
 
         const div = document.createElement('div');
@@ -259,8 +251,9 @@
           let note = '';
           if (rate > 0 && valueSum < goal) {
             const days = (goal - valueSum) / rate;
+            const months = days / 30;
             const targetDate = new Date(Date.now() + days * 86400000);
-            note = `At this pace, it would take ${Math.round(days).toLocaleString()} days to reach ${goal} — that's on ${targetDate.toISOString().split('T')[0]}.`;
+            note = `At this pace, it would take ${months.toFixed(1)} months (${Math.round(days).toLocaleString()} days) to reach ${goal} — that's on ${targetDate.toISOString().split('T')[0]}.`;
           }
           div.innerHTML = `
             <h5>${key} (${valueSum} / ${goal})</h5>
@@ -281,12 +274,13 @@
       });
 
       // Aggregate alerts
-      const aggRate = aggregateTime ? aggregateValue / aggregateTime : 0;
+      const aggRate = aggregateRate;
       const aggregateEl = document.getElementById('aggregate');
       if (aggRate > 0) {
         const days = goal / aggRate;
+        const months = days / 30;
         const date = new Date(Date.now() + days * 86400000);
-        aggregateEl.textContent = `At this combined pace, it would take ${Math.round(days).toLocaleString()} days to reach ${goal} — that's on ${date.toISOString().split('T')[0]}.`;
+        aggregateEl.textContent = `At this combined pace, it would take ${months.toFixed(1)} months (${Math.round(days).toLocaleString()} days) to reach ${goal} — that's on ${date.toISOString().split('T')[0]}.`;
       } else {
         aggregateEl.textContent = 'Insufficient data for aggregate projection.';
       }
@@ -295,8 +289,9 @@
       const drainRate = negativeRateTotal;
       if (drainRate < 0 && positiveTotal > 0) {
         const daysDeplete = positiveTotal / -drainRate;
+        const monthsDeplete = daysDeplete / 30;
         const depleteDate = new Date(Date.now() + daysDeplete * 86400000);
-        xEl.textContent = `At the current negative pace, all positive balances would be depleted in ${Math.round(daysDeplete).toLocaleString()} days — that's on ${depleteDate.toISOString().split('T')[0]}.`;
+        xEl.textContent = `At the current negative pace, all positive balances would be depleted in ${monthsDeplete.toFixed(1)} months (${Math.round(daysDeplete).toLocaleString()} days) — that's on ${depleteDate.toISOString().split('T')[0]}.`;
       } else {
         xEl.textContent = '';
       }
