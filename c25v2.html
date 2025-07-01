@@ -56,6 +56,9 @@
       </div>
     </form>
 
+    <!-- Records Table -->
+    <div id="recordTable" class="table-responsive mt-4"></div>
+
     <!-- Category management -->
     <form id="categoryForm" class="row row-cols-lg-auto g-2 align-items-end mt-3">
       <div class="col-12 col-lg-2">
@@ -85,13 +88,14 @@
       </div>
     </form>
 
-    <!-- Import / Export / Clear -->
+    <!-- Import / Export / Clear / Reset -->
     <div class="d-flex align-items-center gap-2 mt-3">
       <button id="exportBtn" class="btn btn-success">Export JSON</button>
       <label class="btn btn-outline-secondary mb-0">
         Import JSON <input type="file" id="importInput" accept="application/json" hidden>
       </label>
       <button id="clearBtn" class="btn btn-danger">Clear Data</button>
+      <button id="resetBtn" class="btn btn-warning">Reset State</button>
     </div>
   </div>
 
@@ -318,10 +322,53 @@
       });
     }
 
+    function renderRecordTable() {
+      const tableDiv = document.getElementById('recordTable');
+      const cat = categorySelect.value;
+      if (!cat || !data[cat]) { tableDiv.innerHTML = ''; return; }
+      const entries = Object.entries(data[cat]).sort((a,b)=>b[0].localeCompare(a[0]));
+      let html = '<table class="table table-dark table-striped table-sm"><thead><tr><th>YM</th><th>Value</th><th>Time</th><th>Actions</th></tr></thead><tbody>';
+      entries.forEach(([ym, rec]) => {
+        html += `<tr data-ym="${ym}"><td>${ym}</td><td>${rec.value}</td><td>${rec.time}</td><td><button class="btn btn-sm btn-secondary me-1 editRec">Edit</button><button class="btn btn-sm btn-danger deleteRec">Delete</button></td></tr>`;
+      });
+      html += '</tbody></table>';
+      tableDiv.innerHTML = html;
+      tableDiv.querySelectorAll('.deleteRec').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const ym = btn.closest('tr').dataset.ym;
+          if (!confirm(`Delete ${ym}?`)) return;
+          delete data[cat][ym];
+          await idbSet(db, data);
+          render();
+          renderRecordTable();
+        });
+      });
+      tableDiv.querySelectorAll('.editRec').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const ym = btn.closest('tr').dataset.ym;
+          const rec = data[cat][ym];
+          const val = prompt('Value', rec.value);
+          if (val === null) return;
+          const newVal = parseFloat(val);
+          if (isNaN(newVal)) return alert('Invalid value');
+          const timeVal = prompt('Time', rec.time);
+          if (timeVal === null) return;
+          const newTime = parseFloat(timeVal);
+          if (isNaN(newTime)) return alert('Invalid time');
+          data[cat][ym] = { value: newVal, time: newTime };
+          await idbSet(db, data);
+          render();
+          renderRecordTable();
+        });
+      });
+    }
+
     populateColorOptions();
     populateCategories();
     render();
     setCurrentYM();
+    renderRecordTable();
+    categorySelect.addEventListener('change', renderRecordTable);
 
     // ***** Add Entry *****
     document.getElementById('entryForm').addEventListener('submit', async (e) => {
@@ -337,6 +384,7 @@
       data[cat][ym].time += time;
       await idbSet(db, data);
       render();
+      renderRecordTable();
       setCurrentYM();
       document.getElementById('amountInput').value = '';
       document.getElementById('timeInput').value = '';
@@ -349,6 +397,8 @@
       const a = Object.assign(document.createElement('a'), { href: url, download: 'c25-export.json' });
       a.click();
       URL.revokeObjectURL(url);
+      await new Promise(r => setTimeout(r, 5000));
+      location.href = 'https://github.com/sktoushi/stash-utils/upload/main/config';
     });
 
     // ***** Import *****
@@ -363,6 +413,7 @@
         populateColorOptions();
         populateCategories();
         render();
+        renderRecordTable();
         e.target.value = '';
       } catch (err) {
         alert('Invalid JSON file');
@@ -380,9 +431,10 @@
       await idbSet(db, data);
       populateColorOptions();
       populateCategories();
-      categorySelect.value = name;
-      document.getElementById('newCategoryInput').value = '';
-    });
+        categorySelect.value = name;
+        document.getElementById('newCategoryInput').value = '';
+        renderRecordTable();
+      });
 
     document.getElementById('colorForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -404,6 +456,20 @@
       populateColorOptions();
       populateCategories();
       render();
+      renderRecordTable();
+      setCurrentYM();
+    });
+
+    // ***** Reset State *****
+    document.getElementById('resetBtn').addEventListener('click', async () => {
+      if (!confirm('Reload data from bundled JSON?')) return;
+      data = await fetch('config/c25.json').then(r => r.json());
+      ensureColorMap();
+      await idbSet(db, data);
+      populateColorOptions();
+      populateCategories();
+      render();
+      renderRecordTable();
       setCurrentYM();
     });
   })();
