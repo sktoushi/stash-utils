@@ -223,12 +223,16 @@
       ordered.forEach(key => {
         const entries = data[key];
         let valueSum = 0;
-        let rateSum = 0;
+        let rate = 0;
+        const latest = Object.entries(entries)
+          .sort((a,b)=>b[0].localeCompare(a[0]))[0];
+        if (latest) {
+          const e = latest[1];
+          rate = e.value / e.time;
+        }
         Object.values(entries).forEach(e => {
           valueSum += e.value;
-          rateSum += e.value / e.time;
         });
-        const rate = rateSum;
         labels.push(key);
         values.push(valueSum);
         colors.push(data._colors[key] || metroColors.green);
