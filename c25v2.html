@@ -394,7 +394,7 @@
     document.getElementById('exportBtn').addEventListener('click', async () => {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = Object.assign(document.createElement('a'), { href: url, download: 'c25-export.json' });
+      const a = Object.assign(document.createElement('a'), { href: url, download: 'schedule.json' });
       a.click();
       URL.revokeObjectURL(url);
       await new Promise(r => setTimeout(r, 5000));
