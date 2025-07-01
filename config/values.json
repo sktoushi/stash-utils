@@ -31,7 +31,7 @@
     "imgEnding": "195",
     "progressCurrentValueFormula": "publicRepoEnding + stashEnding + stash1p5Ending + stash2Ending + stash3Ending",
     "progressTargetValueFormula": "18393",
-    "lastUpdated": "2025-06-27T19:00:00+08:00",
+    "lastUpdated": "2025-07-01T19:00:00+08:00",
     "progressBasis": "687",
     "dbviewerLinks": {
       "baseURL": "https://sktoushi.github.io/ref2506/dbviewer.html?db=",
