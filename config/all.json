@@ -1,0 +1,20 @@
+{
+  "repositories": {
+    "the-snackbar": {"username": "cjcaf1995", "issueStartNumber": 1, "issueEndNumber": 33},
+    "img": {"username": "cjcaf1995", "issueStartNumber": 1, "issueEndNumber": 195},
+    "stash1p5": {"username": "sktoushi", "issueStartNumber": 1, "issueEndNumber": 265},
+    "log": {"username": "cjcaf1995", "issueStartNumber": 9, "issueEndNumber": 39},
+    "redirect0915": {"username": "cjcaf1995", "issueStartNumber": 1, "issueEndNumber": 255},
+    "public-repo": {"username": "cjcaf1995", "issueStartNumber": 1, "issueEndNumber": 3991},
+    "stash": {"username": "cjcaf1995", "issueStartNumber": 1, "issueEndNumber": 4569},
+    "stash2": {"username": "sktoushi", "issueStartNumber": 1, "issueEndNumber": 4508},
+    "stash3": {"username": "cjcaf1995", "issueStartNumber": 1, "issueEndNumber": 1234}
+  },
+  "formulas": [
+    "random",
+    "leftLeaning",
+    "rightLeaning1",
+    "recent20Percent",
+    "recent5Percent"
+  ]
+}
