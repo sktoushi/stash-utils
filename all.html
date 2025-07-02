@@ -26,9 +26,15 @@
     const formulaParam = new URLSearchParams(location.search).get('formula') || 'random';
     const weights = new Array(n).fill(1);
     if (formulaParam === 'leftLeaning') {
-      for (let i = 0; i < n; i++) weights[i] = n - i;
+      for (let i = 0; i < n; i++) {
+        const noise = 0.5 + getSecureRandomNumber();
+        weights[i] = (n - i) * noise;
+      }
     } else if (formulaParam === 'rightLeaning1') {
-      for (let i = 0; i < n; i++) weights[i] = i + 1;
+      for (let i = 0; i < n; i++) {
+        const noise = 0.5 + getSecureRandomNumber();
+        weights[i] = (i + 1) * noise;
+      }
     } else if (formulaParam === 'recent20Percent') {
       const startIdx = Math.floor(n * 0.8);
       for (let i = startIdx; i < n; i++) weights[i] = 5;
