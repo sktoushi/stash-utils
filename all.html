@@ -23,7 +23,12 @@
       }
     }
     const n = issues.length;
-    const formulaParam = new URLSearchParams(location.search).get('formula') || 'random';
+    let formulaParam = 'random';
+    const formulas = Array.isArray(cfg.formulas) ? cfg.formulas : [];
+    if (formulas.length > 0) {
+      const idx = Math.floor(getSecureRandomNumber() * formulas.length);
+      formulaParam = formulas[idx];
+    }
     const weights = new Array(n).fill(1);
     if (formulaParam === 'leftLeaning') {
       for (let i = 0; i < n; i++) {
