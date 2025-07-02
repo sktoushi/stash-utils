@@ -2,10 +2,15 @@
   "target": "skyway-central-2506.csv",
   "cycle": [
     "skyway-odd.html",
+    "all.html",
     "skyway-recent20percent.html",
+    "all.html",
     "skyway-even.html",
+    "all.html",
     "skyway-ultraviolet.html",
+    "all.html",
     "skyway-recent5percent.html",
+    "all.html",
     "c25v2.html"
   ]
 }
