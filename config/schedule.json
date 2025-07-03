@@ -1,6 +1,7 @@
 {
   "target": "skyway-central-2506.csv",
   "cycle": [
+    "Rockefeller-38-letters-6-128.html",
     "skyway-odd.html",
     "all.html",
     "skyway-recent20percent.html",
