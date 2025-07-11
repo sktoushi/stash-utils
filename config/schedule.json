@@ -15,6 +15,7 @@
     "all.html",
     "c25v2.html", 
     "Practice-Standard-for-Scheduling-9-116.html", 
-    "http://sktoushi.github.io/stash-utils/repository-issue-randomizer.html?username=cjcaf1995&repository=stash-executive&issueNumbers=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47"
+    "http://sktoushi.github.io/stash-utils/repository-issue-randomizer.html?username=cjcaf1995&repository=stash-executive&issueNumbers=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47",
+    "https://sktoushi.github.io/stash-utils/skyway.html?target=skyway-stash3.csv&modeWeights=weighted:1,segments:4,uniform:1&distributions=1-2-3-4-5-6-7-8-7-6-5-4-3-2-1:1|8-7-6-5-4-3-2-1-2-3-4-5-6-7-8:1|6-10-12-15-22-35:1|35-22-15-12-10-6:1"
   ]
 }
