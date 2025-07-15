@@ -8,15 +8,14 @@
       try {
         const resp = await fetch('config/schedule.json');
         const cfg = await resp.json();
-        const now = new Date();
-        const minuteIndex = Math.floor(now.getTime() / 60000);
-        const cycle = cfg.cycle;
+
+        const cycle = Array.isArray(cfg) ? cfg : cfg.cycle;
         if (!Array.isArray(cycle) || cycle.length === 0) {
           document.body.textContent = 'Invalid schedule configuration.';
           return;
         }
-        const page = cycle[minuteIndex % cycle.length];
-        const url = `${page}?target=${encodeURIComponent(cfg.target)}`;
+
+        const url = cycle[Math.floor(Math.random() * cycle.length)];
         window.location.href = url;
       } catch (e) {
         document.body.textContent = 'Failed to load schedule.';
