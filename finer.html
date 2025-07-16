@@ -4,120 +4,86 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Call to Post → Finer Things Bucket</title>
+
     <style>
-      html,body{height:100%;margin:0}
-      html{
-        /* tiled background will be injected via JS once we have blob URL */
-        background-repeat:repeat;
-        background-size:auto;
+      /* Global font + text colour only — no solid background here. */
+      :root {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        color: #222;
       }
-      body{
-        display:flex;
-        align-items:center;
-        justify-content:center;
+
+      /* Let the GIF tiles cover the whole page. */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
       }
-      #play-btn{
-        padding:1rem 2rem;
-        font-size:1.25rem;
-        border:none;
-        border-radius:0.5rem;
-        cursor:pointer;
-        box-shadow:0 4px 8px rgba(0,0,0,.15);
-        background:#fff;
+
+      body {
+        /* Tile the GIF; each tile keeps its built‑in animation. */
+        background-image: url("calltopost.gif");
+        background-repeat: repeat;
+        /* Optional: keep the tiles fixed while scrolling (looks nicer
+           if the page ever grows). */
+        background-attachment: fixed;
+
+        /* Existing centring for the fallback Play button. */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Fallback Play‑button styling (unchanged). */
+      #play-btn {
+        padding: 1rem 2rem;
+        font-size: 1.25rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
     </style>
   </head>
   <body>
-    <script defer>
+    <script>
       const DESTINATION =
         "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-finer-things-in-life";
-      const DB_NAME = "calltopostCache";
-      const STORE = "assets";
-      const ASSETS = {
-        mp3: { key: "calltopostMp3", file: "./calltopost.mp3" },
-        gif: { key: "calltopostGif", file: "./calltopost.gif" },
-      };
 
-      function openDB(){
-        return new Promise((resolve,reject)=>{
-          const req=indexedDB.open(DB_NAME,1);
-          req.onerror=()=>reject(req.error);
-          req.onsuccess=()=>resolve(req.result);
-          req.onupgradeneeded=()=>req.result.createObjectStore(STORE);
-        });
-      }
+      // MP3 lives in the same folder as this HTML
+      const audio = new Audio("calltopost.mp3");
 
-      function getOrFetch(db,key,filename){
-        return new Promise((resolve,reject)=>{
-          const tx=db.transaction(STORE,"readwrite");
-          const store=tx.objectStore(STORE);
-          const g=store.get(key);
-          g.onsuccess=async()=>{
-            if(g.result){resolve(g.result);return;}
-            try{
-              const resp=await fetch(filename,{cache:"force-cache"});
-              if(!resp.ok)throw new Error(resp.status);
-              const blob=await resp.blob();
-              store.put(blob,key);
-              resolve(blob);
-            }catch(e){reject(e);}  
-          };
-          g.onerror=()=>reject(g.error);
-        });
-      }
+      // After the bugle finishes, redirect
+      audio.addEventListener("ended", () => {
+        window.location.href = DESTINATION;
+      });
 
-      async function main(){
-        try{
-          const db=await openDB();
-          const [mp3Blob,gifBlob]=await Promise.all([
-            getOrFetch(db,ASSETS.mp3.key,ASSETS.mp3.file),
-            getOrFetch(db,ASSETS.gif.key,ASSETS.gif.file)
-          ]);
+      /**
+       * Try to autoplay; if blocked, fall back to a user‑gesture Play button.
+       */
+      async function tryAutoPlay() {
+        try {
+          await audio.play(); // most desktop browsers succeed
+        } catch {
+          // Autoplay blocked → show manual Play button
+          const btn = document.createElement("button");
+          btn.id = "play-btn";
+          btn.textContent = "▶︎ Play sound";
+          document.body.appendChild(btn);
 
-          const mp3URL=URL.createObjectURL(mp3Blob);
-          const gifURL=URL.createObjectURL(gifBlob);
-
-          // set tiled background on <html>
-          document.documentElement.style.backgroundImage=`url(${gifURL})`;
-
-          const audio=new Audio(mp3URL);
-          audio.setAttribute("playsinline",""); // iOS
-          audio.preload="auto";
-
-          audio.addEventListener("ended",()=>window.location.href=DESTINATION);
-
-          // helper: attempt autoplay muted then unmute
-          async function attemptAutoPlay(){
-            try{
-              audio.muted=true;
+          btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            try {
               await audio.play();
-              audio.muted=false;
-              return true;
-            }catch(e){return false;}
-          }
-
-          const success=await attemptAutoPlay();
-          if(!success){
-            const btn=document.createElement("button");
-            btn.id="play-btn";
-            btn.textContent="▶︎ Play sound";
-            document.body.appendChild(btn);
-            btn.addEventListener("click",async()=>{
-              btn.disabled=true;
-              try{
-                await audio.play();
-                btn.textContent="Playing…";
-              }catch(e){btn.textContent="Playback failed";}
-            });
-          }
-        }catch(err){
-          console.error("CallToPost init failed",err);
-          // fallback redirect
-          setTimeout(()=>window.location.href=DESTINATION,2000);
+              btn.textContent = "Playing…";
+            } catch {
+              btn.textContent = "Playback failed";
+            }
+          });
         }
       }
 
-      main();
+      window.addEventListener("DOMContentLoaded", tryAutoPlay);
     </script>
   </body>
 </html>
