@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Call to Post → Finer Things Bucket</title>
+    <style>
+      :root {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background: #f7f7f7;
+        color: #222;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+      }
+      #play-btn {
+        padding: 1rem 2rem;
+        font-size: 1.25rem;
+        border: none;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      const DESTINATION =
+        "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-finer-things-in-life";
+
+      // Create the audio element pointing to the MP3 in the same folder
+      const audio = new Audio("calltopost.mp3");
+
+      // When the clip finishes, jump to bucket page
+      audio.addEventListener("ended", () => {
+        window.location.href = DESTINATION;
+      });
+
+      /**
+       * Attempt to autoplay. If the browser blocks it (most mobile & some desktop
+       * browsers require a user gesture), fall back to showing a Play button.
+       */
+      async function tryAutoPlay() {
+        try {
+          await audio.play();
+          // Autoplay succeeded → nothing else to do, redirect will trigger on 'ended'
+        } catch (err) {
+          // Autoplay was blocked → ask user to tap/click
+          const btn = document.createElement("button");
+          btn.id = "play-btn";
+          btn.textContent = "▶︎ Play sound";
+          document.body.appendChild(btn);
+
+          btn.addEventListener("click", async () => {
+            btn.disabled = true;
+            try {
+              await audio.play();
+              btn.textContent = "Playing…";
+            } catch (e) {
+              btn.textContent = "Playback failed";
+            }
+          });
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", tryAutoPlay);
+    </script>
+  </body>
+</html>
