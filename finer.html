@@ -5,15 +5,13 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Call to Post → Finer Things Bucket</title>
     <style>
-      html,body{
-        margin:0;
-        height:100%;
-        width:100%;
-      }
-      body{
-        /* background image will be injected via JS once we have the blob URL */
+      html,body{height:100%;margin:0}
+      html{
+        /* tiled background will be injected via JS once we have blob URL */
         background-repeat:repeat;
         background-size:auto;
+      }
+      body{
         display:flex;
         align-items:center;
         justify-content:center;
@@ -30,114 +28,96 @@
     </style>
   </head>
   <body>
-    <script>
+    <script defer>
       const DESTINATION =
         "https://sktoushi.github.io/stash-utils/bucket.html?target=bucket-finer-things-in-life";
       const DB_NAME = "calltopostCache";
       const STORE = "assets";
-
-      // Keys mapping to filenames for clarity
       const ASSETS = {
-        mp3: { key: "calltopostMp3", file: "calltopost.mp3" },
-        gif: { key: "calltopostGif", file: "calltopost.gif" },
+        mp3: { key: "calltopostMp3", file: "./calltopost.mp3" },
+        gif: { key: "calltopostGif", file: "./calltopost.gif" },
       };
 
-      /**
-       * Open (or create) the IndexedDB instance.
-       * @returns {Promise<IDBDatabase>}
-       */
-      function openDB() {
-        return new Promise((resolve, reject) => {
-          const request = indexedDB.open(DB_NAME, 1);
-          request.onerror = () => reject(request.error);
-          request.onsuccess = () => resolve(request.result);
-          request.onupgradeneeded = () => {
-            request.result.createObjectStore(STORE);
-          };
+      function openDB(){
+        return new Promise((resolve,reject)=>{
+          const req=indexedDB.open(DB_NAME,1);
+          req.onerror=()=>reject(req.error);
+          req.onsuccess=()=>resolve(req.result);
+          req.onupgradeneeded=()=>req.result.createObjectStore(STORE);
         });
       }
 
-      /**
-       * Retrieve a blob from the cache; if missing, fetch it from the network and cache it.
-       * @param {IDBDatabase} db
-       * @param {string} key
-       * @param {string} filename (relative URL)
-       * @returns {Promise<Blob>}
-       */
-      function getOrFetchAsset(db, key, filename) {
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE, "readwrite");
-          const store = tx.objectStore(STORE);
-          const getReq = store.get(key);
-          getReq.onsuccess = async () => {
-            if (getReq.result) {
-              // Cache hit
-              resolve(getReq.result);
-            } else {
-              try {
-                const resp = await fetch(filename);
-                if (!resp.ok) throw new Error(`Fetch failed: ${resp.status}`);
-                const blob = await resp.blob();
-                store.put(blob, key); // cache it
-                resolve(blob);
-              } catch (e) {
-                reject(e);
-              }
-            }
+      function getOrFetch(db,key,filename){
+        return new Promise((resolve,reject)=>{
+          const tx=db.transaction(STORE,"readwrite");
+          const store=tx.objectStore(STORE);
+          const g=store.get(key);
+          g.onsuccess=async()=>{
+            if(g.result){resolve(g.result);return;}
+            try{
+              const resp=await fetch(filename,{cache:"force-cache"});
+              if(!resp.ok)throw new Error(resp.status);
+              const blob=await resp.blob();
+              store.put(blob,key);
+              resolve(blob);
+            }catch(e){reject(e);}  
           };
-          getReq.onerror = () => reject(getReq.error);
+          g.onerror=()=>reject(g.error);
         });
       }
 
-      /**
-       * Main entry point: load assets, play audio, set background, handle redirect.
-       */
-      (async () => {
-        try {
-          const db = await openDB();
-          const [mp3Blob, gifBlob] = await Promise.all([
-            getOrFetchAsset(db, ASSETS.mp3.key, ASSETS.mp3.file),
-            getOrFetchAsset(db, ASSETS.gif.key, ASSETS.gif.file),
+      async function main(){
+        try{
+          const db=await openDB();
+          const [mp3Blob,gifBlob]=await Promise.all([
+            getOrFetch(db,ASSETS.mp3.key,ASSETS.mp3.file),
+            getOrFetch(db,ASSETS.gif.key,ASSETS.gif.file)
           ]);
 
-          // Convert blobs to object URLs
-          const mp3URL = URL.createObjectURL(mp3Blob);
-          const gifURL = URL.createObjectURL(gifBlob);
+          const mp3URL=URL.createObjectURL(mp3Blob);
+          const gifURL=URL.createObjectURL(gifBlob);
 
-          // Set tiled background
-          document.body.style.backgroundImage = `url(${gifURL})`;
+          // set tiled background on <html>
+          document.documentElement.style.backgroundImage=`url(${gifURL})`;
 
-          // Prepare audio element
-          const audio = new Audio(mp3URL);
-          audio.addEventListener("ended", () => {
-            window.location.href = DESTINATION;
-          });
+          const audio=new Audio(mp3URL);
+          audio.setAttribute("playsinline",""); // iOS
+          audio.preload="auto";
 
-          // Attempt autoplay
-          try {
-            await audio.play();
-          } catch (autoplayErr) {
-            // Autoplay blocked → show manual play button
-            const btn = document.createElement("button");
-            btn.id = "play-btn";
-            btn.textContent = "▶︎ Play sound";
+          audio.addEventListener("ended",()=>window.location.href=DESTINATION);
+
+          // helper: attempt autoplay muted then unmute
+          async function attemptAutoPlay(){
+            try{
+              audio.muted=true;
+              await audio.play();
+              audio.muted=false;
+              return true;
+            }catch(e){return false;}
+          }
+
+          const success=await attemptAutoPlay();
+          if(!success){
+            const btn=document.createElement("button");
+            btn.id="play-btn";
+            btn.textContent="▶︎ Play sound";
             document.body.appendChild(btn);
-            btn.addEventListener("click", async () => {
-              btn.disabled = true;
-              try {
+            btn.addEventListener("click",async()=>{
+              btn.disabled=true;
+              try{
                 await audio.play();
-                btn.textContent = "Playing…";
-              } catch (e) {
-                btn.textContent = "Playback failed";
-              }
+                btn.textContent="Playing…";
+              }catch(e){btn.textContent="Playback failed";}
             });
           }
-        } catch (err) {
-          console.error("CallToPost init failed", err);
-          // In case of catastrophic failure, redirect without audio after 2 s
-          setTimeout(() => (window.location.href = DESTINATION), 2000);
+        }catch(err){
+          console.error("CallToPost init failed",err);
+          // fallback redirect
+          setTimeout(()=>window.location.href=DESTINATION,2000);
         }
-      })();
+      }
+
+      main();
     </script>
   </body>
 </html>
